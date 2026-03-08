@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X-Chart Statistics Builder</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Slide 11 Interactive App</p>
+        <h1>X-Chart Statistics Builder</h1>
+        <p class="subtitle">
+          Rebuild each definition and formula using readable tiles. The app will render your answer in proper math notation.
+        </p>
+      </div>
+
+      <div class="scoreboard">
+        <div class="score-card">
+          <span class="score-label">Correct</span>
+          <span class="score-value" id="correctCount">0</span>
+        </div>
+        <div class="score-card">
+          <span class="score-label">Attempts</span>
+          <span class="score-value" id="attemptCount">0</span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 id="termTitle">Term</h2>
+            <p class="panel-subtitle">Recreate both the definition and the formula.</p>
+          </div>
+          <div class="panel-actions">
+            <button class="secondary-btn" id="resetBtn">Reset Current</button>
+            <button class="secondary-btn" id="nextBtn">Next Term</button>
+          </div>
+        </div>
+
+        <div class="term-display">
+          <div class="term-symbol" id="termSymbol"></div>
+          <div class="term-note" id="termNote"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Part A · Build the Definition</h3>
+        <p class="helper-text">Choose the correct phrase for each blank.</p>
+        <div class="definition-box" id="definitionBox"></div>
+        <div class="feedback" id="definitionFeedback"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Part B · Build the Formula with Tiles</h3>
+        <p class="helper-text">
+          Click tiles to fill each slot. Students use readable math pieces; the preview renders the result in standard notation.
+        </p>
+
+        <div class="slots-wrap">
+          <div class="formula-slots" id="formulaSlots"></div>
+        </div>
+
+        <div class="tile-bank-wrap">
+          <div class="tile-bank-title">Available tiles</div>
+          <div class="tile-bank" id="tileBank"></div>
+        </div>
+
+        <div class="builder-actions">
+          <button class="secondary-btn" id="undoBtn">Undo Last Tile</button>
+          <button class="secondary-btn" id="clearFormulaBtn">Clear Formula</button>
+        </div>
+
+        <div class="preview-grid">
+          <div class="preview-card">
+            <div class="preview-label">Readable build</div>
+            <div class="readable-preview" id="readablePreview"></div>
+          </div>
+          <div class="preview-card">
+            <div class="preview-label">Rendered formula</div>
+            <div class="latex-preview" id="latexPreview"></div>
+          </div>
+        </div>
+
+        <div class="feedback" id="formulaFeedback"></div>
+      </section>
+
+      <section class="panel">
+        <div class="submit-row">
+          <button class="primary-btn" id="checkBtn">Check Answer</button>
+        </div>
+        <div class="final-feedback" id="finalFeedback"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
