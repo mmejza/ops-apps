@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Conformance Analysis Challenge</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>Conformance Analysis (X-Chart) Interactive Lab</h1>
+
+<div class="stage">
+
+<h2>Stage 1: Put the Steps in the Correct Order</h2>
+
+<p>Click steps in the correct sequence used to perform conformance analysis.</p>
+
+<div id="steps">
+<button onclick="selectStep(1)">Create X-chart</button>
+<button onclick="selectStep(2)">Collect sample of n observations</button>
+<button onclick="selectStep(3)">Determine if process is under control</button>
+<button onclick="selectStep(4)">Calculate sample mean (X̄)</button>
+<button onclick="selectStep(5)">Compute centerline (X̄̄)</button>
+<button onclick="selectStep(6)">Compute UCL and LCL</button>
+<button onclick="selectStep(7)">Plot sample means</button>
+</div>
+
+<div id="stepFeedback"></div>
+
+</div>
+
+<hr>
+
+<div class="stage">
+
+<h2>Stage 2: Match the Definition</h2>
+
+<p>Select the correct definition.</p>
+
+<select id="term">
+<option value="xbar">Sample Mean (X̄)</option>
+<option value="xbarbar">Centerline (X̄̄)</option>
+<option value="ucl">Upper Control Limit</option>
+<option value="lcl">Lower Control Limit</option>
+</select>
+
+<select id="definition">
+<option value="1">Average of observations in one sample</option>
+<option value="2">Average of all sample means</option>
+<option value="3">X̄̄ + 3(ESD)</option>
+<option value="4">X̄̄ − 3(ESD)</option>
+</select>
+
+<button onclick="checkMatch()">Check</button>
+
+<div id="matchFeedback"></div>
+
+</div>
+
+<hr>
+
+<div class="stage">
+
+<h2>Stage 3: Investigate the Process</h2>
+
+<p>Given the sample means below, determine whether the process is in control.</p>
+
+<table>
+<tr>
+<th>Sample</th>
+<th>Mean</th>
+</tr>
+
+<tr><td>1</td><td>0.47</td></tr>
+<tr><td>2</td><td>0.53</td></tr>
+<tr><td>3</td><td>0.58</td></tr>
+<tr><td>4</td><td>0.45</td></tr>
+<tr><td>5</td><td>0.65</td></tr>
+
+</table>
+
+<p>Control Limits</p>
+
+<ul>
+<li>Centerline = 0.536</li>
+<li>UCL = 0.703</li>
+<li>LCL = 0.369</li>
+</ul>
+
+<button onclick="answer('in')">Process is IN CONTROL</button>
+<button onclick="answer('out')">Assignable Cause Present</button>
+
+<div id="analysisFeedback"></div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
