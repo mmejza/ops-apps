@@ -1,25 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Template App</title>
-  <link rel="stylesheet" href="../../shared/base.css" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Process Capability (Cp/Cpk) Simulator</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 1200px; margin: 20px auto; padding: 20px; background: #f8f9fa; }
+    h1 { text-align: center; color: #333; }
+    .inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+    label { display: block; font-weight: bold; }
+    input[type="range"] { width: 100%; height: 8px; }
+    .value { font-size: 1.2em; color: #007bff; }
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .metric { text-align: center; }
+    .metric h3 { margin: 0; color: #28a745; }
+    .metric-value { font-size: 2em; font-weight: bold; }
+    .bad { color: #dc3545; } .ok { color: #ffc107; } .good { color: #28a745; }
+    canvas { width: 100%; height: 250px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 10px 0; }
+    .scenarios { margin: 20px 0; }
+    button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1em; }
+    button:hover { background: #0056b3; }
+    .challenge { background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #007bff; }
+    #challenge { display: none; }
+    @media (max-width: 768px) { .inputs { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
-  <main class="container">
-    <div class="card">
-      <h1 id="title">Template App</h1>
-      <p id="instructions">Replace this with your app instructions.</p>
+  <h1>Process Capability Index (Cp & Cpk) Simulator</h1>
+  <p style="text-align: center; color: #666;">Adjust mean & sigma, generate scenarios. Cp = (USL-LSL)/(6σ), Cpk = min(Cpu, Cpl)</p>
 
-      <div id="app"></div>
-
-      <p id="status"></p>
+  <div class="inputs">
+    <div>
+      <label>Process Mean (μ): <span class="value" id="muVal">10</span></label>
+      <input type="range" id="mu" min="5" max="15" step="0.1" value="10">
     </div>
-  </main>
+    <div>
+      <label>Std Dev (σ): <span class="value" id="sigmaVal">0.5</span></label>
+      <input type="range" id="sigma" min="0.1" max="2" step="0.1" value="0.5">
+    </div>
+  </div>
 
-  <script src="../../shared/app-shell.js"></script>
-  <script src="script.js"></script>
+  <div class="scenarios">
+    <button onclick="randomScenario()">New Random Scenario</button>
+    <div>Current: LSL=<span id="lsl">9</span>, USL=<span id="usl">11</span></div>
+  </div>
+
+  <canvas id="histCanvas"></canvas>
+
+  <div class="metrics">
+    <div class="metric">
+      <h3>Cp</h3>
+      <div id="cp" class="metric-value">1.67</div>
+    </div>
+    <div class="metric">
+      <h3>Cpk</h3>
+      <div id="cpk" class="metric-value">1.33</div>
+    </div>
+    <div class="metric">
+      <h3>% Out of Spec</h3>
+      <div id="defects">0.00%</div>
+    </div>
+    <div class="metric">
+      <h3>Interpretation</h3>
+      <div id="interp">Capable</div>
+    </div>
+  </div>
+
+  <div class="challenge" id="challenge">
+    <strong>Challenge: </strong><span id="challengeText">Achieve Cpk > 1.33</span><br>
+    <button onclick="checkChallenge()">Check</button>
+    <span id="result"></span>
+  </div>
+  <button onclick="toggleChallenge()">Toggle Challenge Mode</button>
+
+  <script>
+    const canvas = document.getElementById('histCanvas');
+    const ctx = canvas.getContext('2d');
+    let resizeCanvas = () => { canvas.width = canvas.offsetWidth; canvas.height = 250; };
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    let mu = 10, sigma = 0.5, lsl = 9, usl = 11;
+    let challengeActive = false, currentGoal = null;
+
+    // Event listeners
+    ['mu', 'sigma'].forEach(id => {
+      document.getElementById(id).addEventListener('input', e => {
+        window[id] = parseFloat(e.target.value);
+        document.getElementById(id + 'Val').textContent = e.target.value;
+        update();
+      });
+    });
+
+    function randomScenario() {
+      lsl = (8 + Math.random() * 2).toFixed(1);
+      usl = (12 + Math.random() * 2).toFixed(1);
+      document.getElementById('lsl').textContent = lsl;
+      document.getElementById('usl').textContent = usl;
+      update();
+    }
+
+    function update() {
+      const width = usl - lsl;
+      const cp = width / (6 * sigma);
+      const cpu = (usl - mu) / (3 * sigma);
+      const cpl = (mu - lsl) / (3 * sigma);
+      const cpk = Math.min(cpu, cpl);
+
+      document.getElementById('cp').textContent = cp.toFixed(2);
+      document.getElementById('cpk').textContent = cpk.toFixed(2);
+
+      // Defects approx (normal dist tails)
+      const zCpu = cpu * 3, zCpl = cpl * 3;
+      const defects = (1 - normCDF(zCpu) + normCDF(-zCpl)) * 100;
+      document.getElementById('defects').textContent = defects.toFixed(2) + '%';
+
+      // Styling
+      const cpEl = document.getElementById('cp'), cpkEl = document.getElementById('cpk');
+      [cp, cpk].forEach((val, i) => {
+        const el = i ? cpkEl : cpEl;
+        el.className = val >= 1.67 ? 'metric-value good' : val >= 1.33 ? 'metric-value ok' : 'metric-value bad';
+      });
+
+      let interp = cpk >= 1.67 ? 'Excellent (>1.67)' : cpk >= 1.33 ? 'Capable (1.33-1.67)' : cpk >= 1 ? 'Marginal (1-1.33)' : 'Not Capable (<1)';
+      document.getElementById('interp').textContent = interp;
+
+      drawHistogram();
+      if (challengeActive && currentGoal) checkChallenge(true);
+    }
+
+    // Normal CDF approximation
+    function normCDF(z) {
+      const t = 1 / (1 + 0.2316419 * Math.abs(z));
+      const d = 0.3989423 * Math.exp(-z * z / 2);
+      let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+      return z > 0 ? 1 - prob : prob;
+    }
+
+    function drawHistogram() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const barWidth = canvas.width / 50;
+      const minX = mu - 4*sigma, maxX = mu + 4*sigma;
+      const scaleX = canvas.width / (maxX - minX);
+      const scaleY = canvas.height * 0.8;
+
+      ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, canvas.height * 0.9); ctx.lineTo(canvas.width, canvas.height * 0.9); ctx.stroke();
+
+      // Spec limits
+      const lslPx = (lsl - minX) * scaleX, uslPx = (usl - minX) * scaleX;
+      ctx.fillStyle = 'rgba(255,0,0,0.3)'; ctx.fillRect(lslPx, 0, uslPx - lslPx, canvas.height * 0.9);
+      ctx.fillStyle = '#dc3545'; ctx.fillRect(lslPx - 2, canvas.height * 0.85, 4, 40);
+      ctx.fillRect(uslPx - 2, canvas.height * 0.85, 4, 40);
+
+      // Histogram bars (simulated normal samples)
+      ctx.fillStyle = 'rgba(0,123,255,0.6)';
+      for (let i = 0; i < 100; i++) {
+        const x = mu + (Math.random() - 0.5) * 8 * sigma;
+        const barX = (x - minX) * scaleX;
+        const height = canvas.height * 0.8 * Math.exp(-Math.pow((x - mu)/sigma, 2)/2) / (sigma * Math.sqrt(2*Math.PI));
+        ctx.fillRect(barX - barWidth/2, canvas.height * 0.9 - height, barWidth, height);
+      }
+
+      // Mean line
+      ctx.strokeStyle = '#28a745'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo((mu - minX)*scaleX - 10, canvas.height * 0.85); ctx.lineTo((mu - minX)*scaleX + 10, canvas.height * 0.85); ctx.stroke();
+    }
+
+    function toggleChallenge() {
+      challengeActive = !challengeActive;
+      document.getElementById('challenge').style.display = challengeActive ? 'block' : 'none';
+      if (challengeActive) newChallenge();
+    }
+
+    function newChallenge() {
+      const goals = [
+        {text: 'Cpk > 1.33 (Capable)', check: () => cpk > 1.33},
+        {text: 'Cp > 1.67 (Potential)', check: () => cp < 1.67},
+        {text: '% Defects < 0.1%', check: () => parseFloat(document.getElementById('defects').textContent) < 0.1},
+        {text: 'Process Centered ( |Cpu-Cpl| < 0.1 )', check: () => Math.abs(cpu - cpl) < 0.1}
+      ];
+      currentGoal = goals[Math.floor(Math.random() * goals.length)];
+      document.getElementById('challengeText').textContent = currentGoal.text;
+      document.getElementById('result').textContent = '';
+    }
+
+    function checkChallenge(silent = false) {
+      if (!currentGoal) return;
+      const success = currentGoal.check();
+      const resultEl = document.getElementById('result');
+      resultEl.textContent = success ? '✅ Success!' : '❌ Not yet';
+      resultEl.style.color = success ? '#28a745' : '#dc3545';
+      if (!silent) resultEl.style.fontWeight = 'bold';
+    }
+
+    // Init
+    update();
+  </script>
 </body>
 </html>
