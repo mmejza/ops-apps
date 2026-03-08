@@ -3,23 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Template App</title>
-  <link rel="stylesheet" href="../../shared/base.css" />
+  <title>SPC Framework Puzzle</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="container">
-    <div class="card">
-      <h1 id="title">Template App</h1>
-      <p id="instructions">Replace this with your app instructions.</p>
+  <div class="app">
+    <header class="header">
+      <h1>Framework of Quality & SPC Puzzle</h1>
+      <p>
+        Drag each concept card into the correct box to rebuild the slide 5 framework.
+      </p>
+    </header>
 
-      <div id="app"></div>
+    <section class="instructions card">
+      <h2>Goal</h2>
+      <p>
+        Match each concept to its correct role in the quality framework.
+      </p>
+      <div class="btn-row">
+        <button id="checkBtn">Check Answers</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+      <div id="scoreBox" class="score-box"></div>
+    </section>
 
-      <p id="status"></p>
-    </div>
-  </main>
+    <section class="workspace">
+      <div class="bank-wrap card">
+        <h2>Concept Cards</h2>
+        <p class="small-note">Drag from here into the matching zone.</p>
+        <div id="cardBank" class="card-bank">
+          <div class="drag-card" draggable="true" data-match="input">Input Variables</div>
+          <div class="drag-card" draggable="true" data-match="environment">Environmental Variables</div>
+          <div class="drag-card" draggable="true" data-match="output">Output Variables</div>
+          <div class="drag-card" draggable="true" data-match="specifications">Specifications</div>
+          <div class="drag-card" draggable="true" data-match="defects">Defects</div>
+          <div class="drag-card" draggable="true" data-match="rootcause">Root Cause</div>
+          <div class="drag-card" draggable="true" data-match="robustness">Robustness</div>
+        </div>
+      </div>
 
-  <script src="../../shared/app-shell.js"></script>
+      <div class="board card">
+        <h2>Framework Board</h2>
+
+        <div class="zone-grid">
+          <div class="drop-zone" data-zone="input">
+            <h3>Controlled by management</h3>
+            <p>These are the process factors management directly sets or adjusts.</p>
+          </div>
+
+          <div class="drop-zone" data-zone="environment">
+            <h3>Not controlled by management</h3>
+            <p>These can still influence output quality.</p>
+          </div>
+
+          <div class="drop-zone" data-zone="output">
+            <h3>Measures of output quality</h3>
+            <p>Variation here can create quality problems.</p>
+          </div>
+
+          <div class="drop-zone" data-zone="specifications">
+            <h3>Rule that determines if output is defective</h3>
+            <p>Defines acceptable versus unacceptable results.</p>
+          </div>
+
+          <div class="drop-zone" data-zone="defects">
+            <h3>Outputs that do not conform</h3>
+            <p>These fail to meet requirements.</p>
+          </div>
+
+          <div class="drop-zone" data-zone="rootcause">
+            <h3>Input or environmental factor that causes a defect</h3>
+            <p>Points to the source of the problem.</p>
+          </div>
+
+          <div class="drop-zone" data-zone="robustness">
+            <h3>Tolerates change without large output variation</h3>
+            <p>A strong process resists disruption.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="footer card">
+      <h2>What slide 5 teaches</h2>
+      <p>
+        The framework links process inputs and environmental factors to output variation,
+        specifications, defects, root causes, and robustness.
+      </p>
+    </section>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
