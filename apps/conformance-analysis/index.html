@@ -62,33 +62,26 @@
 
 <div class="stage">
 
+<div class="stage">
+
 <h2>Stage 3: Investigate the Process</h2>
 
-<p>Given the sample means below, determine whether the process is in control.</p>
+<p>Analyze the sample means relative to the control limits.</p>
 
-<table>
+<button onclick="generateScenario()">Generate New Scenario</button>
+
+<table id="sampleTable">
 <tr>
 <th>Sample</th>
 <th>Mean</th>
 </tr>
-
-<tr><td>1</td><td>0.47</td></tr>
-<tr><td>2</td><td>0.53</td></tr>
-<tr><td>3</td><td>0.58</td></tr>
-<tr><td>4</td><td>0.45</td></tr>
-<tr><td>5</td><td>0.65</td></tr>
-
 </table>
 
-<p>Control Limits</p>
+<div id="limits"></div>
 
-<ul>
-<li>Centerline = 0.536</li>
-<li>UCL = 0.703</li>
-<li>LCL = 0.369</li>
-</ul>
+<p>Does the process show assignable cause variation?</p>
 
-<button onclick="answer('in')">Process is IN CONTROL</button>
+<button onclick="answer('in')">Process IN CONTROL</button>
 <button onclick="answer('out')">Assignable Cause Present</button>
 
 <div id="analysisFeedback"></div>
