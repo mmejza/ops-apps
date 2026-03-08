@@ -1,94 +1,211 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Conformance Analysis Challenge</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conformance Analysis Mastery Lab</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">SPC Interactive Learning</p>
+        <h1>Conformance Analysis Mastery Lab</h1>
+        <p class="subtitle">
+          Learn the definitions, sequence, calculations, and diagnosis logic for X-chart conformance analysis with continuous variables.
+        </p>
+      </div>
 
-<h1>Conformance Analysis (X-Chart) Interactive Lab</h1>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <span class="stat-label">Score</span>
+          <span class="stat-value" id="scoreValue">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Correct</span>
+          <span class="stat-value" id="correctValue">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Streak</span>
+          <span class="stat-value" id="streakValue">0</span>
+        </div>
+      </div>
+    </header>
 
-<div class="stage">
+    <main>
+      <section class="stage">
+        <div class="stage-head">
+          <h2>Stage 1 · Procedure Order</h2>
+          <button class="secondary-btn" id="resetStage1Btn">Reset</button>
+        </div>
 
-<h2>Stage 1: Put the Steps in the Correct Order</h2>
+        <p class="instructions">
+          Click the steps in the correct order for conformance analysis using continuous variables.
+        </p>
 
-<p>Click steps in the correct sequence used to perform conformance analysis.</p>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            Progress: <span id="stage1Progress">0/7</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="stage1Fill"></div>
+          </div>
+        </div>
 
-<div id="steps">
-<button onclick="selectStep(1)">Create X-chart</button>
-<button onclick="selectStep(2)">Collect sample of n observations</button>
-<button onclick="selectStep(3)">Determine if process is under control</button>
-<button onclick="selectStep(4)">Calculate sample mean (X̄)</button>
-<button onclick="selectStep(5)">Compute centerline (X̄̄)</button>
-<button onclick="selectStep(6)">Compute UCL and LCL</button>
-<button onclick="selectStep(7)">Plot sample means</button>
-</div>
+        <div class="button-grid" id="stepsContainer"></div>
 
-<div id="stepFeedback"></div>
+        <div class="selected-panel">
+          <h3>Your sequence</h3>
+          <ol id="selectedSequence"></ol>
+        </div>
 
-</div>
+        <div class="feedback" id="stepFeedback"></div>
+      </section>
 
-<hr>
+      <section class="stage">
+        <div class="stage-head">
+          <h2>Stage 2 · Definition Sprint</h2>
+          <button class="secondary-btn" id="newDefinitionBtn">New Prompt</button>
+        </div>
 
-<div class="stage">
+        <p class="instructions">
+          Read the prompt and select the matching term. Build a streak to master the vocabulary.
+        </p>
 
-<h2>Stage 2: Match the Definition</h2>
+        <div class="definition-card">
+          <div class="definition-prompt" id="definitionPrompt"></div>
+          <div class="definition-options" id="definitionOptions"></div>
+        </div>
 
-<p>Select the correct definition.</p>
+        <div class="mini-stats">
+          <div><strong>Round:</strong> <span id="definitionRound">1</span></div>
+          <div><strong>Current streak:</strong> <span id="definitionStreak">0</span></div>
+        </div>
 
-<select id="term">
-<option value="xbar">Sample Mean (X̄)</option>
-<option value="xbarbar">Centerline (X̄̄)</option>
-<option value="ucl">Upper Control Limit</option>
-<option value="lcl">Lower Control Limit</option>
-</select>
+        <div class="feedback" id="matchFeedback"></div>
+      </section>
 
-<select id="definition">
-<option value="1">Average of observations in one sample</option>
-<option value="2">Average of all sample means</option>
-<option value="3">X̄̄ + 3(ESD)</option>
-<option value="4">X̄̄ − 3(ESD)</option>
-</select>
+      <section class="stage">
+        <div class="stage-head">
+          <h2>Stage 3 · X-Chart Investigation</h2>
+          <button class="secondary-btn" id="newScenarioBtn">New Scenario</button>
+        </div>
 
-<button onclick="checkMatch()">Check</button>
+        <div class="difficulty-row">
+          <span class="difficulty-label">Difficulty</span>
+          <div class="difficulty-buttons">
+            <button class="difficulty-btn active" data-level="1">Level 1 · Diagnose</button>
+            <button class="difficulty-btn" data-level="2">Level 2 · Calculate + Diagnose</button>
+            <button class="difficulty-btn" data-level="3">Level 3 · Hard Mode</button>
+          </div>
+        </div>
 
-<div id="matchFeedback"></div>
+        <p class="instructions">
+          Use the sample data and X-chart logic to determine whether assignable cause variation is present.
+        </p>
 
-</div>
+        <div class="scenario-grid">
+          <div class="metrics">
+            <div class="metric">
+              <span class="metric-label">Centerline</span>
+              <span class="metric-value" id="centerlineValue">--</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">UCL</span>
+              <span class="metric-value" id="uclValue">--</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">LCL</span>
+              <span class="metric-value" id="lclValue">--</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Attempts</span>
+              <span class="metric-value" id="attemptsValue">0</span>
+            </div>
+          </div>
 
-<hr>
+          <div class="table-wrap">
+            <table id="sampleTable">
+              <thead>
+                <tr>
+                  <th>Sample</th>
+                  <th>Mean</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
 
-<div class="stage">
+        <div class="calc-panel" id="calcPanel">
+          <h3>Compute the chart statistics</h3>
+          <p class="calc-note">
+            Enter your estimates to three decimals before making your diagnosis.
+          </p>
 
-<div class="stage">
+          <div class="calc-grid">
+            <label>
+              Centerline
+              <input type="number" step="0.001" id="calcCenter" />
+            </label>
+            <label>
+              UCL
+              <input type="number" step="0.001" id="calcUcl" />
+            </label>
+            <label>
+              LCL
+              <input type="number" step="0.001" id="calcLcl" />
+            </label>
+          </div>
 
-<h2>Stage 3: Investigate the Process</h2>
+          <div class="calc-actions">
+            <button class="primary-btn" id="checkCalcBtn">Check Calculations</button>
+          </div>
+          <div class="feedback" id="calcFeedback"></div>
+        </div>
 
-<p>Analyze the sample means relative to the control limits.</p>
+        <div class="chart-panel">
+          <h3>X-Chart View</h3>
+          <canvas id="xChartCanvas" width="900" height="360"></canvas>
+        </div>
 
-<button onclick="generateScenario()">Generate New Scenario</button>
+        <div class="decision-panel">
+          <p class="decision-question">What is your diagnosis?</p>
+          <div class="decision-buttons">
+            <button class="primary-btn" id="inControlBtn">Process IN CONTROL</button>
+            <button class="danger-btn" id="outControlBtn">Assignable Cause Present</button>
+          </div>
+        </div>
 
-<table id="sampleTable">
-<tr>
-<th>Sample</th>
-<th>Mean</th>
-</tr>
-</table>
+        <div class="hint-box" id="hintBox"></div>
+        <div class="feedback" id="analysisFeedback"></div>
+      </section>
 
-<div id="limits"></div>
+      <section class="stage mastery-stage">
+        <div class="stage-head">
+          <h2>Mastery Dashboard</h2>
+          <button class="secondary-btn" id="resetAllBtn">Reset Entire App</button>
+        </div>
 
-<p>Does the process show assignable cause variation?</p>
+        <div class="mastery-grid">
+          <div class="mastery-card">
+            <h3>Stage 1</h3>
+            <p id="masteryStage1">Not yet solved</p>
+          </div>
+          <div class="mastery-card">
+            <h3>Stage 2</h3>
+            <p id="masteryStage2">Keep practicing</p>
+          </div>
+          <div class="mastery-card">
+            <h3>Stage 3</h3>
+            <p id="masteryStage3">No scenario solved yet</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
 
-<button onclick="answer('in')">Process IN CONTROL</button>
-<button onclick="answer('out')">Assignable Cause Present</button>
-
-<div id="analysisFeedback"></div>
-
-</div>
-
-<script src="script.js"></script>
-
+  <script src="script.js"></script>
 </body>
 </html>
