@@ -1,0 +1,16 @@
+#app {
+  margin-top: 20px;
+}
+
+.controls {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.output {
+  margin-top: 18px;
+  padding: 14px;
+  background: #eef4ff;
+  border-radius: 10px;
+}
