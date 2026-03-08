@@ -1,98 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SPC Framework Puzzle</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cpk Challenge - Clean Numeric</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .challenge { background: linear-gradient(135deg, #f0f8ff, #e3f2fd); padding: 25px; border-radius: 15px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,123,255,0.1); }
+        input { width: 120px; padding: 10px; margin: 8px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; }
+        button { padding: 12px 24px; background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; border-radius: 8px; cursor: pointer; margin: 5px; font-weight: bold; transition: all 0.2s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,123,255,0.3); }
+        .feedback { font-weight: bold; margin: 15px 0; padding: 12px; border-radius: 8px; }
+        .correct { color: #28a745; background: #d4edda; }
+        .incorrect { color: #dc3545; background: #f8d7da; }
+        .formula { background: linear-gradient(135deg, #e7f3ff, #d1ecf1); padding: 25px; border-left: 6px solid #007bff; margin: 20px 0; border-radius: 12px; text-align: center; }
+        .section { margin-bottom: 25px; }
+        h1, h3 { color: #007bff; }
+        .params { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    </style>
+    <!-- MathJax for continuous LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] },
+            chtml: { scale: 1.1 }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
-  <div class="app">
-    <header class="header">
-      <h1>Framework of Quality & SPC Puzzle</h1>
-      <p>
-        Drag each concept card into the correct box to rebuild the slide 5 framework.
-      </p>
-    </header>
+    <h1>🧮 Process Capability Index (Cpk) Challenge</h1>
+    
+    <div class="section">
+        <p>Calculate Cpk: $$ Cpk = \min\left( \frac{USL - \mu}{3\sigma}, \frac{\mu - LSL}{3\sigma} \right) $$. Round to 2 decimals.</p>
+    </div>
 
-    <section class="instructions card">
-      <h2>Goal</h2>
-      <p>
-        Match each concept to its correct role in the quality framework.
-      </p>
-      <div class="btn-row">
-        <button id="checkBtn">Check Answers</button>
-        <button id="resetBtn">Reset</button>
-      </div>
-      <div id="scoreBox" class="score-box"></div>
-    </section>
-
-    <section class="workspace">
-      <div class="bank-wrap card">
-        <h2>Concept Cards</h2>
-        <p class="small-note">Drag from here into the matching zone.</p>
-        <div id="cardBank" class="card-bank">
-          <div class="drag-card" draggable="true" data-match="input">Input Variables</div>
-          <div class="drag-card" draggable="true" data-match="environment">Environmental Variables</div>
-          <div class="drag-card" draggable="true" data-match="output">Output Variables</div>
-          <div class="drag-card" draggable="true" data-match="specifications">Specifications</div>
-          <div class="drag-card" draggable="true" data-match="defects">Defects</div>
-          <div class="drag-card" draggable="true" data-match="rootcause">Root Cause</div>
-          <div class="drag-card" draggable="true" data-match="robustness">Robustness</div>
+    <div id="app">
+        <button onclick="generateValues()">🔄 New Challenge</button>
+        <div id="values" class="challenge"></div>
+        
+        <div class="section">
+            <label>Enter Cpk: <input type="number" id="userCpk" step="0.01" placeholder="1.23"></label>
+            <button onclick="checkAnswer()">✅ Check Answer</button>
+            <div id="feedback" class="feedback"></div>
         </div>
-      </div>
 
-      <div class="board card">
-        <h2>Framework Board</h2>
+        <div id="solution" style="display: none;" class="formula"></div>
+    </div>
 
-        <div class="zone-grid">
-          <div class="drop-zone" data-zone="input">
-            <h3>Controlled by management</h3>
-            <p>These are the process factors management directly sets or adjusts.</p>
-          </div>
+    <script>
+        let current = { mu: 0, sigma: 0, usl: 0, lsl: 0, cpk: 0 };
 
-          <div class="drop-zone" data-zone="environment">
-            <h3>Not controlled by management</h3>
-            <p>These can still influence output quality.</p>
-          </div>
+        async function renderMath() {
+            await MathJax.typesetPromise();
+        }
 
-          <div class="drop-zone" data-zone="output">
-            <h3>Measures of output quality</h3>
-            <p>Variation here can create quality problems.</p>
-          </div>
+        async function generateValues() {
+            current.mu = (Math.random() * 50 + 50).toFixed(2);
+            current.sigma = (Math.random() * 8 + 2).toFixed(2);
+            current.usl = (parseFloat(current.mu) + Math.random() * 15 + 15).toFixed(2);
+            current.lsl = (parseFloat(current.mu) - Math.random() * 15 - 15).toFixed(2);
+            
+            const cpu = (parseFloat(current.usl) - parseFloat(current.mu)) / (3 * parseFloat(current.sigma));
+            const cpl = (parseFloat(current.mu) - parseFloat(current.lsl)) / (3 * parseFloat(current.sigma));
+            current.cpk = Math.min(cpu, cpl).toFixed(2);
+            
+            document.getElementById('values').innerHTML = `
+                <h3>📊 Process Parameters</h3>
+                <div class="params">
+                    <p>\\( \\mu = ${current.mu} \\)</p>
+                    <p>\\( \\sigma = ${current.sigma} \\)</p>
+                    <p>\\( \\text{USL} = ${current.usl} \\)</p>
+                    <p>\\( \\text{LSL} = ${current.lsl} \\)</p>
+                </div>
+            `;
+            document.getElementById('feedback').innerHTML = '';
+            document.getElementById('solution').style.display = 'none';
+            document.getElementById('userCpk').value = '';
+            await renderMath();
+        }
 
-          <div class="drop-zone" data-zone="specifications">
-            <h3>Rule that determines if output is defective</h3>
-            <p>Defines acceptable versus unacceptable results.</p>
-          </div>
+        async function checkAnswer() {
+            const user = parseFloat(document.getElementById('userCpk').value || 0);
+            const fb = document.getElementById('feedback');
+            if (Math.abs(user - parseFloat(current.cpk)) <= 0.01) {
+                fb.innerHTML = '✅ <strong>Correct!</strong> Great job on Cpk calculation. 🎉';
+                fb.className = 'feedback correct';
+            } else {
+                fb.innerHTML = `❌ Incorrect. Correct Cpk = <strong>${current.cpk}</strong>. Try again!`;
+                fb.className = 'feedback incorrect';
+            }
+            await showSolution();
+        }
 
-          <div class="drop-zone" data-zone="defects">
-            <h3>Outputs that do not conform</h3>
-            <p>These fail to meet requirements.</p>
-          </div>
+        async function showSolution() {
+            const cpu = ((parseFloat(current.usl) - parseFloat(current.mu)) / (3 * parseFloat(current.sigma))).toFixed(2);
+            const cpl = ((parseFloat(current.mu) - parseFloat(current.lsl)) / (3 * parseFloat(current.sigma))).toFixed(2);
+            document.getElementById('solution').innerHTML = `
+                <h4>💡 Step-by-Step Solution</h4>
+                <p>$$ CPU = \\frac{\\text{USL} - \\mu}{3\\sigma} = \\frac{${current.usl} - ${current.mu}}{3 \\times ${current.sigma}} = ${cpu} $$</p>
+                <p>$$ CPL = \\frac{\\mu - \\text{LSL}}{3\\sigma} = \\frac{${current.mu} - ${current.lsl}}{3 \\times ${current.sigma}} = ${cpl} $$</p>
+                <p>$$ Cpk = \\min(${cpu}, ${cpl}) = ${current.cpk} $$</p>
+            `;
+            document.getElementById('solution').style.display = 'block';
+            await renderMath();
+        }
 
-          <div class="drop-zone" data-zone="rootcause">
-            <h3>Input or environmental factor that causes a defect</h3>
-            <p>Points to the source of the problem.</p>
-          </div>
-
-          <div class="drop-zone" data-zone="robustness">
-            <h3>Tolerates change without large output variation</h3>
-            <p>A strong process resists disruption.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="footer card">
-      <h2>What slide 5 teaches</h2>
-      <p>
-        The framework links process inputs and environmental factors to output variation,
-        specifications, defects, root causes, and robustness.
-      </p>
-    </section>
-  </div>
-
-  <script src="script.js"></script>
+        // Initial load
+        generateValues();
+    </script>
 </body>
 </html>
