@@ -44,49 +44,49 @@ const bank = [
     }
   },
   {
-    id: "xdoublebar",
-    title: "Average of Sample Means",
-    symbolLatex: "\\( \\bar{\\bar{X}} \\)",
-    note: "This is the mean of m sample means.",
-    definitionParts: [
-      { type: "text", value: "is the" },
-      { type: "select", answer: "Average", options: ["Average", "Sum", "Upper limit", "Deviation"] },
-      { type: "text", value: "of a set of" },
-      { type: "select", answer: "m", options: ["n", "m", "p", "1"] },
-      { type: "text", value: "sample averages" }
+  id: "xdoublebar",
+  title: "Average of Sample Means",
+  symbolLatex: "\\( \\bar{\\bar{X}} \\)",
+  note: "This is the mean of m sample means.",
+  definitionParts: [
+    { type: "text", value: "is the" },
+    { type: "select", answer: "Average", options: ["Average", "Sum", "Upper limit", "Deviation"] },
+    { type: "text", value: "of a set of" },
+    { type: "select", answer: "m", options: ["n", "m", "p", "1"] },
+    { type: "text", value: "sample averages" }
+  ],
+  slots: [
+    { answerId: "lhs_xdoublebar", label: "left side" },
+    { answerId: "equals", label: "equals sign" },
+    { answerId: "rhs_sample_means_avg", label: "right side of formula" }
+  ],
+  choicesBySlot: {
+    0: [
+      { id: "lhs_xdoublebar", text: "X-double-bar", readable: "X-double-bar", latex: "\\bar{\\bar{X}}" },
+      { id: "lhs_xbar", text: "X-bar", readable: "X-bar", latex: "\\bar{X}" },
+      { id: "lhs_ucl", text: "UCL", readable: "UCL", latex: "UCL" }
     ],
-    slots: [
-      { answerId: "lhs_xdoublebar", label: "left side" },
-      { answerId: "equals", label: "equals sign" },
-      { answerId: "rhs_sample_means_avg", label: "mean of m sample means" }
+    1: [
+      { id: "equals", text: "=", readable: "=", latex: "=" },
+      { id: "plus", text: "+", readable: "+", latex: "+" },
+      { id: "minus", text: "-", readable: "-", latex: "-" }
     ],
-    choicesBySlot: {
-      0: [
-        { id: "lhs_xdoublebar", text: "X-double-bar", readable: "X-double-bar", latex: "\\bar{\\bar{X}}" },
-        { id: "lhs_xbar", text: "X-bar", readable: "X-bar", latex: "\\bar{X}" },
-        { id: "lhs_ucl", text: "UCL", readable: "UCL", latex: "UCL" }
-      ],
-      1: [
-        { id: "equals", text: "=", readable: "=", latex: "=" },
-        { id: "plus", text: "+", readable: "+", latex: "+" },
-        { id: "minus", text: "-", readable: "-", latex: "-" }
-      ],
-      2: [
-        {
-          id: "rhs_sample_means_avg",
-          text: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
-          readable: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
-          latex: "\\frac{\\bar{X}_{(1)} + \\bar{X}_{(2)} + \\cdots + \\bar{X}_{(m)}}{m}"
-        },
-        {
-          id: "rhs_sample_mean",
-          text: "(x₁ + x₂ + ... + xₙ) / n",
-          readable: "(x₁ + x₂ + ... + xₙ) / n",
-          latex: "\\frac{x_{(1)} + x_{(2)} + \\cdots + x_{(n)}}{n}"
-        }
-      ]
-    }
-  },
+    2: [
+      {
+        id: "rhs_sample_means_avg",
+        text: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
+        readable: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
+        latex: "\\frac{\\bar{X}_{(1)} + \\bar{X}_{(2)} + \\cdots + \\bar{X}_{(m)}}{m}"
+      },
+      {
+        id: "rhs_sample_mean",
+        text: "(x₁ + x₂ + ... + xₙ) / n",
+        readable: "(x₁ + x₂ + ... + xₙ) / n",
+        latex: "\\frac{x_{(1)} + x_{(2)} + \\cdots + x_{(n)}}{n}"
+      }
+    ]
+  }
+}
   {
     id: "esd",
     title: "Estimated Standard Deviation of Sample Means",
@@ -320,34 +320,34 @@ function renderSlots(item) {
   formulaSlots.innerHTML = "";
 
   item.slots.forEach((slot, index) => {
-    const div = document.createElement("button");
-    div.type = "button";
-    div.className = "slot";
-    div.id = `slot-${index}`;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "slot";
+    btn.id = `slot-${index}`;
 
     const chosenId = formulaSelections[index];
-    const choices = item.choicesBySlot[String(index)] || item.choicesBySlot[index] || [];
-    const choice = choices.find(c => c.id === chosenId);
+    const slotChoices = item.choicesBySlot[index] || [];
+    const chosenChoice = slotChoices.find(c => c.id === chosenId);
 
-    if (choice) {
-      div.classList.add("filled");
-      div.textContent = choice.text;
+    if (chosenChoice) {
+      btn.classList.add("filled");
+      btn.textContent = chosenChoice.text;
     } else {
-      div.textContent = `Slot ${index + 1}: ${slot.label}`;
+      btn.textContent = `Slot ${index + 1}: ${slot.label}`;
     }
 
     if (activeSlotIndex === index) {
-      div.classList.add("active");
+      btn.classList.add("active");
     }
 
-    div.addEventListener("click", () => {
+    btn.addEventListener("click", () => {
       activeSlotIndex = index;
       renderSlots(item);
       renderChoices(item, activeSlotIndex);
       updateActiveIndicator();
     });
 
-    formulaSlots.appendChild(div);
+    formulaSlots.appendChild(btn);
   });
 }
 
@@ -356,9 +356,9 @@ function renderChoices(item, slotIndex) {
 
   if (slotIndex === null || slotIndex === undefined) return;
 
-  const choices = item.choicesBySlot[String(slotIndex)] || item.choicesBySlot[slotIndex] || [];
+  const slotChoices = item.choicesBySlot[slotIndex] || [];
 
-  choices.forEach(choice => {
+  slotChoices.forEach(choice => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "choice-btn";
@@ -369,8 +369,6 @@ function renderChoices(item, slotIndex) {
 
       if (slotIndex < item.slots.length - 1) {
         activeSlotIndex = slotIndex + 1;
-      } else {
-        activeSlotIndex = slotIndex;
       }
 
       renderSlots(item);
@@ -453,15 +451,21 @@ function checkDefinition(item) {
 }
 
 function checkFormula(item) {
-  const expected = item.slots.map(s => s.answerId);
-  const actual = item.slots.map((_, i) => formulaSelections[i] || "");
+  const expected = item.slots.map(slot => slot.answerId);
+  const actual = item.slots.map((slot, index) => formulaSelections[index] || null);
 
-  const ok = JSON.stringify(actual) === JSON.stringify(expected);
+  const ok =
+    actual.length === expected.length &&
+    actual.every((value, index) => value === expected[index]);
 
   if (ok) {
     setFeedback(formulaFeedback, "Formula is correct.", "success");
   } else {
-    setFeedback(formulaFeedback, "Formula is not correct yet. Rebuild the formula in the correct slot order.", "error");
+    setFeedback(
+      formulaFeedback,
+      "Formula is not correct yet. Check each slot carefully from left to right.",
+      "error"
+    );
   }
 
   return ok;
