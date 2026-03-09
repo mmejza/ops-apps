@@ -8,8 +8,17 @@
 
   <script>
     window.MathJax = {
-      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
-      svg: { fontCache: 'global' }
+      tex: {
+        inlineMath: [['\\(', '\\)'], ['$', '$']],
+        displayMath: [['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' },
+      startup: {
+        ready: () => {
+          MathJax.startup.defaultReady();
+          window.mathReady = true;
+        }
+      }
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
@@ -21,7 +30,7 @@
         <p class="eyebrow">Slide 11 Interactive App</p>
         <h1>X-Chart Statistics Builder</h1>
         <p class="subtitle">
-          Rebuild each definition and formula using readable tiles. The app will render your answer in proper math notation.
+          Rebuild each definition and formula using readable pieces. The app renders your completed formula in standard mathematical notation.
         </p>
       </div>
 
@@ -42,7 +51,7 @@
         <div class="panel-head">
           <div>
             <h2 id="termTitle">Term</h2>
-            <p class="panel-subtitle">Recreate both the definition and the formula.</p>
+            <p class="panel-subtitle">Build both the definition and the formula.</p>
           </div>
           <div class="panel-actions">
             <button class="secondary-btn" id="resetBtn">Reset Current</button>
@@ -64,22 +73,25 @@
       </section>
 
       <section class="panel">
-        <h3>Part B · Build the Formula with Tiles</h3>
+        <h3>Part B · Build the Formula</h3>
         <p class="helper-text">
-          Click tiles to fill each slot. Students use readable math pieces; the preview renders the result in standard notation.
+          Fill each slot using the matching readable option. Students never type LaTeX.
         </p>
 
-        <div class="slots-wrap">
-          <div class="formula-slots" id="formulaSlots"></div>
-        </div>
+        <div class="formula-layout">
+          <div class="slots-wrap">
+            <div class="slot-title">Formula slots</div>
+            <div class="formula-slots" id="formulaSlots"></div>
+          </div>
 
-        <div class="tile-bank-wrap">
-          <div class="tile-bank-title">Available tiles</div>
-          <div class="tile-bank" id="tileBank"></div>
+          <div class="choices-wrap">
+            <div class="choice-title">Choose for the active slot</div>
+            <div class="active-slot-indicator" id="activeSlotIndicator">Select a slot to begin.</div>
+            <div class="choice-bank" id="choiceBank"></div>
+          </div>
         </div>
 
         <div class="builder-actions">
-          <button class="secondary-btn" id="undoBtn">Undo Last Tile</button>
           <button class="secondary-btn" id="clearFormulaBtn">Clear Formula</button>
         </div>
 

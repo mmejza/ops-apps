@@ -13,47 +13,41 @@ const bank = [
     ],
     slots: [
       { answerId: "lhs_xbar", label: "left side" },
-      { answerId: "equals", label: "=" },
-      { answerId: "frac_sample_sum", label: "sample sum over n" }
+      { answerId: "equals", label: "equals sign" },
+      { answerId: "rhs_sample_mean", label: "sample mean formula" }
     ],
-    tiles: [
-      {
-        id: "lhs_xbar",
-        text: "X-bar",
-        readable: "X-bar",
-        latex: "\\bar{X}"
-      },
-      {
-        id: "equals",
-        text: "=",
-        readable: "=",
-        latex: "="
-      },
-      {
-        id: "frac_sample_sum",
-        text: "(x₁ + x₂ + ... + xₙ) / n",
-        readable: "(x₁ + x₂ + ... + xₙ) / n",
-        latex: "\\frac{x_{(1)} + x_{(2)} + \\cdots + x_{(n)}}{n}"
-      },
-      {
-        id: "lhs_xdoublebar",
-        text: "X-double-bar",
-        readable: "X-double-bar",
-        latex: "\\bar{\\bar{X}}"
-      },
-      {
-        id: "frac_sample_means",
-        text: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
-        readable: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
-        latex: "\\frac{\\bar{X}_{(1)} + \\bar{X}_{(2)} + \\cdots + \\bar{X}_{(m)}}{m}"
-      }
-    ]
+    choicesBySlot: {
+      0: [
+        { id: "lhs_xbar", text: "X-bar", readable: "X-bar", latex: "\\bar{X}" },
+        { id: "lhs_xdoublebar", text: "X-double-bar", readable: "X-double-bar", latex: "\\bar{\\bar{X}}" },
+        { id: "lhs_esd", text: "ESD of X-bar", readable: "ESD of X-bar", latex: "ESD_{(\\bar{X})}" }
+      ],
+      1: [
+        { id: "equals", text: "=", readable: "=", latex: "=" },
+        { id: "plus", text: "+", readable: "+", latex: "+" },
+        { id: "minus", text: "-", readable: "-", latex: "-" }
+      ],
+      2: [
+        {
+          id: "rhs_sample_mean",
+          text: "(x₁ + x₂ + ... + xₙ) / n",
+          readable: "(x₁ + x₂ + ... + xₙ) / n",
+          latex: "\\frac{x_{(1)} + x_{(2)} + \\cdots + x_{(n)}}{n}"
+        },
+        {
+          id: "rhs_sample_means_avg",
+          text: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
+          readable: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
+          latex: "\\frac{\\bar{X}_{(1)} + \\bar{X}_{(2)} + \\cdots + \\bar{X}_{(m)}}{m}"
+        }
+      ]
+    }
   },
   {
     id: "xdoublebar",
     title: "Average of Sample Means",
     symbolLatex: "\\( \\bar{\\bar{X}} \\)",
-    note: "This is the average of a set of m sample averages.",
+    note: "This is the mean of m sample means.",
     definitionParts: [
       { type: "text", value: "is the" },
       { type: "select", answer: "Average", options: ["Average", "Sum", "Upper limit", "Deviation"] },
@@ -63,41 +57,35 @@ const bank = [
     ],
     slots: [
       { answerId: "lhs_xdoublebar", label: "left side" },
-      { answerId: "equals", label: "=" },
-      { answerId: "frac_sample_means", label: "average of sample means" }
+      { answerId: "equals", label: "equals sign" },
+      { answerId: "rhs_sample_means_avg", label: "mean of m sample means" }
     ],
-    tiles: [
-      {
-        id: "lhs_xdoublebar",
-        text: "X-double-bar",
-        readable: "X-double-bar",
-        latex: "\\bar{\\bar{X}}"
-      },
-      {
-        id: "equals",
-        text: "=",
-        readable: "=",
-        latex: "="
-      },
-      {
-        id: "frac_sample_means",
-        text: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
-        readable: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
-        latex: "\\frac{\\bar{X}_{(1)} + \\bar{X}_{(2)} + \\cdots + \\bar{X}_{(m)}}{m}"
-      },
-      {
-        id: "frac_sample_sum",
-        text: "(x₁ + x₂ + ... + xₙ) / n",
-        readable: "(x₁ + x₂ + ... + xₙ) / n",
-        latex: "\\frac{x_{(1)} + x_{(2)} + \\cdots + x_{(n)}}{n}"
-      },
-      {
-        id: "lhs_esd",
-        text: "ESD of X-bar",
-        readable: "ESD of X-bar",
-        latex: "ESD_{(\\bar{X})}"
-      }
-    ]
+    choicesBySlot: {
+      0: [
+        { id: "lhs_xdoublebar", text: "X-double-bar", readable: "X-double-bar", latex: "\\bar{\\bar{X}}" },
+        { id: "lhs_xbar", text: "X-bar", readable: "X-bar", latex: "\\bar{X}" },
+        { id: "lhs_ucl", text: "UCL", readable: "UCL", latex: "UCL" }
+      ],
+      1: [
+        { id: "equals", text: "=", readable: "=", latex: "=" },
+        { id: "plus", text: "+", readable: "+", latex: "+" },
+        { id: "minus", text: "-", readable: "-", latex: "-" }
+      ],
+      2: [
+        {
+          id: "rhs_sample_means_avg",
+          text: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
+          readable: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
+          latex: "\\frac{\\bar{X}_{(1)} + \\bar{X}_{(2)} + \\cdots + \\bar{X}_{(m)}}{m}"
+        },
+        {
+          id: "rhs_sample_mean",
+          text: "(x₁ + x₂ + ... + xₙ) / n",
+          readable: "(x₁ + x₂ + ... + xₙ) / n",
+          latex: "\\frac{x_{(1)} + x_{(2)} + \\cdots + x_{(n)}}{n}"
+        }
+      ]
+    }
   },
   {
     id: "esd",
@@ -112,152 +100,115 @@ const bank = [
         options: ["Estimated Standard Deviation", "Upper Control Limit", "Process Average", "Lower Control Limit"]
       },
       { type: "text", value: "of" },
-      {
-        type: "select",
-        answer: "X̄",
-        options: ["X̄", "UCL", "LCL", "m"]
-      },
+      { type: "select", answer: "X̄", options: ["X̄", "UCL", "LCL", "m"] },
       { type: "text", value: "sample means" }
     ],
     slots: [
       { answerId: "lhs_esd", label: "left side" },
-      { answerId: "equals", label: "=" },
-      { answerId: "frac_sd_over_rootn", label: "std. dev. all parts over root n" }
+      { answerId: "equals", label: "equals sign" },
+      { answerId: "rhs_esd", label: "estimated standard deviation formula" }
     ],
-    tiles: [
-      {
-        id: "lhs_esd",
-        text: "ESD of X-bar",
-        readable: "ESD of X-bar",
-        latex: "ESD_{(\\bar{X})}"
-      },
-      {
-        id: "equals",
-        text: "=",
-        readable: "=",
-        latex: "="
-      },
-      {
-        id: "frac_sd_over_rootn",
-        text: "standard deviation of all parts / √n",
-        readable: "standard deviation of all parts / √n",
-        latex: "\\frac{\\text{standard deviation all parts}}{\\sqrt{n}}"
-      },
-      {
-        id: "ucl_formula_rhs",
-        text: "X-double-bar + 3(ESD of X-bar)",
-        readable: "X-double-bar + 3(ESD of X-bar)",
-        latex: "\\bar{\\bar{X}} + 3\\left(ESD_{(\\bar{X})}\\right)"
-      },
-      {
-        id: "lcl_formula_rhs",
-        text: "X-double-bar - 3(ESD of X-bar)",
-        readable: "X-double-bar - 3(ESD of X-bar)",
-        latex: "\\bar{\\bar{X}} - 3\\left(ESD_{(\\bar{X})}\\right)"
-      }
-    ]
+    choicesBySlot: {
+      0: [
+        { id: "lhs_esd", text: "ESD of X-bar", readable: "ESD of X-bar", latex: "ESD_{(\\bar{X})}" },
+        { id: "lhs_xbar", text: "X-bar", readable: "X-bar", latex: "\\bar{X}" },
+        { id: "lhs_lcl", text: "LCL", readable: "LCL", latex: "LCL" }
+      ],
+      1: [
+        { id: "equals", text: "=", readable: "=", latex: "=" },
+        { id: "plus", text: "+", readable: "+", latex: "+" }
+      ],
+      2: [
+        {
+          id: "rhs_esd",
+          text: "standard deviation of all parts / √n",
+          readable: "standard deviation of all parts / √n",
+          latex: "\\frac{\\text{standard deviation of all parts}}{\\sqrt{n}}"
+        },
+        {
+          id: "rhs_ucl",
+          text: "X-double-bar + 3(ESD of X-bar)",
+          readable: "X-double-bar + 3(ESD of X-bar)",
+          latex: "\\bar{\\bar{X}} + 3\\left(ESD_{(\\bar{X})}\\right)"
+        }
+      ]
+    }
   },
   {
     id: "ucl",
     title: "Upper Control Limit",
     symbolLatex: "\\( UCL \\)",
-    note: "This is the upper control limit for the X-chart.",
+    note: "This is the upper control limit.",
     definitionParts: [
       { type: "text", value: "is the" },
-      {
-        type: "select",
-        answer: "Upper control limit",
-        options: ["Upper control limit", "Lower control limit", "Average of sample means", "Sample mean"]
-      }
+      { type: "select", answer: "Upper control limit", options: ["Upper control limit", "Lower control limit", "Sample mean", "Average of sample means"] }
     ],
     slots: [
       { answerId: "lhs_ucl", label: "left side" },
-      { answerId: "equals", label: "=" },
-      { answerId: "ucl_formula_rhs", label: "upper-limit formula" }
+      { answerId: "equals", label: "equals sign" },
+      { answerId: "rhs_ucl", label: "upper control limit formula" }
     ],
-    tiles: [
-      {
-        id: "lhs_ucl",
-        text: "UCL",
-        readable: "UCL",
-        latex: "UCL"
-      },
-      {
-        id: "equals",
-        text: "=",
-        readable: "=",
-        latex: "="
-      },
-      {
-        id: "ucl_formula_rhs",
-        text: "X-double-bar + 3(ESD of X-bar)",
-        readable: "X-double-bar + 3(ESD of X-bar)",
-        latex: "\\bar{\\bar{X}} + 3\\left(ESD_{(\\bar{X})}\\right)"
-      },
-      {
-        id: "lcl_formula_rhs",
-        text: "X-double-bar - 3(ESD of X-bar)",
-        readable: "X-double-bar - 3(ESD of X-bar)",
-        latex: "\\bar{\\bar{X}} - 3\\left(ESD_{(\\bar{X})}\\right)"
-      },
-      {
-        id: "lhs_lcl",
-        text: "LCL",
-        readable: "LCL",
-        latex: "LCL"
-      }
-    ]
+    choicesBySlot: {
+      0: [
+        { id: "lhs_ucl", text: "UCL", readable: "UCL", latex: "UCL" },
+        { id: "lhs_lcl", text: "LCL", readable: "LCL", latex: "LCL" }
+      ],
+      1: [
+        { id: "equals", text: "=", readable: "=", latex: "=" }
+      ],
+      2: [
+        {
+          id: "rhs_ucl",
+          text: "X-double-bar + 3(ESD of X-bar)",
+          readable: "X-double-bar + 3(ESD of X-bar)",
+          latex: "\\bar{\\bar{X}} + 3\\left(ESD_{(\\bar{X})}\\right)"
+        },
+        {
+          id: "rhs_lcl",
+          text: "X-double-bar - 3(ESD of X-bar)",
+          readable: "X-double-bar - 3(ESD of X-bar)",
+          latex: "\\bar{\\bar{X}} - 3\\left(ESD_{(\\bar{X})}\\right)"
+        }
+      ]
+    }
   },
   {
     id: "lcl",
     title: "Lower Control Limit",
     symbolLatex: "\\( LCL \\)",
-    note: "This is the lower control limit for the X-chart.",
+    note: "This is the lower control limit.",
     definitionParts: [
       { type: "text", value: "is the" },
-      {
-        type: "select",
-        answer: "Lower control limit",
-        options: ["Upper control limit", "Lower control limit", "Sample mean", "Estimated standard deviation"]
-      }
+      { type: "select", answer: "Lower control limit", options: ["Upper control limit", "Lower control limit", "Sample mean", "Estimated standard deviation"] }
     ],
     slots: [
       { answerId: "lhs_lcl", label: "left side" },
-      { answerId: "equals", label: "=" },
-      { answerId: "lcl_formula_rhs", label: "lower-limit formula" }
+      { answerId: "equals", label: "equals sign" },
+      { answerId: "rhs_lcl", label: "lower control limit formula" }
     ],
-    tiles: [
-      {
-        id: "lhs_lcl",
-        text: "LCL",
-        readable: "LCL",
-        latex: "LCL"
-      },
-      {
-        id: "equals",
-        text: "=",
-        readable: "=",
-        latex: "="
-      },
-      {
-        id: "lcl_formula_rhs",
-        text: "X-double-bar - 3(ESD of X-bar)",
-        readable: "X-double-bar - 3(ESD of X-bar)",
-        latex: "\\bar{\\bar{X}} - 3\\left(ESD_{(\\bar{X})}\\right)"
-      },
-      {
-        id: "ucl_formula_rhs",
-        text: "X-double-bar + 3(ESD of X-bar)",
-        readable: "X-double-bar + 3(ESD of X-bar)",
-        latex: "\\bar{\\bar{X}} + 3\\left(ESD_{(\\bar{X})}\\right)"
-      },
-      {
-        id: "lhs_ucl",
-        text: "UCL",
-        readable: "UCL",
-        latex: "UCL"
-      }
-    ]
+    choicesBySlot: {
+      0: [
+        { id: "lhs_lcl", text: "LCL", readable: "LCL", latex: "LCL" },
+        { id: "lhs_ucl", text: "UCL", readable: "UCL", latex: "UCL" }
+      ],
+      1: [
+        { id: "equals", text: "=", readable: "=", latex: "=" }
+      ],
+      2: [
+        {
+          id: "rhs_lcl",
+          text: "X-double-bar - 3(ESD of X-bar)",
+          readable: "X-double-bar - 3(ESD of X-bar)",
+          latex: "\\bar{\\bar{X}} - 3\\left(ESD_{(\\bar{X})}\\right)"
+        },
+        {
+          id: "rhs_ucl",
+          text: "X-double-bar + 3(ESD of X-bar)",
+          readable: "X-double-bar + 3(ESD of X-bar)",
+          latex: "\\bar{\\bar{X}} + 3\\left(ESD_{(\\bar{X})}\\right)"
+        }
+      ]
+    }
   }
 ];
 
@@ -265,13 +216,15 @@ let currentIndex = 0;
 let correctCount = 0;
 let attemptCount = 0;
 let formulaSelections = [];
+let activeSlotIndex = null;
 
 const termTitle = document.getElementById("termTitle");
 const termSymbol = document.getElementById("termSymbol");
 const termNote = document.getElementById("termNote");
 const definitionBox = document.getElementById("definitionBox");
 const formulaSlots = document.getElementById("formulaSlots");
-const tileBank = document.getElementById("tileBank");
+const choiceBank = document.getElementById("choiceBank");
+const activeSlotIndicator = document.getElementById("activeSlotIndicator");
 const readablePreview = document.getElementById("readablePreview");
 const latexPreview = document.getElementById("latexPreview");
 const correctCountEl = document.getElementById("correctCount");
@@ -283,7 +236,6 @@ const finalFeedback = document.getElementById("finalFeedback");
 document.getElementById("checkBtn").addEventListener("click", checkAnswer);
 document.getElementById("nextBtn").addEventListener("click", nextTerm);
 document.getElementById("resetBtn").addEventListener("click", renderCurrent);
-document.getElementById("undoBtn").addEventListener("click", undoTile);
 document.getElementById("clearFormulaBtn").addEventListener("click", clearFormula);
 
 function shuffle(arr) {
@@ -317,6 +269,7 @@ function clearFeedbacks() {
 function renderCurrent() {
   clearFeedbacks();
   formulaSelections = [];
+  activeSlotIndex = 0;
 
   const item = bank[currentIndex];
   termTitle.textContent = item.title;
@@ -325,10 +278,11 @@ function renderCurrent() {
 
   renderDefinition(item);
   renderSlots(item);
-  renderTileBank(item);
+  renderChoices(item, activeSlotIndex);
   updatePreviews();
+  updateActiveIndicator();
 
-  MathJax.typesetPromise();
+  safeTypeset([termSymbol, latexPreview]);
 }
 
 function renderDefinition(item) {
@@ -366,66 +320,74 @@ function renderSlots(item) {
   formulaSlots.innerHTML = "";
 
   item.slots.forEach((slot, index) => {
-    const div = document.createElement("div");
+    const div = document.createElement("button");
+    div.type = "button";
     div.className = "slot";
     div.id = `slot-${index}`;
     div.textContent = `Slot ${index + 1}: ${slot.label}`;
+    div.addEventListener("click", () => {
+      activeSlotIndex = index;
+      renderSlots(item);
+      renderChoices(item, activeSlotIndex);
+      updateActiveIndicator();
+    });
+
+    if (activeSlotIndex === index) {
+      div.classList.add("active");
+    }
+
+    const chosenId = formulaSelections[index];
+    if (chosenId) {
+      const choice = item.choicesBySlot[index].find(c => c.id === chosenId);
+      div.classList.add("filled");
+      div.textContent = choice ? choice.text : `Slot ${index + 1}`;
+    }
+
     formulaSlots.appendChild(div);
   });
 }
 
-function renderTileBank(item) {
-  tileBank.innerHTML = "";
+function renderChoices(item, slotIndex) {
+  choiceBank.innerHTML = "";
+  if (slotIndex === null || slotIndex === undefined) return;
 
-  shuffle(item.tiles).forEach(tile => {
+  item.choicesBySlot[slotIndex].forEach(choice => {
     const btn = document.createElement("button");
-    btn.className = "tile";
     btn.type = "button";
-    btn.textContent = tile.text;
-    btn.addEventListener("click", () => addTile(tile.id));
-    tileBank.appendChild(btn);
+    btn.className = "choice-btn";
+    btn.textContent = choice.text;
+    btn.addEventListener("click", () => {
+      formulaSelections[slotIndex] = choice.id;
+
+      if (slotIndex < item.slots.length - 1) {
+        activeSlotIndex = slotIndex + 1;
+      }
+
+      renderSlots(item);
+      renderChoices(item, activeSlotIndex);
+      updateActiveIndicator();
+      updatePreviews();
+    });
+    choiceBank.appendChild(btn);
   });
 }
 
-function addTile(tileId) {
+function updateActiveIndicator() {
   const item = bank[currentIndex];
-  if (formulaSelections.length >= item.slots.length) return;
-
-  formulaSelections.push(tileId);
-  renderFilledSlots();
-  updatePreviews();
-}
-
-function undoTile() {
-  if (formulaSelections.length === 0) return;
-  formulaSelections.pop();
-  renderFilledSlots();
-  updatePreviews();
+  if (activeSlotIndex === null || activeSlotIndex === undefined) {
+    activeSlotIndicator.textContent = "All slots complete.";
+    return;
+  }
+  activeSlotIndicator.textContent = `Active slot: Slot ${activeSlotIndex + 1} — ${item.slots[activeSlotIndex].label}`;
 }
 
 function clearFormula() {
   formulaSelections = [];
-  renderFilledSlots();
+  activeSlotIndex = 0;
+  renderSlots(bank[currentIndex]);
+  renderChoices(bank[currentIndex], activeSlotIndex);
+  updateActiveIndicator();
   updatePreviews();
-}
-
-function renderFilledSlots() {
-  const item = bank[currentIndex];
-
-  item.slots.forEach((slot, index) => {
-    const slotEl = document.getElementById(`slot-${index}`);
-    const chosenId = formulaSelections[index];
-
-    if (!chosenId) {
-      slotEl.className = "slot";
-      slotEl.textContent = `Slot ${index + 1}: ${slot.label}`;
-      return;
-    }
-
-    const tile = item.tiles.find(t => t.id === chosenId);
-    slotEl.className = "slot filled";
-    slotEl.textContent = tile ? tile.text : `Slot ${index + 1}`;
-  });
 }
 
 function updatePreviews() {
@@ -435,20 +397,29 @@ function updatePreviews() {
 
   item.slots.forEach((slot, index) => {
     const chosenId = formulaSelections[index];
-    const tile = item.tiles.find(t => t.id === chosenId);
+    const choice = item.choicesBySlot[index].find(c => c.id === chosenId);
 
-    if (tile) {
-      readableParts.push(tile.readable);
-      latexParts.push(tile.latex);
+    if (choice) {
+      readableParts.push(choice.readable);
+      latexParts.push(choice.latex);
     } else {
       readableParts.push("□");
-      latexParts.push("\\square");
+      latexParts.push("\\Box");
     }
   });
 
   readablePreview.textContent = readableParts.join(" ");
   latexPreview.innerHTML = `\$begin:math:display$ \$\{latexParts\.join\(\" \"\)\} \\$end:math:display$`;
-  MathJax.typesetPromise([latexPreview]);
+
+  safeTypeset([latexPreview]);
+}
+
+function safeTypeset(elements) {
+  if (!window.MathJax || !window.mathReady) return;
+  MathJax.typesetClear(elements);
+  MathJax.typesetPromise(elements).catch(err => {
+    console.error("MathJax render error:", err);
+  });
 }
 
 function checkDefinition(item) {
@@ -472,12 +443,14 @@ function checkDefinition(item) {
 
 function checkFormula(item) {
   const expected = item.slots.map(s => s.answerId);
-  const ok = JSON.stringify(formulaSelections) === JSON.stringify(expected);
+  const actual = item.slots.map((_, i) => formulaSelections[i] || "");
+
+  const ok = JSON.stringify(actual) === JSON.stringify(expected);
 
   if (ok) {
     setFeedback(formulaFeedback, "Formula is correct.", "success");
   } else {
-    setFeedback(formulaFeedback, "Formula is not correct yet. Rebuild it in the correct order.", "error");
+    setFeedback(formulaFeedback, "Formula is not correct yet. Rebuild the formula in the correct slot order.", "error");
   }
 
   return ok;
