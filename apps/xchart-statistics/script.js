@@ -12,9 +12,9 @@ const bank = [
       { type: "text", value: "units" }
     ],
     slots: [
-      { answerId: "lhs_xbar", label: "left side" },
+      { answerId: "lhs_xbar", label: "left side of formula" },
       { answerId: "equals", label: "equals sign" },
-      { answerId: "rhs_sample_mean", label: "sample mean formula" }
+      { answerId: "rhs_sample_mean", label: "right side of formula" }
     ],
     choicesBySlot: {
       0: [
