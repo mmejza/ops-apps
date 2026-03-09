@@ -324,7 +324,22 @@ function renderSlots(item) {
     div.type = "button";
     div.className = "slot";
     div.id = `slot-${index}`;
-    div.textContent = `Slot ${index + 1}: ${slot.label}`;
+
+    const chosenId = formulaSelections[index];
+    const choices = item.choicesBySlot[String(index)] || item.choicesBySlot[index] || [];
+    const choice = choices.find(c => c.id === chosenId);
+
+    if (choice) {
+      div.classList.add("filled");
+      div.textContent = choice.text;
+    } else {
+      div.textContent = `Slot ${index + 1}: ${slot.label}`;
+    }
+
+    if (activeSlotIndex === index) {
+      div.classList.add("active");
+    }
+
     div.addEventListener("click", () => {
       activeSlotIndex = index;
       renderSlots(item);
@@ -332,35 +347,30 @@ function renderSlots(item) {
       updateActiveIndicator();
     });
 
-    if (activeSlotIndex === index) {
-      div.classList.add("active");
-    }
-
-    const chosenId = formulaSelections[index];
-    if (chosenId) {
-      const choice = item.choicesBySlot[index].find(c => c.id === chosenId);
-      div.classList.add("filled");
-      div.textContent = choice ? choice.text : `Slot ${index + 1}`;
-    }
-
     formulaSlots.appendChild(div);
   });
 }
 
 function renderChoices(item, slotIndex) {
   choiceBank.innerHTML = "";
+
   if (slotIndex === null || slotIndex === undefined) return;
 
-  item.choicesBySlot[slotIndex].forEach(choice => {
+  const choices = item.choicesBySlot[String(slotIndex)] || item.choicesBySlot[slotIndex] || [];
+
+  choices.forEach(choice => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "choice-btn";
     btn.textContent = choice.text;
+
     btn.addEventListener("click", () => {
       formulaSelections[slotIndex] = choice.id;
 
       if (slotIndex < item.slots.length - 1) {
         activeSlotIndex = slotIndex + 1;
+      } else {
+        activeSlotIndex = slotIndex;
       }
 
       renderSlots(item);
@@ -368,6 +378,7 @@ function renderChoices(item, slotIndex) {
       updateActiveIndicator();
       updatePreviews();
     });
+
     choiceBank.appendChild(btn);
   });
 }
