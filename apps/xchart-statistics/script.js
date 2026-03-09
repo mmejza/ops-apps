@@ -44,49 +44,49 @@ const bank = [
     }
   },
   {
-  id: "xdoublebar",
-  title: "Average of Sample Means",
-  symbolLatex: "\\( \\bar{\\bar{X}} \\)",
-  note: "This is the mean of m sample means.",
-  definitionParts: [
-    { type: "text", value: "is the" },
-    { type: "select", answer: "Average", options: ["Average", "Sum", "Upper limit", "Deviation"] },
-    { type: "text", value: "of a set of" },
-    { type: "select", answer: "m", options: ["n", "m", "p", "1"] },
-    { type: "text", value: "sample averages" }
-  ],
-  slots: [
-    { answerId: "lhs_xdoublebar", label: "left side" },
-    { answerId: "equals", label: "equals sign" },
-    { answerId: "rhs_sample_means_avg", label: "right side of formula" }
-  ],
-  choicesBySlot: {
-    0: [
-      { id: "lhs_xdoublebar", text: "X-double-bar", readable: "X-double-bar", latex: "\\bar{\\bar{X}}" },
-      { id: "lhs_xbar", text: "X-bar", readable: "X-bar", latex: "\\bar{X}" },
-      { id: "lhs_ucl", text: "UCL", readable: "UCL", latex: "UCL" }
+    id: "xdoublebar",
+    title: "Average of Sample Means",
+    symbolLatex: "\\( \\bar{\\bar{X}} \\)",
+    note: "This is the mean of m sample means.",
+    definitionParts: [
+      { type: "text", value: "is the" },
+      { type: "select", answer: "Average", options: ["Average", "Sum", "Upper limit", "Deviation"] },
+      { type: "text", value: "of a set of" },
+      { type: "select", answer: "m", options: ["n", "m", "p", "1"] },
+      { type: "text", value: "sample averages" }
     ],
-    1: [
-      { id: "equals", text: "=", readable: "=", latex: "=" },
-      { id: "plus", text: "+", readable: "+", latex: "+" },
-      { id: "minus", text: "-", readable: "-", latex: "-" }
+    slots: [
+      { answerId: "lhs_xdoublebar", label: "left side" },
+      { answerId: "equals", label: "equals sign" },
+      { answerId: "rhs_sample_means_avg", label: "mean of m sample means" }
     ],
-    2: [
-      {
-        id: "rhs_sample_means_avg",
-        text: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
-        readable: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
-        latex: "\\frac{\\bar{X}_{(1)} + \\bar{X}_{(2)} + \\cdots + \\bar{X}_{(m)}}{m}"
-      },
-      {
-        id: "rhs_sample_mean",
-        text: "(x₁ + x₂ + ... + xₙ) / n",
-        readable: "(x₁ + x₂ + ... + xₙ) / n",
-        latex: "\\frac{x_{(1)} + x_{(2)} + \\cdots + x_{(n)}}{n}"
-      }
-    ]
-  }
-}
+    choicesBySlot: {
+      0: [
+        { id: "lhs_xdoublebar", text: "X-double-bar", readable: "X-double-bar", latex: "\\bar{\\bar{X}}" },
+        { id: "lhs_xbar", text: "X-bar", readable: "X-bar", latex: "\\bar{X}" },
+        { id: "lhs_ucl", text: "UCL", readable: "UCL", latex: "UCL" }
+      ],
+      1: [
+        { id: "equals", text: "=", readable: "=", latex: "=" },
+        { id: "plus", text: "+", readable: "+", latex: "+" },
+        { id: "minus", text: "-", readable: "-", latex: "-" }
+      ],
+      2: [
+        {
+          id: "rhs_sample_means_avg",
+          text: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
+          readable: "(X̄₁ + X̄₂ + ... + X̄ₘ) / m",
+          latex: "\\frac{\\bar{X}_{(1)} + \\bar{X}_{(2)} + \\cdots + \\bar{X}_{(m)}}{m}"
+        },
+        {
+          id: "rhs_sample_mean",
+          text: "(x₁ + x₂ + ... + xₙ) / n",
+          readable: "(x₁ + x₂ + ... + xₙ) / n",
+          latex: "\\frac{x_{(1)} + x_{(2)} + \\cdots + x_{(n)}}{n}"
+        }
+      ]
+    }
+  },
   {
     id: "esd",
     title: "Estimated Standard Deviation of Sample Means",
