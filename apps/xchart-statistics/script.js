@@ -12,7 +12,7 @@ const bank = [
       { type: "text", value: "units" }
     ],
     slots: [
-      { answerId: "lhs_xbar", label: "left side of formula" },
+      { answerId: "lhs_xbar", label: "left side" },
       { answerId: "equals", label: "equals sign" },
       { answerId: "rhs_sample_mean", label: "right side of formula" }
     ],
@@ -56,7 +56,7 @@ const bank = [
       { type: "text", value: "sample averages" }
     ],
     slots: [
-      { answerId: "lhs_xdoublebar", label: "left side of formula" },
+      { answerId: "lhs_xdoublebar", label: "left side" },
       { answerId: "equals", label: "equals sign" },
       { answerId: "rhs_sample_means_avg", label: "right side of formula" }
     ],
@@ -106,7 +106,7 @@ const bank = [
     slots: [
       { answerId: "lhs_esd", label: "left side" },
       { answerId: "equals", label: "equals sign" },
-      { answerId: "rhs_esd", label: "estimated standard deviation formula" }
+      { answerId: "rhs_esd", label: "right side of formula" }
     ],
     choicesBySlot: {
       0: [
@@ -141,12 +141,16 @@ const bank = [
     note: "This is the upper control limit.",
     definitionParts: [
       { type: "text", value: "is the" },
-      { type: "select", answer: "Upper control limit", options: ["Upper control limit", "Lower control limit", "Sample mean", "Average of sample means"] }
+      {
+        type: "select",
+        answer: "Upper control limit",
+        options: ["Upper control limit", "Lower control limit", "Sample mean", "Average of sample means"]
+      }
     ],
     slots: [
       { answerId: "lhs_ucl", label: "left side" },
       { answerId: "equals", label: "equals sign" },
-      { answerId: "rhs_ucl", label: "upper control limit formula" }
+      { answerId: "rhs_ucl", label: "right side of formula" }
     ],
     choicesBySlot: {
       0: [
@@ -179,12 +183,16 @@ const bank = [
     note: "This is the lower control limit.",
     definitionParts: [
       { type: "text", value: "is the" },
-      { type: "select", answer: "Lower control limit", options: ["Upper control limit", "Lower control limit", "Sample mean", "Estimated standard deviation"] }
+      {
+        type: "select",
+        answer: "Lower control limit",
+        options: ["Upper control limit", "Lower control limit", "Sample mean", "Estimated standard deviation"]
+      }
     ],
     slots: [
       { answerId: "lhs_lcl", label: "left side" },
       { answerId: "equals", label: "equals sign" },
-      { answerId: "rhs_lcl", label: "lower control limit formula" }
+      { answerId: "rhs_lcl", label: "right side of formula" }
     ],
     choicesBySlot: {
       0: [
@@ -216,7 +224,7 @@ let currentIndex = 0;
 let correctCount = 0;
 let attemptCount = 0;
 let formulaSelections = [];
-let activeSlotIndex = null;
+let activeSlotIndex = 0;
 
 const termTitle = document.getElementById("termTitle");
 const termSymbol = document.getElementById("termSymbol");
@@ -266,12 +274,22 @@ function clearFeedbacks() {
   finalFeedback.textContent = "";
 }
 
+function safeTypeset(elements) {
+  if (!window.MathJax || !window.mathReady) return;
+  MathJax.typesetClear(elements);
+  MathJax.typesetPromise(elements).catch(err => {
+    console.error("MathJax render error:", err);
+  });
+}
+
 function renderCurrent() {
   clearFeedbacks();
-  formulaSelections = [];
-  activeSlotIndex = 0;
 
   const item = bank[currentIndex];
+
+  formulaSelections = new Array(item.slots.length).fill(null);
+  activeSlotIndex = 0;
+
   termTitle.textContent = item.title;
   termSymbol.innerHTML = item.symbolLatex;
   termNote.textContent = item.note;
@@ -279,8 +297,8 @@ function renderCurrent() {
   renderDefinition(item);
   renderSlots(item);
   renderChoices(item, activeSlotIndex);
-  updatePreviews();
-  updateActiveIndicator();
+  updateActiveIndicator(item);
+  updatePreviews(item);
 
   safeTypeset([termSymbol, latexPreview]);
 }
@@ -327,7 +345,7 @@ function renderSlots(item) {
 
     const chosenId = formulaSelections[index];
     const slotChoices = item.choicesBySlot[index] || [];
-    const chosenChoice = slotChoices.find(c => c.id === chosenId);
+    const chosenChoice = slotChoices.find(choice => choice.id === chosenId);
 
     if (chosenChoice) {
       btn.classList.add("filled");
@@ -336,7 +354,7 @@ function renderSlots(item) {
       btn.textContent = `Slot ${index + 1}: ${slot.label}`;
     }
 
-    if (activeSlotIndex === index) {
+    if (index === activeSlotIndex) {
       btn.classList.add("active");
     }
 
@@ -344,7 +362,7 @@ function renderSlots(item) {
       activeSlotIndex = index;
       renderSlots(item);
       renderChoices(item, activeSlotIndex);
-      updateActiveIndicator();
+      updateActiveIndicator(item);
     });
 
     formulaSlots.appendChild(btn);
@@ -353,8 +371,6 @@ function renderSlots(item) {
 
 function renderChoices(item, slotIndex) {
   choiceBank.innerHTML = "";
-
-  if (slotIndex === null || slotIndex === undefined) return;
 
   const slotChoices = item.choicesBySlot[slotIndex] || [];
 
@@ -369,48 +385,53 @@ function renderChoices(item, slotIndex) {
 
       if (slotIndex < item.slots.length - 1) {
         activeSlotIndex = slotIndex + 1;
+      } else {
+        activeSlotIndex = slotIndex;
       }
 
       renderSlots(item);
       renderChoices(item, activeSlotIndex);
-      updateActiveIndicator();
-      updatePreviews();
+      updateActiveIndicator(item);
+      updatePreviews(item);
     });
 
     choiceBank.appendChild(btn);
   });
 }
 
-function updateActiveIndicator() {
-  const item = bank[currentIndex];
-  if (activeSlotIndex === null || activeSlotIndex === undefined) {
+function updateActiveIndicator(item) {
+  if (activeSlotIndex >= item.slots.length) {
     activeSlotIndicator.textContent = "All slots complete.";
     return;
   }
-  activeSlotIndicator.textContent = `Active slot: Slot ${activeSlotIndex + 1} — ${item.slots[activeSlotIndex].label}`;
+
+  activeSlotIndicator.textContent =
+    `Active slot: Slot ${activeSlotIndex + 1} — ${item.slots[activeSlotIndex].label}`;
 }
 
 function clearFormula() {
-  formulaSelections = [];
+  const item = bank[currentIndex];
+  formulaSelections = new Array(item.slots.length).fill(null);
   activeSlotIndex = 0;
-  renderSlots(bank[currentIndex]);
-  renderChoices(bank[currentIndex], activeSlotIndex);
-  updateActiveIndicator();
-  updatePreviews();
+  renderSlots(item);
+  renderChoices(item, activeSlotIndex);
+  updateActiveIndicator(item);
+  updatePreviews(item);
+  clearFeedbacks();
 }
 
-function updatePreviews() {
-  const item = bank[currentIndex];
+function updatePreviews(item) {
   const readableParts = [];
   const latexParts = [];
 
   item.slots.forEach((slot, index) => {
     const chosenId = formulaSelections[index];
-    const choice = item.choicesBySlot[index].find(c => c.id === chosenId);
+    const slotChoices = item.choicesBySlot[index] || [];
+    const chosenChoice = slotChoices.find(choice => choice.id === chosenId);
 
-    if (choice) {
-      readableParts.push(choice.readable);
-      latexParts.push(choice.latex);
+    if (chosenChoice) {
+      readableParts.push(chosenChoice.readable);
+      latexParts.push(chosenChoice.latex);
     } else {
       readableParts.push("□");
       latexParts.push("\\Box");
@@ -423,20 +444,14 @@ function updatePreviews() {
   safeTypeset([latexPreview]);
 }
 
-function safeTypeset(elements) {
-  if (!window.MathJax || !window.mathReady) return;
-  MathJax.typesetClear(elements);
-  MathJax.typesetPromise(elements).catch(err => {
-    console.error("MathJax render error:", err);
-  });
-}
-
 function checkDefinition(item) {
   let ok = true;
 
   item.definitionParts.forEach((part, index) => {
     if (part.type === "select") {
-      const select = definitionBox.querySelector(`select[data-kind="definition"][data-index="${index}"]`);
+      const select = definitionBox.querySelector(
+        `select[data-kind="definition"][data-index="${index}"]`
+      );
       if (!select || select.value !== part.answer) ok = false;
     }
   });
@@ -455,15 +470,15 @@ function checkFormula(item) {
   const actual = item.slots.map((slot, index) => formulaSelections[index] || null);
 
   const ok =
-    actual.length === expected.length &&
-    actual.every((value, index) => value === expected[index]);
+    expected.length === actual.length &&
+    expected.every((value, index) => value === actual[index]);
 
   if (ok) {
     setFeedback(formulaFeedback, "Formula is correct.", "success");
   } else {
     setFeedback(
       formulaFeedback,
-      "Formula is not correct yet. Check each slot carefully from left to right.",
+      `Formula is not correct yet. Expected: ${expected.join(" | ")} ; Yours: ${actual.join(" | ")}`,
       "error"
     );
   }
