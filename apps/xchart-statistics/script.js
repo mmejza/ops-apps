@@ -56,9 +56,9 @@ const bank = [
       { type: "text", value: "sample averages" }
     ],
     slots: [
-      { answerId: "lhs_xdoublebar", label: "left side" },
+      { answerId: "lhs_xdoublebar", label: "left side of formula" },
       { answerId: "equals", label: "equals sign" },
-      { answerId: "rhs_sample_means_avg", label: "mean of m sample means" }
+      { answerId: "rhs_sample_means_avg", label: "right side of formula" }
     ],
     choicesBySlot: {
       0: [
