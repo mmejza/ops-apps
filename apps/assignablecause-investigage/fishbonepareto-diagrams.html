@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPC Root Cause Lab</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --ink:#1f2937;
+      --muted:#64748b;
+      --line:#dbe3ef;
+      --accent:#2563eb;
+      --accent2:#0f766e;
+      --good:#166534;
+      --goodbg:#dcfce7;
+      --warn:#92400e;
+      --warnbg:#fef3c7;
+      --bad:#991b1b;
+      --badbg:#fee2e2;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      line-height:1.45;
+    }
+    .wrap{max-width:1240px;margin:0 auto;padding:24px}
+    .hero{
+      background:linear-gradient(135deg,#eef4ff,#ffffff);
+      border:1px solid #d8e4ff;
+      border-radius:20px;
+      padding:22px;
+      box-shadow:0 10px 26px rgba(0,0,0,.05);
+      margin-bottom:18px;
+    }
+    .hero h1{margin:0 0 8px;font-size:2rem}
+    .hero p{margin:0;color:#334155;max-width:980px}
+    .grid{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:18px;
+      align-items:start;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid #e5e7eb;
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 10px 24px rgba(0,0,0,.05);
+    }
+    h2,h3{margin:0 0 10px}
+    p{margin:0 0 10px}
+    .scenario{
+      border-left:4px solid var(--accent);
+      padding-left:12px;
+      margin:8px 0 14px;
+      color:#334155;
+    }
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin:14px 0 0;
+    }
+    button{
+      border:none;
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:700;
+      background:var(--accent);
+      color:#fff;
+    }
+    button.secondary{background:#475569}
+    button.ghost{background:#e5e7eb;color:#111827}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .tab-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+    .tab{
+      padding:8px 12px;
+      border-radius:999px;
+      background:#eff6ff;
+      border:1px solid #bfdbfe;
+      font-size:.95rem;
+      color:#1d4ed8;
+      font-weight:700;
+    }
+    .workspace{display:grid;gap:16px}
+    .panel{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      background:#fcfdff;
+    }
+    .fishbone-wrap{
+      overflow:auto;
+      border:1px solid #d7dfeb;
+      border-radius:14px;
+      background:#fff;
+      padding:8px;
+    }
+    svg{width:100%;height:auto;display:block}
+    .cause-bank{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+    .chip{
+      padding:12px 14px;
+      background:#ffffff;
+      border:2px solid #cbd5e1;
+      border-radius:12px;
+      font-size:1rem;
+      line-height:1.35;
+      cursor:pointer;
+      text-align:left;
+      width:100%;
+      color:#0f172a;
+      font-weight:600;
+      box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    .chip:hover{background:#eef4ff;border-color:#93c5fd}
+    .chip.used{opacity:1;background:#f1f5f9;border-color:#94a3b8;color:#334155}
+    .category-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+    .dropzone{
+      min-height:88px;
+      border:2px dashed #cbd5e1;
+      border-radius:14px;
+      padding:10px;
+      background:#f8fafc;
+    }
+    .dropzone h4{margin:0 0 8px;font-size:1rem}
+    .dropzone .mini{font-size:.86rem;color:var(--muted);margin-bottom:8px}
+    .placed{
+      display:inline-block;
+      padding:7px 10px;
+      margin:4px 6px 0 0;
+      border-radius:999px;
+      background:#dbeafe;
+      border:1px solid #93c5fd;
+      font-size:.9rem;
+    }
+    .pareto-box{
+      border:1px solid #d7dfeb;
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+    canvas{width:100%;height:auto;display:block}
+    .rank-list{display:grid;gap:8px;margin-top:12px}
+    .rank-row{
+      display:grid;
+      grid-template-columns:40px 1fr;
+      gap:10px;
+      align-items:center;
+      padding:10px;
+      border:1px solid #dde5ef;
+      border-radius:12px;
+      background:#fafcff;
+    }
+    .rank-row select{
+      width:100%;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid #cbd5e1;
+      background:#fff;
+    }
+    .qa-block{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #e5e7eb}
+    .qa-block:last-child{border-bottom:none}
+    .prompt{font-weight:700;margin-bottom:8px}
+    .options{display:grid;gap:8px}
+    label.option{
+      display:flex;gap:10px;align-items:flex-start;
+      border:1px solid #dbe2ea;border-radius:12px;padding:10px 12px;background:#fafafa;cursor:pointer;
+    }
+    label.option:hover{background:#f3f7ff}
+    .feedback{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;font-weight:700}
+    .feedback.good{display:block;background:var(--goodbg);color:var(--good)}
+    .feedback.bad{display:block;background:var(--badbg);color:var(--bad)}
+    .feedback.warn{display:block;background:var(--warnbg);color:var(--warn)}
+    .score{font-weight:800;font-size:1.05rem;margin-top:10px}
+    .hint{
+      margin-top:12px;
+      padding:12px;
+      border-radius:14px;
+      background:#eff6ff;
+      border:1px solid #bfdbfe;
+      color:#1e3a8a;
+    }
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+    .pill{
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid #cbd5e1;
+      background:#f8fafc;
+      font-size:.9rem;
+    }
+    .small{font-size:.93rem;color:var(--muted)}
+    @media (max-width:950px){
+      .grid,.two-col,.category-grid,.cause-bank{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>SPC Root Cause Lab</h1>
+      <p>Use a <strong>fishbone diagram</strong> to organize possible assignable causes and a <strong>Pareto diagram</strong> to decide where to investigate first. This interactive app is built for undergraduate students learning statistical process control.</p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Investigation Workspace</h2>
+        <p class="scenario" id="scenarioText"></p>
+        <div class="pill-row">
+          <div class="pill">Fishbone = organize possible causes</div>
+          <div class="pill">Pareto = prioritize biggest categories</div>
+          <div class="pill">Goal = investigate assignable causes</div>
+        </div>
+
+        <div class="workspace">
+          <div class="panel">
+            <h3>Part A. Build the fishbone diagram</h3>
+            <p class="small">Step 1: click a cause from the bank, then click the category where it belongs. Causes you have already placed stay visible but change appearance slightly.</p>
+            <div class="fishbone-wrap">
+              <svg viewBox="0 0 960 360" aria-label="Fishbone diagram">
+                <line x1="170" y1="180" x2="820" y2="180" stroke="#111827" stroke-width="4" />
+                <polygon points="820,180 780,155 780,205" fill="#111827"></polygon>
+                <text x="845" y="186" font-size="22" font-weight="700" fill="#111827">Defect</text>
+                <text id="effectText" x="835" y="214" font-size="16" fill="#334155"></text>
+
+                <line x1="270" y1="180" x2="185" y2="100" stroke="#475569" stroke-width="3" />
+                <line x1="430" y1="180" x2="345" y2="100" stroke="#475569" stroke-width="3" />
+                <line x1="590" y1="180" x2="505" y2="100" stroke="#475569" stroke-width="3" />
+
+                <line x1="270" y1="180" x2="185" y2="260" stroke="#475569" stroke-width="3" />
+                <line x1="430" y1="180" x2="345" y2="260" stroke="#475569" stroke-width="3" />
+                <line x1="590" y1="180" x2="505" y2="260" stroke="#475569" stroke-width="3" />
+
+                <text x="118" y="95" font-size="20" font-weight="700" fill="#0f172a">People</text>
+                <text x="278" y="95" font-size="20" font-weight="700" fill="#0f172a">Machine</text>
+                <text x="438" y="95" font-size="20" font-weight="700" fill="#0f172a">Method</text>
+
+                <text x="120" y="286" font-size="20" font-weight="700" fill="#0f172a">Material</text>
+                <text x="286" y="286" font-size="20" font-weight="700" fill="#0f172a">Measurement</text>
+                <text x="430" y="286" font-size="20" font-weight="700" fill="#0f172a">Environment</text>
+
+                <g id="svgLabels"></g>
+              </svg>
+            </div>
+
+            <div class="cause-bank" id="causeBank"></div>
+            <div class="category-grid" id="dropGrid"></div>
+            <div class="feedback" id="fishboneFeedback"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Part B. Use the Pareto idea</h3>
+            <p class="small">Step 2: rank the cause categories from highest to lowest frequency based on the defect data collected by the team.</p>
+            <div class="pareto-box">
+              <canvas id="paretoCanvas" width="760" height="380"></canvas>
+            </div>
+            <div class="rank-list" id="rankList"></div>
+            <div class="feedback" id="paretoFeedback"></div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button id="checkWorkBtn">Check My Work</button>
+          <button id="hintBtn" class="secondary">Hint</button>
+          <button id="newCaseBtn">New Scenario</button>
+          <button id="resetBtn" class="ghost">Reset Scenario</button>
+        </div>
+        <div class="hint" id="hintBox" style="display:none"></div>
+      </section>
+
+      <aside class="card">
+        <h2>Concept Check</h2>
+        <p class="small">After organizing causes and prioritizing them, answer these questions.</p>
+        <div id="quizArea"></div>
+        <button id="checkQuizBtn">Check Quiz</button>
+        <div class="score" id="scoreBox"></div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const scenarios = [
+      {
+        title: 'Bottle fill-volume variation',
+        process: 'A beverage plant sees an out-of-control signal on an X-bar chart because bottle fill volume has shifted upward in several samples.',
+        effect: 'Overfilled bottles',
+        causes: [
+          {text:'New operator skipped startup checks', category:'People'},
+          {text:'Filler nozzle is sticking', category:'Machine'},
+          {text:'Calibration step was shortened', category:'Method'},
+          {text:'Syrup density changed this week', category:'Material'},
+          {text:'Scale used for audit is miscalibrated', category:'Measurement'},
+          {text:'Room temperature rose during afternoon shift', category:'Environment'}
+        ],
+        pareto: [
+          ['Machine', 18],
+          ['Method', 14],
+          ['Material', 9],
+          ['People', 7],
+          ['Measurement', 4],
+          ['Environment', 3]
+        ],
+        quizAnswers: {q1:'fishbone', q2:'pareto', q3:'assignable', q4:'prioritize'}
+      },
+      {
+        title: 'Tablet coating defects',
+        process: 'A pharmaceutical line sees a sudden increase in coating blemishes. The SPC team wants to separate likely assignable causes from random variation.',
+        effect: 'Coating blemishes',
+        causes: [
+          {text:'Spray gun pressure is unstable', category:'Machine'},
+          {text:'Operator changed drying sequence', category:'Method'},
+          {text:'Coating mix viscosity changed', category:'Material'},
+          {text:'Inspection team is rating defects inconsistently', category:'Measurement'},
+          {text:'Humidity is higher than normal', category:'Environment'},
+          {text:'New employee has limited setup experience', category:'People'}
+        ],
+        pareto: [
+          ['Method', 17],
+          ['Machine', 15],
+          ['Environment', 10],
+          ['Material', 7],
+          ['People', 5],
+          ['Measurement', 3]
+        ],
+        quizAnswers: {q1:'fishbone', q2:'pareto', q3:'assignable', q4:'prioritize'}
+      },
+      {
+        title: 'Washer diameter defects',
+        process: 'A metal stamping process has several samples outside the control limits. Engineers want a structured cause search before changing the whole process.',
+        effect: 'Diameter out of spec',
+        causes: [
+          {text:'Die wear increased after long run time', category:'Machine'},
+          {text:'Inspection gauge zero point drifted', category:'Measurement'},
+          {text:'Raw stock thickness is inconsistent', category:'Material'},
+          {text:'Setup sheet was revised incorrectly', category:'Method'},
+          {text:'Operator missed replacement timing', category:'People'},
+          {text:'Vibration increased near the press area', category:'Environment'}
+        ],
+        pareto: [
+          ['Machine', 20],
+          ['Material', 13],
+          ['Method', 11],
+          ['People', 6],
+          ['Measurement', 5],
+          ['Environment', 2]
+        ],
+        quizAnswers: {q1:'fishbone', q2:'pareto', q3:'assignable', q4:'prioritize'}
+      }
+    ];
+
+    const categories = ['People','Machine','Method','Material','Measurement','Environment'];
+    const labelPositions = {
+      People:[130,78], Machine:[286,78], Method:[450,78],
+      Material:[125,318], Measurement:[270,318], Environment:[440,318]
+    };
+
+    const quizBank = [
+      {
+        id:'q1',
+        prompt:'1. Which tool is mainly used to organize possible causes of a defect into categories?',
+        options:[
+          ['fishbone','Fishbone diagram'],
+          ['pareto','Pareto diagram'],
+          ['control-chart','Control chart'],
+          ['histogram','Histogram']
+        ]
+      },
+      {
+        id:'q2',
+        prompt:'2. Which tool helps the team decide which cause categories to investigate first based on frequency?',
+        options:[
+          ['control-chart','Control chart'],
+          ['pareto','Pareto diagram'],
+          ['scatter','Scatter plot'],
+          ['flowchart','Flowchart']
+        ]
+      },
+      {
+        id:'q3',
+        prompt:'3. In SPC, the purpose of these tools is to help investigate which kind of causes?',
+        options:[
+          ['common','Common causes only'],
+          ['assignable','Assignable causes'],
+          ['seasonal','Seasonal causes only'],
+          ['customer','Customer preference causes']
+        ]
+      },
+      {
+        id:'q4',
+        prompt:'4. Why are fishbone and Pareto diagrams often used together?',
+        options:[
+          ['prioritize','Fishbone lists possibilities; Pareto helps prioritize the biggest sources of trouble.'],
+          ['replace','They replace control charts completely.'],
+          ['prove','They prove process capability directly.'],
+          ['average','They calculate average sample means.']
+        ]
+      }
+    ];
+
+    let currentScenario = null;
+    let selectedCause = null;
+    let placements = {};
+
+    const scenarioText = document.getElementById('scenarioText');
+    const effectText = document.getElementById('effectText');
+    const causeBank = document.getElementById('causeBank');
+    const dropGrid = document.getElementById('dropGrid');
+    const fishboneFeedback = document.getElementById('fishboneFeedback');
+    const paretoFeedback = document.getElementById('paretoFeedback');
+    const hintBox = document.getElementById('hintBox');
+    const svgLabels = document.getElementById('svgLabels');
+    const rankList = document.getElementById('rankList');
+    const quizArea = document.getElementById('quizArea');
+    const scoreBox = document.getElementById('scoreBox');
+    const paretoCanvas = document.getElementById('paretoCanvas');
+    const pctx = paretoCanvas.getContext('2d');
+
+    function initScenario(){
+      currentScenario = scenarios[Math.floor(Math.random()*scenarios.length)];
+      selectedCause = null;
+      placements = {};
+      categories.forEach(c => placements[c] = []);
+      scenarioText.innerHTML = `<strong>${currentScenario.title}:</strong> ${currentScenario.process}`;
+      effectText.textContent = currentScenario.effect;
+      hintBox.style.display = 'none';
+      hintBox.textContent = '';
+      fishboneFeedback.className = 'feedback';
+      fishboneFeedback.textContent = '';
+      paretoFeedback.className = 'feedback';
+      paretoFeedback.textContent = '';
+      renderCauseBank();
+      renderDropzones();
+      renderFishboneLabels();
+      renderParetoChart();
+      renderRankList();
+      renderQuiz();
+      scoreBox.textContent = '';
+    }
+
+    function renderCauseBank(){
+      causeBank.innerHTML = '';
+      currentScenario.causes.forEach((cause, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = cause.text;
+        btn.dataset.index = idx;
+        if (isCauseUsed(cause.text)) btn.classList.add('used');
+        btn.addEventListener('click', () => {
+          if (isCauseUsed(cause.text)) return;
+          selectedCause = cause;
+          document.querySelectorAll('.chip').forEach(el => el.style.outline = 'none');
+          btn.style.outline = '3px solid #2563eb';
+          btn.style.background = '#dbeafe';
+        });
+        causeBank.appendChild(btn);
+      });
+    }
+
+    function isCauseUsed(text){
+      return Object.values(placements).flat().includes(text);
+    }
+
+    function renderDropzones(){
+      dropGrid.innerHTML = '';
+      categories.forEach(cat => {
+        const dz = document.createElement('div');
+        dz.className = 'dropzone';
+        dz.innerHTML = `<h4>${cat}</h4><div class="mini">Click this box after choosing a cause.</div><div>${placements[cat].map(t => `<span class="placed">${t}</span>`).join('')}</div>`;
+        dz.addEventListener('click', () => {
+          if (!selectedCause) return;
+          if (!placements[cat].includes(selectedCause.text)) {
+            placements[cat].push(selectedCause.text);
+          }
+          selectedCause = null;
+          renderCauseBank();
+          renderDropzones();
+          renderFishboneLabels();
+        });
+        dropGrid.appendChild(dz);
+      });
+    }
+
+    function renderFishboneLabels(){
+      svgLabels.innerHTML = '';
+      categories.forEach(cat => {
+        const [x, y] = labelPositions[cat];
+        placements[cat].forEach((text, i) => {
+          const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          t.setAttribute('x', x);
+          t.setAttribute('y', y + i*18);
+          t.setAttribute('font-size', '13');
+          t.setAttribute('fill', '#1d4ed8');
+          t.textContent = '• ' + shortText(text, 31);
+          svgLabels.appendChild(t);
+        });
+      });
+    }
+
+    function shortText(s, n){
+      return s.length > n ? s.slice(0, n-1) + '…' : s;
+    }
+
+    function renderParetoChart(){
+      const sorted = [...currentScenario.pareto].sort((a,b)=>b[1]-a[1]);
+      const w = paretoCanvas.width, h = paretoCanvas.height;
+      pctx.clearRect(0,0,w,h);
+      pctx.fillStyle = '#ffffff';
+      pctx.fillRect(0,0,w,h);
+      const pad = {left:60,right:58,top:24,bottom:56};
+      const chartW = w-pad.left-pad.right;
+      const chartH = h-pad.top-pad.bottom;
+      const max = sorted[0][1];
+      const total = sorted.reduce((a,b)=>a+b[1],0);
+
+      pctx.strokeStyle = '#d1d5db';
+      for(let i=0;i<=5;i++){
+        const y = pad.top + chartH*i/5;
+        pctx.beginPath();
+        pctx.moveTo(pad.left, y);
+        pctx.lineTo(w-pad.right, y);
+        pctx.stroke();
+      }
+
+      pctx.strokeStyle = '#111827';
+      pctx.beginPath();
+      pctx.moveTo(pad.left,pad.top);
+      pctx.lineTo(pad.left,h-pad.bottom);
+      pctx.lineTo(w-pad.right,h-pad.bottom);
+      pctx.stroke();
+
+      const barGap = 18;
+      const barW = (chartW - barGap*(sorted.length+1))/sorted.length;
+      let cumulative = 0;
+      const points = [];
+
+      sorted.forEach((item,i)=>{
+        const [cat,val] = item;
+        const x = pad.left + barGap + i*(barW+barGap);
+        const barH = (val/max)*chartH;
+        const y = h-pad.bottom-barH;
+        pctx.fillStyle = '#93c5fd';
+        pctx.fillRect(x,y,barW,barH);
+        pctx.strokeStyle = '#2563eb';
+        pctx.strokeRect(x,y,barW,barH);
+
+        pctx.fillStyle = '#111827';
+        pctx.font = '12px Arial';
+        pctx.fillText(String(val), x + barW/2 - 6, y - 8);
+        pctx.save();
+        pctx.translate(x + barW/2 + 4, h - 18);
+        pctx.rotate(-Math.PI/5);
+        pctx.fillText(cat, 0, 0);
+        pctx.restore();
+
+        cumulative += val;
+        const cumPct = cumulative/total;
+        const px = x + barW/2;
+        const py = pad.top + chartH*(1-cumPct);
+        points.push([px,py]);
+      });
+
+      pctx.strokeStyle = '#0f766e';
+      pctx.lineWidth = 3;
+      pctx.beginPath();
+      points.forEach((pt,i)=>{
+        if(i===0) pctx.moveTo(pt[0],pt[1]);
+        else pctx.lineTo(pt[0],pt[1]);
+      });
+      pctx.stroke();
+      points.forEach(pt=>{
+        pctx.fillStyle = '#0f766e';
+        pctx.beginPath();
+        pctx.arc(pt[0],pt[1],4,0,Math.PI*2);
+        pctx.fill();
+      });
+
+      pctx.fillStyle = '#111827';
+      pctx.font = 'bold 14px Arial';
+      pctx.fillText('Frequency', 10, 18);
+      pctx.fillText('Cumulative %', w-108, 18);
+      for(let i=0;i<=5;i++){
+        const y = pad.top + chartH*(1-i/5);
+        pctx.font = '12px Arial';
+        pctx.fillText(String(Math.round(max*i/5)), 20, y+4);
+        pctx.fillText(String(Math.round((i/5)*100)) + '%', w-50, y+4);
+      }
+    }
+
+    function renderRankList(){
+      rankList.innerHTML = '';
+      const opts = currentScenario.pareto.map(x=>x[0]);
+      for(let i=0;i<opts.length;i++){
+        const row = document.createElement('div');
+        row.className = 'rank-row';
+        const optionHtml = ['<option value="">Select category</option>']
+          .concat(opts.map(o => `<option value="${o}">${o}</option>`)).join('');
+        row.innerHTML = `<div><strong>${i+1}</strong></div><div><select data-rank="${i}">${optionHtml}</select></div>`;
+        rankList.appendChild(row);
+      }
+    }
+
+    function renderQuiz(){
+      quizArea.innerHTML = '';
+      quizBank.forEach(q => {
+        const block = document.createElement('div');
+        block.className = 'qa-block';
+        block.innerHTML = `
+          <div class="prompt">${q.prompt}</div>
+          <div class="options">
+            ${q.options.map((opt,i)=>`
+              <label class="option">
+                <input type="radio" name="${q.id}" value="${opt[0]}">
+                <span><strong>${String.fromCharCode(97+i)})</strong> ${opt[1]}</span>
+              </label>
+            `).join('')}
+          </div>
+          <div class="feedback" id="fb-${q.id}"></div>
+        `;
+        quizArea.appendChild(block);
+      });
+    }
+
+    function checkFishbone(){
+      let correct = 0;
+      currentScenario.causes.forEach(cause => {
+        const placedCategory = categories.find(cat => placements[cat].includes(cause.text));
+        if (placedCategory === cause.category) correct++;
+      });
+      const allPlaced = Object.values(placements).flat().length === currentScenario.causes.length;
+      if (!allPlaced) {
+        fishboneFeedback.className = 'feedback warn';
+        fishboneFeedback.textContent = 'Place every possible cause into one category on the fishbone diagram.';
+        return false;
+      }
+      if (correct === currentScenario.causes.length) {
+        fishboneFeedback.className = 'feedback good';
+        fishboneFeedback.textContent = 'Excellent. You organized the possible assignable causes correctly.';
+        return true;
+      }
+      fishboneFeedback.className = 'feedback bad';
+      fishboneFeedback.textContent = `You correctly placed ${correct} of ${currentScenario.causes.length} causes. Recheck which category each cause belongs to.`;
+      return false;
+    }
+
+    function checkPareto(){
+      const sorted = [...currentScenario.pareto].sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+      const chosen = [...document.querySelectorAll('#rankList select')].map(s=>s.value);
+      if (chosen.some(v => !v)) {
+        paretoFeedback.className = 'feedback warn';
+        paretoFeedback.textContent = 'Rank all six categories before checking the Pareto section.';
+        return false;
+      }
+      const noDupes = new Set(chosen).size === chosen.length;
+      if (!noDupes) {
+        paretoFeedback.className = 'feedback bad';
+        paretoFeedback.textContent = 'Each rank should use a different category.';
+        return false;
+      }
+      let correct = 0;
+      chosen.forEach((v,i)=>{ if(v===sorted[i]) correct++; });
+      if (correct === sorted.length) {
+        paretoFeedback.className = 'feedback good';
+        paretoFeedback.textContent = 'Correct. The Pareto logic points to the biggest categories first.';
+        return true;
+      }
+      paretoFeedback.className = 'feedback bad';
+      paretoFeedback.textContent = `You matched ${correct} of ${sorted.length} ranks. Start with the tallest bar, then move downward.`;
+      return false;
+    }
+
+    function checkQuiz(){
+      let correct = 0;
+      quizBank.forEach(q => {
+        const chosen = document.querySelector(`input[name="${q.id}"]:checked`);
+        const fb = document.getElementById(`fb-${q.id}`);
+        fb.className = 'feedback';
+        if (!chosen) {
+          fb.classList.add('warn');
+          fb.textContent = 'Choose an answer.';
+          return;
+        }
+        if (chosen.value === currentScenario.quizAnswers[q.id]) {
+          correct++;
+          fb.classList.add('good');
+          fb.textContent = 'Correct.';
+        } else {
+          const right = q.options.find(o => o[0] === currentScenario.quizAnswers[q.id])[1];
+          fb.classList.add('bad');
+          fb.textContent = 'Not quite. Best answer: ' + right;
+        }
+      });
+      scoreBox.textContent = `Quiz score: ${correct} / ${quizBank.length}`;
+      return correct;
+    }
+
+    function resetScenario(){
+      selectedCause = null;
+      placements = {};
+      categories.forEach(c => placements[c] = []);
+      renderCauseBank();
+      renderDropzones();
+      renderFishboneLabels();
+      renderRankList();
+      fishboneFeedback.className = 'feedback';
+      paretoFeedback.className = 'feedback';
+      fishboneFeedback.textContent = '';
+      paretoFeedback.textContent = '';
+      hintBox.style.display = 'none';
+      hintBox.textContent = '';
+      document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
+      document.querySelectorAll('.qa-block .feedback').forEach(el => { el.className = 'feedback'; el.textContent = ''; });
+      scoreBox.textContent = '';
+    }
+
+    document.getElementById('checkWorkBtn').addEventListener('click', () => {
+      checkFishbone();
+      checkPareto();
+    });
+    document.getElementById('checkQuizBtn').addEventListener('click', checkQuiz);
+    document.getElementById('newCaseBtn').addEventListener('click', initScenario);
+    document.getElementById('resetBtn').addEventListener('click', resetScenario);
+    document.getElementById('hintBtn').addEventListener('click', () => {
+      hintBox.style.display = 'block';
+      hintBox.innerHTML = `
+        <strong>Hint:</strong> In the fishbone, sort causes by type: people, machine, method, material, measurement, or environment.<br>
+        In the Pareto section, rank categories from the <strong>largest frequency bar</strong> to the smallest. Investigate the biggest categories first because they account for most of the observed defects.
+      `;
+    });
+
+    initScenario();
+  </script>
+</body>
+</html>

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>p-Chart Trainer – Varying Sample Sizes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f7fb;
+            color: #222;
+            max-width: 1150px;
+        }
+        h1 {
+            margin-top: 0;
+        }
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .flex-2 {
+            flex: 2 1 260px;
+        }
+        .flex-1 {
+            flex: 1 1 220px;
+        }
+        button {
+            border-radius: 6px;
+            border: none;
+            padding: 8px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+            transition: background 0.15s, transform 0.05s, box-shadow 0.05s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.2);
+        }
+        button.secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+        button.secondary:hover {
+            background: #d1d5db;
+        }
+        .label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #6b7280;
+        }
+        input[type="number"] {
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            width: 90px;
+        }
+        input[type="number"]:focus {
+            outline: 2px solid #2563eb;
+            outline-offset: 1px;
+        }
+        .flag-select {
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 2px solid #d1d5db;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            min-width: 120px;
+            transition: border-color 0.2s;
+        }
+        .flag-select:focus {
+            outline: 2px solid #2563eb;
+            outline-offset: 1px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 13px;
+        }
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        th {
+            background: #eff2fb;
+        }
+        tr:nth-child(even) td {
+            background: #f9fafb;
+        }
+        .pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+        .pill-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .feedback {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .feedback.good {
+            color: #166534;
+        }
+        .feedback.bad {
+            color: #b91c1c;
+        }
+        .small {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .formula-box {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 8px 10px;
+            border: 1px dashed #cbd5f5;
+            margin-top: 6px;
+            font-size: 14px;
+        }
+        .radio-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 13px;
+        }
+        .radio-row label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .hint {
+            font-size: 12px;
+            color: #4b5563;
+            margin-top: 4px;
+        }
+        details summary {
+            cursor: pointer;
+            font-size: 13px;
+            color: #2563eb;
+        }
+        details {
+            margin-top: 6px;
+        }
+        @media (max-width: 700px) {
+            body {
+                padding: 12px;
+            }
+        }
+    </style>
+    <!-- MathJax for LaTeX-style formulas -->
+    <script>
+        window.MathJax = {
+            tex: {inlineMath: [['\\(','\\)']]},
+            svg: {fontCache: 'global'}
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+</head>
+<body>
+    <h1>p-Chart Trainer: Varying Sample Sizes</h1>
+    <p style="font-size:14px;max-width:900px;">
+        This version uses different sample sizes \(n_i\) for each subgroup and variable control limits UCL\(_i\), LCL\(_i\). Students see why p‑charts are especially useful when sample size changes.
+    </p>
+
+    <div class="card">
+        <div class="flex-row">
+            <div class="flex-2">
+                <div class="label">Step 1 · Scenario setup</div>
+                <p style="font-size:14px;margin-top:6px;">
+                    Each day you inspect a different number of units and count how many are defective. For subgroup \(i\): \(p_i = d_i / n_i\), and the overall \(\bar p\) uses total defectives divided by total inspected.
+                </p>
+                <div class="flex-row" style="margin-top:8px;align-items:flex-end;">
+                    <div class="flex-1">
+                        <div class="label">Number of subgroups (m)</div>
+                        <input type="number" id="input-m" min="6" max="8" step="1" value="8">
+                        <div class="small">Between 6 and 8 subgroups.</div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="label">Min subgroup size</div>
+                        <input type="number" id="input-n-min" min="30" max="400" step="10" value="60">
+                        <div class="small">Keeps \(n_i \bar p\) reasonably large.</div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="label">Max subgroup size</div>
+                        <input type="number" id="input-n-max" min="40" max="500" step="10" value="120">
+                        <div class="small">Max must exceed min.</div>
+                    </div>
+                    <div class="flex-1">
+                        <button id="btn-generate">New random data</button>
+                        <div class="small">Random defectives with \(\bar p\) ~1–20%.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="label">Formulas with variable \(n_i\)</div>
+                <div class="formula-box">
+                    <p style="margin:0;font-size:13px;">
+                        Overall fraction defective:
+                    </p>
+                    <p style="margin:4px 0;">
+                        \(\bar p = \dfrac{\sum d_i}{\sum n_i}\)
+                    </p>
+                    <p style="margin:4px 0;">
+                        For subgroup \(i\):
+                    </p>
+                    <p style="margin:4px 0;">
+                        \(p_i = \dfrac{d_i}{n_i}\)
+                    </p>
+                    <p style="margin:4px 0;">
+                        \(\text{UCL}_i = \bar p + 3\sqrt{\dfrac{\bar p(1-\bar p)}{n_i}}\)
+                    </p>
+                    <p style="margin:4px 0;">
+                        \(\text{LCL}_i = \bar p - 3\sqrt{\dfrac{\bar p(1-\bar p)}{n_i}}\)
+                    </p>
+                    <p class="small" style="margin:4px 0;">
+                        If \(\text{LCL}_i < 0\), set \(\text{LCL}_i = 0\).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="data-card" style="display:none;">
+        <div class="flex-row" style="justify-content:space-between;align-items:center;">
+            <div>
+                <span class="label">Step 2 · Data table</span>
+                <span class="pill pill-info" id="summary-pill"></span>
+            </div>
+        </div>
+        <p class="small" style="margin-top:4px;">
+            Each subgroup has its own \(n_i\), so its control limits are a bit wider when the sample is small and tighter when the sample is large.
+        </p>
+        <div style="overflow-x:auto;margin-top:8px;">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Subgroup</th>
+                        <th>Sample size \(n_i\)</th>
+                        <th>Defectives \(d_i\)</th>
+                        <th>In control?</th>
+                    </tr>
+                </thead>
+                <tbody id="data-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" id="calc-card" style="display:none;">
+        <div class="label">Step 3 · Your calculations</div>
+        <p class="small" style="margin-top:4px;max-width:900px;">
+            For each subgroup you practice, do both tasks together: compute overall \(\bar p\), UCL\(_j\), LCL\(_j\), and choose that subgroup's In control? option in the table.
+            Then click Reveal to unlock the correct answer for that subgroup only.
+        </p>
+
+        <div class="flex-row" style="margin-top:8px;">
+            <div class="flex-1">
+                <div class="label">Subgroup to practice (j)</div>
+                <input type="number" id="input-j" min="1" value="1">
+                <div class="hint">Pick 1–m from the table.</div>
+            </div>
+            <div class="flex-1">
+                <div class="label">Your overall \(\bar p\)</div>
+                <input type="number" id="input-pbar" step="0.0001">
+                <div class="hint">Decimal or % accepted.</div>
+                <div id="fb-pbar" class="feedback"></div>
+            </div>
+            <div class="flex-1">
+                <div class="label">Your UCL\(_j\)</div>
+                <input type="number" id="input-ucl" step="0.0001">
+                <div class="hint">Use \(n_j\) from your chosen subgroup.</div>
+                <div id="fb-ucl" class="feedback"></div>
+            </div>
+            <div class="flex-1">
+                <div class="label">Your LCL\(_j\)</div>
+                <input type="number" id="input-lcl" step="0.0001">
+                <div class="hint">Set to 0 if your result is negative.</div>
+                <div id="fb-lcl" class="feedback"></div>
+            </div>
+        </div>
+
+        <div style="margin-top:10px;">
+            <button id="btn-check">Check my work</button>
+            <button class="secondary" id="btn-reveal" data-flags-revealed="false">Reveal correct values</button>
+            <span class="small" id="tolerance-info"></span>
+        </div>
+        <p class="small" style="margin-top:6px;">
+            Reveal is per subgroup \(j\): calculations must be correct and that subgroup's In control? choice must be selected.
+        </p>
+
+        <details>
+            <summary>Show worked solution for this dataset</summary>
+            <div id="solution-worked" style="margin-top:6px;font-size:13px;"></div>
+        </details>
+    </div>
+
+    <div class="card" id="interpret-card" style="display:none;">
+        <div class="label">Step 4 · Interpretation challenge</div>
+        <p class="small" style="margin-top:4px;">
+            Based on the  is there at least one subgroup where the true \(p_i\) lies outside its own control limits? If so, the process shows evidence of being out of statistical control.
+        </p>
+
+        <div class="flex-row" style="margin-top:8px;">
+            <div class="flex-1">
+                <div class="radio-row">
+                    <label>
+                        <input type="radio" name="interp" value="in">
+                        Process is in control
+                    </label>
+                    <label>
+                        <input type="radio" name="interp" value="out">
+                        Process is out of control
+                    </label>
+                </div>
+                <button id="btn-check-interpret" style="margin-top:6px;">Check interpretation</button>
+                <div id="fb-interpret" class="feedback"></div>
+                <p class="hint" id="hint-interpret"></p>
+            </div>
+            <div class="flex-1">
+                <div class="label">What a graph would show</div>
+                <p class="small" id="text-visual"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentM = 8;
+        let nArray = [];
+        let dArray = [];
+        let pArray = [];
+        let uclArray = [];
+        let lclArray = [];
+        let pbar = 0;
+        const tol = 0.005;
+
+        function randomUniform(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function randomNormal(mean, sd) {
+            let u = 0, v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+            return mean + sd * z;
+        }
+
+        function generateData() {
+            const mInput = document.getElementById("input-m");
+            const nMinInput = document.getElementById("input-n-min");
+            const nMaxInput = document.getElementById("input-n-max");
+            currentM = Math.max(6, Math.min(8, Number(mInput.value) || 8));
+            let nMin = Number(nMinInput.value) || 60;
+            let nMax = Number(nMaxInput.value) || 120;
+            if (nMax <= nMin) nMax = nMin + 10;
+
+            const targetP = randomUniform(0.01, 0.20);
+
+            nArray = [];
+            dArray = [];
+            pArray = [];
+            uclArray = [];
+            lclArray = [];
+
+            let totalD = 0;
+            let totalN = 0;
+
+            for (let i = 0; i < currentM; i++) {
+                const ni = Math.round(randomUniform(nMin, nMax));
+                const lambda = targetP * ni;
+                let di = Math.round(randomNormal(lambda, Math.sqrt(Math.max(lambda, 1))));
+                if (di < 0) di = 0;
+                if (di > ni) di = ni;
+                const pi = di / ni;
+
+                nArray.push(ni);
+                dArray.push(di);
+                pArray.push(pi);
+                totalD += di;
+                totalN += ni;
+            }
+
+            pbar = totalD / totalN;
+
+            for (let i = 0; i < currentM; i++) {
+                const ni = nArray[i];
+                const sigmaPi = Math.sqrt(pbar * (1 - pbar) / ni);
+                let u = pbar + 3 * sigmaPi;
+                let l = pbar - 3 * sigmaPi;
+                if (l < 0) l = 0;
+                uclArray.push(u);
+                lclArray.push(l);
+            }
+
+            document.getElementById("btn-reveal").setAttribute("data-flags-revealed", "false");
+
+            renderTable();
+            updateSummary();
+            clearUserInputs();
+            updateToleranceInfo();
+            updateWorkedSolution();
+            updateInterpretationVisual();
+
+            document.getElementById("data-card").style.display = "block";
+            document.getElementById("calc-card").style.display = "block";
+            document.getElementById("interpret-card").style.display = "block";
+
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        function renderTable() {
+            const body = document.getElementById("data-body");
+            body.innerHTML = "";
+
+            // Store correct answers for validation
+            window.correctFlags = [];
+
+            for (let i = 0; i < currentM; i++) {
+                const tr = document.createElement("tr");
+                const tdIdx = document.createElement("td");
+                const tdN = document.createElement("td");
+                const tdD = document.createElement("td");
+                const tdFlag = document.createElement("td");
+
+                tdIdx.textContent = (i + 1).toString();
+                tdN.textContent = nArray[i];
+                tdD.textContent = dArray[i];
+
+                const pi = pArray[i];
+                const u = uclArray[i];
+                const l = lclArray[i];
+                
+                let correctAnswer = "";
+                if (pi > u) {
+                    correctAnswer = "Above UCL";
+                } else if (pi < l) {
+                    correctAnswer = "Below UCL";
+                } else {
+                    correctAnswer = "Within limit";
+                }
+                
+                window.correctFlags[i] = correctAnswer;
+
+                // Create a dropdown for student classification on every render.
+                const select = document.createElement("select");
+                select.id = `flag-select-${i}`;
+                select.className = "flag-select";
+                select.dataset.correctAnswer = correctAnswer;
+
+                const optSelect = document.createElement("option");
+                optSelect.value = "";
+                optSelect.textContent = "Select...";
+                select.appendChild(optSelect);
+
+                const options = ["Within limit", "Above UCL", "Below UCL"];
+                options.forEach(opt => {
+                    const option = document.createElement("option");
+                    option.value = opt;
+                    option.textContent = opt;
+                    select.appendChild(option);
+                });
+
+                tdFlag.appendChild(select);
+
+                tr.appendChild(tdIdx);
+                tr.appendChild(tdN);
+                tr.appendChild(tdD);
+                tr.appendChild(tdFlag);
+                body.appendChild(tr);
+            }
+        }
+
+        function updateSummary() {
+            const totalD = dArray.reduce((a, b) => a + b, 0);
+            const totalN = nArray.reduce((a, b) => a + b, 0);
+            const pill = document.getElementById("summary-pill");
+            pill.textContent = `Total inspected = ${totalN}, total defectives = ${totalD},   p̄ ≈ ${(pbar*100).toFixed(2)}%`;
+        }
+
+        function clearUserInputs() {
+            document.getElementById("input-j").value = 1;
+            document.getElementById("input-pbar").value = "";
+            document.getElementById("input-ucl").value = "";
+            document.getElementById("input-lcl").value = "";
+            ["fb-pbar", "fb-ucl", "fb-lcl", "fb-interpret"].forEach(id => {
+                const el = document.getElementById(id);
+                el.textContent = "";
+                el.className = "feedback";
+            });
+            document.querySelectorAll("input[name='interp']").forEach(r => r.checked = false);
+            document.getElementById("hint-interpret").textContent = "";
+            const fbFlags = document.getElementById("fb-flags");
+            if (fbFlags) {
+                fbFlags.textContent = "";
+                fbFlags.className = "feedback";
+            }
+        }
+
+        function parseUserNumber(val) {
+            if (val === "" || isNaN(Number(val))) return null;
+            return Number(val);
+        }
+
+        function normalizeToDecimal(x) {
+            if (x > 1.2) return x / 100;
+            return x;
+        }
+
+        function checkAnswers() {
+            const jInput = Number(document.getElementById("input-j").value) || 1;
+            const idx = Math.min(Math.max(1, jInput), currentM) - 1;
+
+            const pbarInput = parseUserNumber(document.getElementById("input-pbar").value);
+            const uclInput = parseUserNumber(document.getElementById("input-ucl").value);
+            const lclInput = parseUserNumber(document.getElementById("input-lcl").value);
+
+            checkOne("fb-pbar", pbarInput, pbar, "p̄");
+            checkOne("fb-ucl", uclInput, uclArray[idx], `UCL${idx+1}`);
+            checkOne("fb-lcl", lclInput, lclArray[idx], `LCL${idx+1}`);
+
+            checkFlagSelections();
+        }
+
+        function checkFlagSelections() {
+            let allCorrect = true;
+            let hasBlank = false;
+            
+            for (let i = 0; i < currentM; i++) {
+                const select = document.getElementById(`flag-select-${i}`);
+                if (!select) continue;
+                
+                const userSelection = select.value;
+                const correctAnswer = select.dataset.correctAnswer;
+                
+                if (userSelection === "") {
+                    hasBlank = true;
+                    allCorrect = false;
+                    select.style.borderColor = "#fca5a5";
+                } else if (userSelection === correctAnswer) {
+                    select.style.borderColor = "#86efac";
+                } else {
+                    allCorrect = false;
+                    select.style.borderColor = "#fca5a5";
+                }
+            }
+            
+            const fb = document.getElementById("fb-flags") || createFlagsFeedback();
+            if (allCorrect && document.querySelectorAll(".flag-select").length > 0) {
+                fb.textContent = "All flag selections are correct!";
+                fb.className = "feedback good";
+            } else if (document.querySelectorAll(".flag-select").length > 0) {
+                if (hasBlank) {
+                    fb.textContent = "Choose an option for every In control? cell before revealing answers.";
+                } else {
+                    fb.textContent = "Please correct all flag selections (shown with red borders).";
+                }
+                fb.className = "feedback bad";
+            }
+        }
+
+        function createFlagsFeedback() {
+            const fbDiv = document.createElement("div");
+            fbDiv.id = "fb-flags";
+            fbDiv.className = "feedback";
+            const container = document.getElementById("challenge-container");
+            if (container) {
+                container.appendChild(fbDiv);
+            }
+            return fbDiv;
+        }
+
+        function checkOne(feedbackId, userVal, trueVal, label) {
+            const fb = document.getElementById(feedbackId);
+            fb.className = "feedback";
+            if (userVal === null) {
+                fb.textContent = "Enter a value first.";
+                fb.classList.add("bad");
+                return false;
+            }
+            const dec = normalizeToDecimal(userVal);
+            const diff = Math.abs(dec - trueVal);
+            const pctTrue = trueVal * 100;
+            if (diff <= tol) {
+                fb.textContent = `${label} is correct!`;
+                fb.classList.add("good");
+                return true;
+            } else {
+                const sign = dec > trueVal ? "high" : "low";
+                fb.textContent = `${label} is too ${sign}. True value ≈ ${trueVal.toFixed(4)} (≈ ${pctTrue.toFixed(2)}%).`;
+                fb.classList.add("bad");
+                return false;
+            }
+        }
+
+        function revealAnswers() {
+            const jInput = Number(document.getElementById("input-j").value) || 1;
+            const idx = Math.min(Math.max(1, jInput), currentM) - 1;
+
+            const pbarInput = parseUserNumber(document.getElementById("input-pbar").value);
+            const uclInput = parseUserNumber(document.getElementById("input-ucl").value);
+            const lclInput = parseUserNumber(document.getElementById("input-lcl").value);
+
+            const pbarOk = checkOne("fb-pbar", pbarInput, pbar, "p̄");
+            const uclOk = checkOne("fb-ucl", uclInput, uclArray[idx], `UCL${idx+1}`);
+            const lclOk = checkOne("fb-lcl", lclInput, lclArray[idx], `LCL${idx+1}`);
+
+            const select = document.getElementById(`flag-select-${idx}`);
+            if (!select || select.value === "") {
+                const fb = document.getElementById("fb-flags") || createFlagsFeedback();
+                if (select) {
+                    select.style.borderColor = "#fca5a5";
+                }
+                fb.textContent = `Choose an In control? option for subgroup ${idx + 1} before revealing.`;
+                fb.className = "feedback bad";
+                return;
+            }
+
+            if (!(pbarOk && uclOk && lclOk)) {
+                const fb = document.getElementById("fb-flags") || createFlagsFeedback();
+                fb.textContent = `Compute p̄, UCL${idx + 1}, and LCL${idx + 1} correctly first, then reveal subgroup ${idx + 1}.`;
+                fb.className = "feedback bad";
+                return;
+            }
+
+            document.getElementById("input-pbar").value = pbar.toFixed(4);
+            document.getElementById("input-ucl").value = uclArray[idx].toFixed(4);
+            document.getElementById("input-lcl").value = lclArray[idx].toFixed(4);
+            ["fb-pbar", "fb-ucl", "fb-lcl"].forEach(id => {
+                const el = document.getElementById(id);
+                el.textContent = "";
+                el.className = "feedback";
+            });
+            
+            // Reveal the flags in the table
+            document.getElementById("btn-reveal").setAttribute("data-flags-revealed", "true");
+
+            const wasCorrect = select.value === select.dataset.correctAnswer;
+            if (wasCorrect) {
+                select.style.borderColor = "#86efac";
+            } else {
+                select.style.borderColor = "#fca5a5";
+            }
+
+            const fb = document.getElementById("fb-flags") || createFlagsFeedback();
+            if (wasCorrect) {
+                fb.textContent = `Subgroup ${idx + 1}: Correct. In control? = ${select.dataset.correctAnswer}.`;
+                fb.className = "feedback good";
+            } else {
+                fb.textContent = `Subgroup ${idx + 1}: Not correct. You chose '${select.value}'. Correct answer is '${select.dataset.correctAnswer}'.`;
+                fb.className = "feedback bad";
+            }
+
+            // Reveal by showing the true classification after feedback.
+            select.value = select.dataset.correctAnswer;
+            
+            updateWorkedSolution();
+
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        function updateToleranceInfo() {
+            const span = document.getElementById("tolerance-info");
+            span.textContent = ` Answers within ±${(tol*100).toFixed(1)} percentage points are accepted.`;
+        }
+
+        function updateWorkedSolution() {
+            if (nArray.length === 0) return;
+            const totalD = dArray.reduce((a, b) => a + b, 0);
+            const totalN = nArray.reduce((a, b) => a + b, 0);
+            const container = document.getElementById("solution-worked");
+            const j = Math.min(Math.max(1, Number(document.getElementById("input-j").value) || 1), currentM);
+            const idx = j - 1;
+            const nj = nArray[idx];
+            const sigmaPj = Math.sqrt(pbar * (1 - pbar) / nj);
+
+            let html = "";
+            html += `<p>1. Compute overall \\(\\bar p\\):</p>`;
+            html += `<p>\\(\\bar p = \\dfrac{\\sum d_i}{\\sum n_i} = \\dfrac{${totalD}}{${totalN}} \\approx ${pbar.toFixed(4)}\\) (≈ ${(pbar*100).toFixed(2)}%).</p>`;
+            html += `<p>2. For subgroup ${j} with \\(n_${j} = ${nj}\\), compute its standard deviation:</p>`;
+            html += `<p>\\(\\sigma_{p,j} = \\sqrt{\\dfrac{\\bar p(1-\\bar p)}{n_j}} \\approx ${sigmaPj.toFixed(4)}\\).</p>`;
+            html += `<p>3. Control limits for subgroup ${j}:</p>`;
+            html += `<p>\\(\\text{UCL}_j = \\bar p + 3\\sigma_{p,j} \\approx ${uclArray[idx].toFixed(4)}\\) (≈ ${(uclArray[idx]*100).toFixed(2)}%).</p>`;
+            html += `<p>\\(\\text{LCL}_j = \\bar p - 3\\sigma_{p,j} \\approx ${lclArray[idx].toFixed(4)}\\) (≈ ${(lclArray[idx]*100).toFixed(2)}%).`;
+            if (lclArray[idx] === 0) {
+                html += ` Since this was negative, we set LCL = 0.</p>`;
+            } else {
+                html += `</p>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function updateInterpretationVisual() {
+            if (pArray.length === 0) return;
+            const text = document.getElementById("text-visual");
+            let above = 0;
+            let below = 0;
+            let outside = 0;
+            for (let i = 0; i < pArray.length; i++) {
+                if (pArray[i] > uclArray[i]) {
+                    above++;
+                    outside++;
+                } else if (pArray[i] < lclArray[i]) {
+                    below++;
+                    outside++;
+                }
+            }
+            let summary = `If you graphed these data, you would draw a horizontal line at p̄ ≈ ${(pbar*100).toFixed(2)}% and variable-width control limits that get tighter when n is large and wider when n is small. `;
+            summary += `Here, ${outside} subgroup(s) lie outside their individual limits (${above} above, ${below} below).`;
+            text.textContent = summary;
+        }
+
+        function checkInterpretation() {
+            const fb = document.getElementById("fb-interpret");
+            const hint = document.getElementById("hint-interpret");
+            fb.textContent = "";
+            fb.className = "feedback";
+            hint.textContent = "";
+
+            const choice = document.querySelector("input[name='interp']:checked");
+            if (!choice) {
+                fb.textContent = "Choose an option first.";
+                fb.classList.add("bad");
+                return;
+            }
+
+            let outside = 0;
+            for (let i = 0; i < pArray.length; i++) {
+                if (pArray[i] > uclArray[i] || pArray[i] < lclArray[i]) {
+                    outside++;
+                }
+            }
+            const trueOut = outside > 0;
+            const userOut = (choice.value === "out");
+
+            if (trueOut && userOut) {
+                fb.textContent = "Correct: at least one subgroup has p outside its own limits → evidence of special causes.";
+                fb.classList.add("good");
+            } else if (!trueOut && !userOut) {
+                fb.textContent = "Correct: all points are within their own limits → no obvious special causes by this rule.";
+                fb.classList.add("good");
+            } else if (trueOut && !userOut) {
+                fb.textContent = "Not quite. There ARE subgroups with p outside their limits.";
+                fb.classList.add("bad");
+                hint.textContent = "Look for subgroups where your computed p_i would be higher than UCL_i or lower than LCL_i.";
+            } else {
+                fb.textContent = "Not quite. All subgroups are inside their limits, so we would normally treat this as in control for this rule.";
+                fb.classList.add("bad");
+                hint.textContent = "Remember: other run rules can indicate issues even if all points are inside limits.";
+            }
+        }
+
+        document.getElementById("btn-generate").addEventListener("click", generateData);
+        document.getElementById("btn-check").addEventListener("click", checkAnswers);
+        document.getElementById("btn-reveal").addEventListener("click", revealAnswers);
+        document.getElementById("btn-check-interpret").addEventListener("click", checkInterpretation);
+        document.getElementById("input-j").addEventListener("change", function () {
+            updateWorkedSolution();
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        });
+
+        // Initial dataset
+        generateData();
+    </script>
+</body>
+</html>
