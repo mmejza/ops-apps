@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Inventory Holding Cost</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet" />
+	<script>
+		window.MathJax = {
+			tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+			svg: { fontCache: "global" }
+		};
+	</script>
+	<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+	<style>
+		:root {
+			--ink: #152033;
+			--paper: #fffefa;
+			--fog: #f0f4ff;
+			--line: #d8dfeb;
+			--brand: #1f5fbf;
+			--brand2: #0f766e;
+			--warn: #b45309;
+			--good: #166534;
+			--bad: #991b1b;
+			--muted: #5b6678;
+			--radius-lg: 20px;
+			--radius-md: 12px;
+			--shadow: 0 14px 36px rgba(21, 32, 51, 0.12);
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			margin: 0;
+			font-family: "DM Sans", "Avenir Next", "Trebuchet MS", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 8% 8%, rgba(31, 95, 191, 0.18), transparent 35%),
+				radial-gradient(circle at 85% 10%, rgba(15, 118, 110, 0.16), transparent 30%),
+				linear-gradient(165deg, #f7fbff 0%, #fffef9 55%, #f6faf6 100%);
+			min-height: 100vh;
+		}
+
+		.page {
+			width: min(1200px, 95vw);
+			margin: 0 auto;
+			padding: 24px 0 40px;
+		}
+
+		h1, h2, h3 {
+			font-family: "Source Serif 4", Georgia, serif;
+			margin: 0;
+			line-height: 1.14;
+		}
+
+		.hero {
+			border-radius: 24px;
+			background: linear-gradient(128deg, #113868 0%, #1f5fbf 54%, #0f766e 100%);
+			color: #fff;
+			padding: 24px;
+			box-shadow: var(--shadow);
+			position: relative;
+			overflow: hidden;
+			margin-bottom: 18px;
+		}
+
+		.hero::after {
+			content: "";
+			position: absolute;
+			width: 220px;
+			height: 220px;
+			border-radius: 50%;
+			right: -70px;
+			top: -60px;
+			background: rgba(255, 255, 255, 0.14);
+		}
+
+		.hero h1 {
+			font-size: clamp(1.55rem, 3.5vw, 2.4rem);
+			margin-bottom: 10px;
+			max-width: 760px;
+			position: relative;
+			z-index: 1;
+		}
+
+		.hero p {
+			margin: 0;
+			line-height: 1.48;
+			max-width: 880px;
+			color: rgba(255, 255, 255, 0.93);
+			position: relative;
+			z-index: 1;
+		}
+
+		.score-row {
+			margin-top: 16px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+			gap: 10px;
+			position: relative;
+			z-index: 1;
+		}
+
+		.pill {
+			border-radius: 999px;
+			border: 1px solid rgba(255, 255, 255, 0.25);
+			background: rgba(255, 255, 255, 0.12);
+			padding: 9px 12px;
+			display: flex;
+			justify-content: space-between;
+			font-size: 0.88rem;
+			font-weight: 700;
+		}
+
+		.panel {
+			background: var(--paper);
+			border: 1px solid var(--line);
+			border-radius: var(--radius-lg);
+			box-shadow: 0 9px 22px rgba(21, 32, 51, 0.07);
+			padding: 18px;
+			margin-bottom: 14px;
+		}
+
+		.head {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
+			flex-wrap: wrap;
+			margin-bottom: 8px;
+		}
+
+		.head p {
+			margin: 0;
+			font-size: 0.92rem;
+			color: var(--muted);
+		}
+
+		.statement-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 12px;
+			margin-top: 10px;
+			margin-bottom: 14px;
+		}
+
+		.card {
+			border: 1px solid var(--line);
+			border-radius: var(--radius-md);
+			background: var(--fog);
+			padding: 12px;
+		}
+
+		.card h3 {
+			font-size: 1.02rem;
+			margin-bottom: 8px;
+		}
+
+		.line-item {
+			display: flex;
+			justify-content: space-between;
+			padding: 7px 0;
+			border-bottom: 1px dashed #ced8e8;
+			font-size: 0.93rem;
+		}
+
+		.line-item:last-child { border-bottom: none; }
+		.line-item strong { font-weight: 700; }
+
+		label {
+			display: block;
+			font-size: 0.86rem;
+			margin-bottom: 6px;
+			color: #20314b;
+			font-weight: 700;
+		}
+
+		input, select {
+			width: 100%;
+			border: 1px solid #bfd0e2;
+			border-radius: 10px;
+			padding: 9px;
+			font-size: 0.94rem;
+			font-family: inherit;
+			background: #fff;
+			color: var(--ink);
+		}
+
+		.actions {
+			margin-top: 10px;
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		button {
+			border: none;
+			border-radius: 999px;
+			padding: 10px 14px;
+			font-family: inherit;
+			font-weight: 700;
+			cursor: pointer;
+			transition: transform 120ms ease, filter 120ms ease;
+		}
+
+		button:hover {
+			transform: translateY(-1px);
+			filter: brightness(1.03);
+		}
+
+		.primary {
+			background: linear-gradient(120deg, #1f5fbf, #0f766e);
+			color: #fff;
+		}
+
+		.secondary {
+			background: #fff;
+			border: 1px solid #c5d5e6;
+			color: #22344f;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 10px;
+			border-radius: 10px;
+			overflow: hidden;
+		}
+
+		th, td {
+			border: 1px solid #d6dfea;
+			padding: 8px;
+			text-align: center;
+			font-size: 0.9rem;
+		}
+
+		th {
+			background: #e9f1ff;
+			color: #22344f;
+		}
+
+		td:first-child {
+			text-align: left;
+			font-weight: 700;
+			color: #243652;
+		}
+
+		#sensitivityTable td:first-child {
+			text-align: center;
+			color: var(--ink);
+			font-weight: 400;
+		}
+
+		#altTurnsTable td:first-child {
+			text-align: center;
+			color: var(--ink);
+			font-weight: 700;
+		}
+
+		.highlight-row {
+			background: #eef6ff;
+		}
+
+		.highlight-row td {
+			font-weight: 700 !important;
+		}
+
+		.feedback {
+			margin-top: 10px;
+			min-height: 1.2rem;
+			font-weight: 700;
+			color: var(--muted);
+		}
+
+		.feedback.good { color: var(--good); }
+		.feedback.warn { color: var(--warn); }
+		.feedback.bad { color: var(--bad); }
+
+		.hint {
+			margin-top: 10px;
+			border: 1px dashed #c8d4e6;
+			border-radius: 10px;
+			background: #f8fbff;
+			padding: 10px;
+			font-size: 0.87rem;
+			color: #334155;
+			line-height: 1.6;
+		}
+
+		.quiz-box {
+			border: 1px solid var(--line);
+			border-radius: var(--radius-md);
+			background: #fcfdf9;
+			padding: 12px;
+			margin-top: 10px;
+		}
+
+		.quiz-box p {
+			margin: 0 0 10px;
+			font-weight: 700;
+			line-height: 1.4;
+		}
+
+		.choice-grid { display: grid; gap: 8px; }
+
+		.choice {
+			border-radius: 10px;
+			border: 1px solid #c5d5e6;
+			background: #fff;
+			color: #1f2f45;
+			font-size: 0.9rem;
+			font-weight: 700;
+			text-align: left;
+			padding: 10px;
+			cursor: pointer;
+		}
+
+		.choice.correct {
+			border-color: #15803d;
+			background: #eefcf2;
+			color: #166534;
+		}
+
+		.choice.wrong {
+			border-color: #b91c1c;
+			background: #fff1f2;
+			color: #991b1b;
+		}
+
+		.mastery {
+			margin-top: 10px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 10px;
+		}
+
+		.tile {
+			border: 1px solid var(--line);
+			border-radius: 10px;
+			background: #fff;
+			padding: 10px;
+		}
+
+		.tile .k {
+			display: block;
+			color: var(--muted);
+			font-size: 0.8rem;
+			margin-bottom: 6px;
+		}
+
+		.tile .v {
+			font-weight: 700;
+			font-size: 1rem;
+		}
+
+		.sens-note {
+			font-size: 0.82rem;
+			color: var(--muted);
+			margin-top: 8px;
+		}
+
+
+		@media (max-width: 860px) {
+			.statement-grid { grid-template-columns: 1fr; }
+			.hero, .panel { border-radius: 15px; padding: 15px; }
+		}
+	</style>
+</head>
+<body>
+	<main class="page">
+
+		<section class="hero">
+			<h1>Inventory Holding Cost</h1>
+			<p>Learning Objective: Evaluate the holding cost of an inventory item based on a holding cost percentage, days-of-supply, or inventory turns.</p>
+			<div class="score-row">
+				<div class="pill"><span>Cases solved</span><span id="casesSolved">0</span></div>
+				<div class="pill"><span>Calculation score</span><span id="calcScore">0%</span></div>
+				<div class="pill"><span>Quiz correct</span><span id="quizCorrect">0</span></div>
+				<div class="pill"><span>Total points</span><span id="totalScore">0</span></div>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="head">
+				<h2>1. Holding Cost Calculator</h2>
+				<p>Using the following item data, calculate values of the three metrics in the table below.</p>
+			</div>
+
+			<div class="statement-grid">
+				<div class="card">
+					<h3>Item Profile</h3>
+					<div class="line-item"><span>Category</span><strong id="itemCategory">--</strong></div>
+					<div class="line-item"><span>Unit Cost</span><strong id="unitCostDisplay">--</strong></div>
+					<div class="line-item"><span>Annual COGS</span><strong id="annualCogsDisplay">--</strong></div>
+					<div class="line-item"><span>Annual Holding Cost Rate</span><strong id="hRateDisplay">--</strong></div>
+				</div>
+				<div class="card">
+					<h3>Inventory Velocity</h3>
+					<div class="line-item"><span>Annual Inventory Turns</span><strong id="turnsDisplay">--</strong></div>
+					<div class="line-item"><span>Days-of-Supply</span><strong id="dosDisplay">--</strong></div>
+				</div>
+			</div>
+
+			<table>
+				<thead>
+					<tr>
+						<th style="text-align:left">Metric</th>
+						<th>Your Answer</th>
+						<th>Result</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Holding cost per unit at current turns ($)</td>
+						<td><input id="ansUnitHC" type="number" step="0.01" placeholder="$" /></td>
+						<td id="fbUnitHC">--</td>
+					</tr>
+					<tr>
+						<td>Average inventory value ($)</td>
+						<td><input id="ansAvgInv" type="number" step="1" placeholder="$" /></td>
+						<td id="fbAvgInv">--</td>
+					</tr>
+					<tr>
+						<td>Total annual holding cost ($)</td>
+						<td><input id="ansTotalHC" type="number" step="1" placeholder="$" /></td>
+						<td id="fbTotalHC">--</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="actions">
+				<button class="primary" id="gradeBtn">Grade My Calculations</button>
+				<button class="secondary" id="showWorkBtn">Show Correct Values</button>
+				<button class="secondary" id="newCaseBtn">Generate New Case</button>
+			</div>
+			<div class="feedback" id="calcFeedback"></div>
+			<div class="hint" id="solutionHint" hidden></div>
+		</section>
+
+		<section class="panel">
+			<div class="head">
+				<h2>2. Alternative Turns Practice</h2>
+				<p>Use the four turns values below and calculate DOS, average inventory value, and total holding cost.</p>
+			</div>
+			<div id="altTurnsWrap"></div>
+			<div class="actions">
+				<button class="primary" id="gradeAltBtn">Grade Part 2</button>
+				<button class="secondary" id="showAltBtn">Show Part 2 Solutions</button>
+				<button class="secondary" id="clearAltBtn">Clear Part 2 Answers</button>
+			</div>
+			<div class="feedback" id="altFeedback"></div>
+		</section>
+
+		<section class="panel">
+			<div class="head">
+				<h2>3. Short Practice Quiz</h2>
+				<p>Answer four questions per round from a 12-question bank.</p>
+			</div>
+			<div class="quiz-box">
+				<p id="quizPrompt"></p>
+				<div class="choice-grid" id="quizChoices"></div>
+			</div>
+			<div class="actions">
+				<button class="secondary" id="nextQuizBtn">Next Question</button>
+			</div>
+			<div class="feedback" id="quizFeedback"></div>
+			<div class="mastery">
+				<div class="tile"><span class="k">Round progress</span><span class="v" id="roundProgress">0 / 4</span></div>
+				<div class="tile"><span class="k">Quiz accuracy</span><span class="v" id="quizAccuracy">0%</span></div>
+				<div class="tile"><span class="k">Current turns</span><span class="v" id="cueTurns">--</span></div>
+				<div class="tile"><span class="k">Holding cost rate</span><span class="v" id="cueHRate">--</span></div>
+			</div>
+		</section>
+
+	</main>
+
+	<script>
+		const QUIZ_ROUND_TARGET = 4;
+
+		const ITEM_CATEGORIES = [
+			"Consumer Electronics", "Industrial Components", "Food & Beverage",
+			"Apparel & Footwear", "Automotive Parts", "Medical Supplies",
+			"Office Supplies", "Building Materials", "Sporting Goods", "Hardware & Tools"
+		];
+
+		const quizBank = [
+			{
+				q: "The annual holding cost per unit is calculated as:",
+				options: [
+					"Unit cost × holding cost rate",
+					"Unit cost / holding cost rate",
+					"COGS × inventory turns",
+					"Turns / holding cost rate"
+				],
+				answer: "Unit cost × holding cost rate"
+			},
+			{
+				q: "An item costs $80 and the annual holding cost rate is 25%. What is the annual holding cost per unit?",
+				options: ["$200", "$20", "$25", "$3.20"],
+				answer: "$20"
+			},
+			{
+				q: "Annual COGS is $1,200,000 and turns are 6. Average inventory value equals:",
+				options: ["$7,200,000", "$200,000", "$6,000,000", "$72,000"],
+				answer: "$200,000"
+			},
+			{
+				q: "COGS = $600,000, turns = 4, and h = 20%. Total annual holding cost is:",
+				options: ["$120,000", "$30,000", "$48,000", "$24,000"],
+				answer: "$30,000"
+			},
+			{
+				q: "As annual inventory turns increase (all else equal), total annual holding cost:",
+				options: ["Increases", "Decreases", "Stays the same", "Becomes unpredictable"],
+				answer: "Decreases"
+			},
+			{
+				q: "If days-of-supply doubles from 30 to 60 days (COGS and h% unchanged), total holding cost will:",
+				options: ["Halve", "Double", "Stay the same", "Quarter"],
+				answer: "Double"
+			},
+			{
+				q: "Which of the following is NOT typically included in an annual holding cost rate?",
+				options: [
+					"Capital / opportunity cost",
+					"Storage and warehousing",
+					"Ordering or setup cost",
+					"Insurance and obsolescence"
+				],
+				answer: "Ordering or setup cost"
+			},
+			{
+				q: "Average inventory value from COGS and turns equals:",
+				options: ["COGS × turns", "COGS / turns", "Turns / COGS", "COGS + turns"],
+				answer: "COGS / turns"
+			},
+			{
+				q: "If the holding cost rate rises from 20% to 30% (all else equal), total holding cost:",
+				options: ["Decreases by 33%", "Increases by 50%", "Doubles", "Stays the same"],
+				answer: "Increases by 50%"
+			},
+			{
+				q: "A firm has COGS = $500,000, DOS = 36.5 days, and h = 24%. Total annual holding cost is:",
+				options: ["$120,000", "$12,000", "$50,000", "$1,200"],
+				answer: "$12,000"
+			},
+			{
+				q: "The primary reason higher turns reduce total holding cost is:",
+				options: [
+					"Orders become larger",
+					"Less average inventory is held",
+					"The holding cost rate decreases",
+					"COGS increases proportionally"
+				],
+				answer: "Less average inventory is held"
+			},
+			{
+				q: "If annual turns = 8 with a 365-day year, what is the days-of-supply?",
+				options: ["30.0 days", "45.6 days", "52.0 days", "58.4 days"],
+				answer: "45.6 days"
+			}
+		];
+
+		const state = {
+			caseData: null,
+			altTurnCases: [],
+			casesSolved: 0,
+			calcScore: 0,
+			quizCorrect: 0,
+			quizAsked: 0,
+			totalScore: 0,
+			quizRoundPool: [],
+			quizRoundAnswered: 0,
+			quizQuestionAnswered: false,
+			quizRoundCompleted: false,
+			quizCurrent: null
+		};
+
+		function r(v, d = 2) {
+			const p = 10 ** d;
+			return Math.round(v * p) / p;
+		}
+
+		function shuffleArray(items) {
+			const copy = [...items];
+			for (let i = copy.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[copy[i], copy[j]] = [copy[j], copy[i]];
+			}
+			return copy;
+		}
+
+		function fmtDollar(n, decimals = 2) {
+			return "$" + Number(n).toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+		}
+
+		function renderLatex(element) {
+			if (!element || !window.MathJax || !window.MathJax.typesetPromise) return;
+			window.MathJax.typesetPromise([element]).catch(() => {});
+		}
+
+		function generateCase() {
+			const category = ITEM_CATEGORIES[Math.floor(Math.random() * ITEM_CATEGORIES.length)];
+			const unitCost = r(15 + Math.random() * 185, 2);
+			const annualUnits = Math.round(2000 + Math.random() * 18000);
+			const cogs = r(unitCost * annualUnits, 0);
+			const hPct = r(16 + Math.random() * 16, 1);
+			const turns = r(3 + Math.random() * 13, 1);
+			const dos = r(365 / turns, 1);
+			const annualUnitHC = r(unitCost * hPct / 100, 2);
+			const unitHC = r(annualUnitHC / turns, 2);
+			const avgInv = r(cogs / turns, 0);
+			const totalHC = r(avgInv * hPct / 100, 0);
+
+			state.caseData = { category, unitCost, cogs, hPct, turns, dos, annualUnitHC, unitHC, avgInv, totalHC };
+
+			renderCase();
+			clearInputs();
+			hideSolution();
+			buildAltTurnsExercise();
+			clearAltTurnsInputs();
+			updateScoreboard();
+		}
+
+		function renderCase() {
+			const d = state.caseData;
+			document.getElementById("itemCategory").textContent = d.category;
+			document.getElementById("unitCostDisplay").textContent = fmtDollar(d.unitCost);
+			document.getElementById("annualCogsDisplay").textContent = fmtDollar(d.cogs, 0);
+			document.getElementById("hRateDisplay").textContent = d.hPct + "%";
+			document.getElementById("turnsDisplay").textContent = d.turns;
+			document.getElementById("dosDisplay").textContent = d.dos + " days";
+			document.getElementById("cueTurns").textContent = d.turns;
+			document.getElementById("cueHRate").textContent = d.hPct + "%";
+		}
+
+		function gradeCalculations() {
+			if (!state.caseData) return;
+			const d = state.caseData;
+
+			const ansUnitHC = Number(document.getElementById("ansUnitHC").value);
+			const ansAvgInv = Number(document.getElementById("ansAvgInv").value);
+			const ansTotalHC = Number(document.getElementById("ansTotalHC").value);
+
+			const checks = [
+				{ val: ansUnitHC, correct: d.unitHC, tol: Math.max(d.unitHC * 0.04, 0.02), cell: "fbUnitHC" },
+				{ val: ansAvgInv, correct: d.avgInv, tol: Math.max(d.avgInv * 0.02, 20), cell: "fbAvgInv" },
+				{ val: ansTotalHC, correct: d.totalHC, tol: Math.max(d.totalHC * 0.02, 5), cell: "fbTotalHC" }
+			];
+
+			let score = 0;
+			checks.forEach(item => {
+				const cell = document.getElementById(item.cell);
+				const ok = Number.isFinite(item.val) && item.val !== 0 && Math.abs(item.val - item.correct) <= item.tol;
+				if (ok) {
+					cell.textContent = "Correct";
+					cell.style.color = "#166534";
+					score++;
+				} else if (Number.isFinite(item.val) && item.val !== 0) {
+					cell.textContent = `Target: ${fmtDollar(item.correct, item.correct < 500 ? 2 : 0)}`;
+					cell.style.color = "#b45309";
+				} else {
+					cell.textContent = "Missing";
+					cell.style.color = "#991b1b";
+				}
+			});
+
+			const pct = Math.round(score / checks.length * 100);
+			state.calcScore = Math.max(state.calcScore, pct);
+			state.totalScore += score * 8;
+			if (score === checks.length) state.casesSolved++;
+
+			if (pct >= 90) {
+				setCalcFeedback(`Excellent: ${score}/3. You correctly evaluated all holding cost metrics.`, "good");
+			} else if (pct >= 50) {
+				setCalcFeedback(`${score}/3 correct. Check your formula: \\(Per\\text{-}unit\\ HC = \\frac{Unit\\ Cost \\times h}{Turns}\\).`, "warn");
+			} else {
+				setCalcFeedback(`${score}/3. \\(Per\\text{-}unit\\ HC = \\frac{Unit\\ Cost \\times h}{Turns}\\); \\(Avg\\ Inventory = \\frac{COGS}{Turns}\\); \\(Total\\ HC = Avg\\ Inventory \\times h\\).`, "bad");
+			}
+
+			updateScoreboard();
+		}
+
+		function buildAltTurnsExercise() {
+			if (!state.caseData) return;
+			const d = state.caseData;
+			const base = d.turns;
+			const raw = [base * 0.7, base * 0.9, base * 1.2, base * 1.45]
+				.map((v) => r(Math.min(20, Math.max(2, v)), 1));
+
+			const unique = [];
+			raw.forEach((value) => {
+				if (!unique.includes(value)) unique.push(value);
+			});
+			while (unique.length < 4) {
+				const candidate = r(Math.min(20, Math.max(2, unique[unique.length - 1] + 0.8)), 1);
+				if (!unique.includes(candidate)) unique.push(candidate);
+			}
+
+			state.altTurnCases = unique.slice(0, 4);
+
+			let html = `<table id="altTurnsTable">
+				<thead>
+					<tr>
+						<th>Alternative Turns</th>
+						<th>Your DOS (days)</th>
+						<th>Your Avg Inventory Value ($)</th>
+						<th>Your Total Holding Cost ($)</th>
+						<th>Result</th>
+					</tr>
+				</thead>
+				<tbody>`;
+
+			state.altTurnCases.forEach((turns, i) => {
+				html += `<tr>
+					<td>${turns}</td>
+					<td><input id="altDos${i}" type="number" step="0.1" /></td>
+					<td><input id="altAvg${i}" type="number" step="1" /></td>
+					<td><input id="altHc${i}" type="number" step="1" /></td>
+					<td id="altFb${i}">--</td>
+				</tr>`;
+			});
+
+			html += `</tbody></table>
+			<div class="sens-note">Use current Part 1 data. For each row:
+			\\[DOS = \\frac{365}{turns}\\]
+			\\[Avg\\ Inventory = \\frac{COGS}{turns}\\]
+			\\[Total\\ Holding\\ Cost = Avg\\ Inventory \\times h\\]
+			</div>`;
+
+			const wrap = document.getElementById("altTurnsWrap");
+			wrap.innerHTML = html;
+			renderLatex(wrap);
+		}
+
+		function gradeAltTurnsExercise() {
+			if (!state.caseData || !state.altTurnCases.length) return;
+			const d = state.caseData;
+			let correctRows = 0;
+
+			state.altTurnCases.forEach((turns, i) => {
+				const ansDos = Number(document.getElementById(`altDos${i}`).value);
+				const ansAvg = Number(document.getElementById(`altAvg${i}`).value);
+				const ansHc = Number(document.getElementById(`altHc${i}`).value);
+
+				const dos = r(365 / turns, 1);
+				const avg = r(d.cogs / turns, 0);
+				const hc = r(avg * d.hPct / 100, 0);
+
+				const dosOk = Number.isFinite(ansDos) && Math.abs(ansDos - dos) <= 0.4;
+				const avgOk = Number.isFinite(ansAvg) && Math.abs(ansAvg - avg) <= Math.max(20, avg * 0.02);
+				const hcOk = Number.isFinite(ansHc) && Math.abs(ansHc - hc) <= Math.max(8, hc * 0.02);
+
+				const cell = document.getElementById(`altFb${i}`);
+				if (dosOk && avgOk && hcOk) {
+					cell.textContent = "Correct";
+					cell.style.color = "#166534";
+					correctRows += 1;
+				} else if (Number.isFinite(ansDos) || Number.isFinite(ansAvg) || Number.isFinite(ansHc)) {
+					cell.textContent = "Check values";
+					cell.style.color = "#b45309";
+				} else {
+					cell.textContent = "Missing";
+					cell.style.color = "#991b1b";
+				}
+			});
+
+			const pct = Math.round((correctRows / 4) * 100);
+			state.totalScore += correctRows * 5;
+			if (correctRows === 4) state.casesSolved += 1;
+
+			if (pct >= 90) {
+				setAltFeedback(`Excellent: ${correctRows}/4 rows fully correct.`, "good");
+			} else if (pct >= 50) {
+				setAltFeedback(`${correctRows}/4 rows fully correct. Recheck DOS and average inventory calculations.`, "warn");
+			} else {
+				setAltFeedback(`${correctRows}/4 rows fully correct. Use Part 1 formulas row-by-row.`, "bad");
+			}
+
+			updateScoreboard();
+		}
+
+		function showAltTurnsSolutions() {
+			if (!state.caseData || !state.altTurnCases.length) return;
+			const d = state.caseData;
+			state.altTurnCases.forEach((turns, i) => {
+				const dos = r(365 / turns, 1);
+				const avg = r(d.cogs / turns, 0);
+				const hc = r(avg * d.hPct / 100, 0);
+				document.getElementById(`altDos${i}`).value = dos;
+				document.getElementById(`altAvg${i}`).value = avg;
+				document.getElementById(`altHc${i}`).value = hc;
+				const cell = document.getElementById(`altFb${i}`);
+				cell.textContent = "Solution shown";
+				cell.style.color = "#1f5fbf";
+			});
+			setAltFeedback(
+				`Solutions shown for all four alternative turns. Formulas used: \\(DOS = \\frac{365}{Turns}\\), \\(Avg\\ Inventory = \\frac{COGS}{Turns}\\), \\(Total\\ HC = Avg\\ Inventory \\times h\\).`,
+				"warn"
+			);
+		}
+
+		function clearAltTurnsInputs() {
+			state.altTurnCases.forEach((_, i) => {
+				const dosEl = document.getElementById(`altDos${i}`);
+				const avgEl = document.getElementById(`altAvg${i}`);
+				const hcEl = document.getElementById(`altHc${i}`);
+				const fbEl = document.getElementById(`altFb${i}`);
+				if (dosEl) dosEl.value = "";
+				if (avgEl) avgEl.value = "";
+				if (hcEl) hcEl.value = "";
+				if (fbEl) {
+					fbEl.textContent = "--";
+					fbEl.style.color = "";
+				}
+			});
+			setAltFeedback("", "");
+		}
+
+		function setAltFeedback(msg, type) {
+			const el = document.getElementById("altFeedback");
+			el.innerHTML = msg;
+			el.className = type ? `feedback ${type}` : "feedback";
+			renderLatex(el);
+		}
+
+		function setCalcFeedback(msg, type) {
+			const el = document.getElementById("calcFeedback");
+			el.innerHTML = msg;
+			el.className = `feedback ${type}`;
+			renderLatex(el);
+		}
+
+		function clearInputs() {
+			["ansUnitHC", "ansAvgInv", "ansTotalHC"].forEach(id => {
+				document.getElementById(id).value = "";
+			});
+			["fbUnitHC", "fbAvgInv", "fbTotalHC"].forEach(id => {
+				const el = document.getElementById(id);
+				el.textContent = "--";
+				el.style.color = "";
+			});
+			setCalcFeedback("", "");
+		}
+
+		function showSolution() {
+			if (!state.caseData) return;
+			const d = state.caseData;
+			const hint = document.getElementById("solutionHint");
+			hint.hidden = false;
+			hint.innerHTML =
+				`Annual HC per unit: \\(${fmtDollar(d.unitCost)} \\times ${d.hPct}\\% = ${fmtDollar(d.annualUnitHC)}\\)<br>` +
+				`Per-unit HC at current turns: \\(${fmtDollar(d.annualUnitHC)} \\div ${d.turns} = ${fmtDollar(d.unitHC)}\\)<br>` +
+				`Avg inventory: \\(${fmtDollar(d.cogs, 0)} \\div ${d.turns} = ${fmtDollar(d.avgInv, 0)}\\)<br>` +
+				`Total holding cost: \\(${fmtDollar(d.avgInv, 0)} \\times ${d.hPct}\\% = ${fmtDollar(d.totalHC, 0)}\\)`;
+			renderLatex(hint);
+		}
+
+		function hideSolution() {
+			const hint = document.getElementById("solutionHint");
+			hint.hidden = true;
+			hint.innerHTML = "";
+		}
+
+		function startQuizRound() {
+			state.quizRoundPool = shuffleArray(quizBank).slice(0, QUIZ_ROUND_TARGET);
+			state.quizRoundAnswered = 0;
+			state.quizQuestionAnswered = false;
+			state.quizRoundCompleted = false;
+			document.getElementById("nextQuizBtn").textContent = "Next Question";
+			setQuizFeedback("Round started: answer 4 questions.", "warn");
+			loadQuizQuestion();
+			updateScoreboard();
+		}
+
+		function loadQuizQuestion() {
+			const question = state.quizRoundPool[state.quizRoundAnswered];
+			state.quizCurrent = question;
+			state.quizQuestionAnswered = false;
+			document.getElementById("quizPrompt").textContent = question.q;
+			const wrap = document.getElementById("quizChoices");
+			wrap.innerHTML = "";
+			shuffleArray(question.options).forEach(option => {
+				const btn = document.createElement("button");
+				btn.type = "button";
+				btn.className = "choice";
+				btn.textContent = option;
+				btn.addEventListener("click", () => gradeQuizChoice(btn, option));
+				wrap.appendChild(btn);
+			});
+		}
+
+		function gradeQuizChoice(button, selected) {
+			if (state.quizQuestionAnswered) return;
+			const choices = document.querySelectorAll("#quizChoices .choice");
+			choices.forEach(c => { c.disabled = true; });
+			state.quizQuestionAnswered = true;
+			state.quizRoundAnswered++;
+			state.quizAsked++;
+
+			if (selected === state.quizCurrent.answer) {
+				button.classList.add("correct");
+				state.quizCorrect++;
+				state.totalScore += 8;
+				setQuizFeedback("Correct.", "good");
+			} else {
+				button.classList.add("wrong");
+				choices.forEach(c => {
+					if (c.textContent === state.quizCurrent.answer) c.classList.add("correct");
+				});
+				setQuizFeedback(`Not quite. Correct answer: ${state.quizCurrent.answer}.`, "bad");
+			}
+
+			if (state.quizRoundAnswered >= QUIZ_ROUND_TARGET) {
+				state.quizRoundCompleted = true;
+				document.getElementById("nextQuizBtn").textContent = "Start New 4-Question Round";
+				const curMsg = document.getElementById("quizFeedback").textContent;
+				const curType = document.getElementById("quizFeedback").classList.contains("good") ? "good" : "warn";
+				setQuizFeedback(`${curMsg} Round complete.`, curType);
+			} else {
+				document.getElementById("nextQuizBtn").textContent = `Next Question (${state.quizRoundAnswered}/${QUIZ_ROUND_TARGET})`;
+			}
+
+			updateScoreboard();
+		}
+
+		function nextQuizStep() {
+			if (state.quizRoundCompleted) {
+				startQuizRound();
+				return;
+			}
+			if (!state.quizQuestionAnswered) {
+				setQuizFeedback("Answer the current question before moving on.", "warn");
+				return;
+			}
+			setQuizFeedback("", "");
+			loadQuizQuestion();
+			updateScoreboard();
+		}
+
+		function setQuizFeedback(msg, type) {
+			const el = document.getElementById("quizFeedback");
+			el.textContent = msg;
+			el.className = type ? `feedback ${type}` : "feedback";
+		}
+
+		function updateScoreboard() {
+			const acc = state.quizAsked ? Math.round(state.quizCorrect / state.quizAsked * 100) : 0;
+			document.getElementById("casesSolved").textContent = state.casesSolved;
+			document.getElementById("calcScore").textContent = `${state.calcScore}%`;
+			document.getElementById("quizCorrect").textContent = state.quizCorrect;
+			document.getElementById("totalScore").textContent = state.totalScore;
+			document.getElementById("roundProgress").textContent = `${state.quizRoundAnswered} / ${QUIZ_ROUND_TARGET}`;
+			document.getElementById("quizAccuracy").textContent = `${acc}%`;
+		}
+
+		function bindEvents() {
+			document.getElementById("gradeBtn").addEventListener("click", gradeCalculations);
+			document.getElementById("showWorkBtn").addEventListener("click", showSolution);
+			document.getElementById("newCaseBtn").addEventListener("click", generateCase);
+			document.getElementById("gradeAltBtn").addEventListener("click", gradeAltTurnsExercise);
+			document.getElementById("showAltBtn").addEventListener("click", showAltTurnsSolutions);
+			document.getElementById("clearAltBtn").addEventListener("click", clearAltTurnsInputs);
+			document.getElementById("nextQuizBtn").addEventListener("click", nextQuizStep);
+		}
+
+		function init() {
+			bindEvents();
+			generateCase();
+			startQuizRound();
+		}
+
+		init();
+	</script>
+</body>
+</html>

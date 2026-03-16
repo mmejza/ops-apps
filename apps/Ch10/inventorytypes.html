@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Inventory Types and Challenges Studio</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Literata:opsz,wght@7..72,500;7..72,700&display=swap" rel="stylesheet" />
+	<style>
+		:root {
+			--ink: #12263a;
+			--paper: #fffdf6;
+			--sand: #f2e8cf;
+			--amber: #f6ad55;
+			--clay: #b7791f;
+			--teal: #2c7a7b;
+			--leaf: #2f855a;
+			--rose: #c05621;
+			--danger: #9b2c2c;
+			--card: #ffffff;
+			--muted: #5f6d7a;
+			--line: #e4dcc7;
+			--shadow: 0 20px 45px rgba(18, 38, 58, 0.12);
+			--radius-xl: 24px;
+			--radius-md: 14px;
+			--radius-sm: 10px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Space Grotesk", "Avenir Next", "Trebuchet MS", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 12% 10%, rgba(246, 173, 85, 0.25), transparent 35%),
+				radial-gradient(circle at 88% 4%, rgba(44, 122, 123, 0.22), transparent 30%),
+				linear-gradient(150deg, #fffaf0 0%, #fefce8 50%, #f4f9f6 100%);
+			min-height: 100vh;
+		}
+
+		.page {
+			width: min(1150px, 94vw);
+			margin: 0 auto;
+			padding: 30px 0 44px;
+		}
+
+		.hero {
+			background: linear-gradient(120deg, #11324d, #1f4e5f 58%, #2f855a);
+			color: #fff;
+			padding: 28px;
+			border-radius: var(--radius-xl);
+			box-shadow: var(--shadow);
+			position: relative;
+			overflow: hidden;
+			margin-bottom: 22px;
+		}
+
+		.hero::after {
+			content: "";
+			position: absolute;
+			right: -80px;
+			top: -70px;
+			width: 240px;
+			height: 240px;
+			border-radius: 50%;
+			background: rgba(255, 255, 255, 0.15);
+		}
+
+		.eyebrow {
+			margin: 0;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			font-size: 0.8rem;
+			opacity: 0.9;
+		}
+
+		h1, h2, h3 {
+			font-family: "Literata", Georgia, serif;
+			line-height: 1.15;
+			margin: 0;
+		}
+
+		h1 {
+			font-size: clamp(1.7rem, 4vw, 2.5rem);
+			margin-top: 8px;
+			margin-bottom: 10px;
+			max-width: 700px;
+			position: relative;
+			z-index: 1;
+		}
+
+		.hero p {
+			margin: 0;
+			max-width: 760px;
+			color: rgba(255, 255, 255, 0.92);
+			position: relative;
+			z-index: 1;
+			line-height: 1.48;
+		}
+
+		.score-row {
+			margin-top: 18px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+			gap: 10px;
+			position: relative;
+			z-index: 1;
+		}
+
+		.score-pill {
+			border: 1px solid rgba(255, 255, 255, 0.22);
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.14);
+			padding: 9px 12px;
+			display: flex;
+			justify-content: space-between;
+			font-weight: 600;
+			font-size: 0.93rem;
+		}
+
+		.panel {
+			background: var(--card);
+			border: 1px solid var(--line);
+			border-radius: var(--radius-xl);
+			box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+			padding: 22px;
+			margin-bottom: 20px;
+			opacity: 0;
+			transform: translateY(12px);
+			animation: rise 560ms ease forwards;
+		}
+
+		.panel:nth-of-type(2) { animation-delay: 90ms; }
+		.panel:nth-of-type(3) { animation-delay: 160ms; }
+		.panel:nth-of-type(4) { animation-delay: 230ms; }
+
+		@keyframes rise {
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.section-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+			margin-bottom: 8px;
+		}
+
+		.section-head p {
+			margin: 0;
+			color: var(--muted);
+			font-size: 0.95rem;
+		}
+
+		.cards {
+			margin-top: 14px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+			gap: 12px;
+		}
+
+		.type-card {
+			border: 1px solid var(--line);
+			border-radius: var(--radius-md);
+			padding: 14px;
+			background: linear-gradient(180deg, #fff 0%, #fffcf2 100%);
+			transition: transform 150ms ease, border-color 150ms ease;
+			cursor: pointer;
+		}
+
+		.type-card:hover,
+		.type-card:focus-visible {
+			transform: translateY(-2px);
+			border-color: var(--amber);
+			outline: none;
+		}
+
+		.type-card.active {
+			border-color: var(--teal);
+			box-shadow: inset 0 0 0 1px rgba(44, 122, 123, 0.32);
+		}
+
+		.tag {
+			display: inline-block;
+			font-size: 0.74rem;
+			border-radius: 999px;
+			background: #fef3c7;
+			color: #92400e;
+			padding: 4px 8px;
+			margin-bottom: 8px;
+			font-weight: 700;
+			letter-spacing: 0.02em;
+		}
+
+		.type-card h3 {
+			font-size: 1.05rem;
+			margin-bottom: 8px;
+		}
+
+		.type-card p {
+			margin: 0;
+			color: var(--muted);
+			font-size: 0.92rem;
+			line-height: 1.4;
+		}
+
+		.detail-box {
+			margin-top: 14px;
+			border: 1px dashed #d7c7a2;
+			background: #fffbef;
+			border-radius: var(--radius-md);
+			padding: 14px;
+			min-height: 110px;
+		}
+
+		.detail-title {
+			margin: 0 0 8px;
+			font-size: 1.05rem;
+		}
+
+		.detail-box p {
+			margin: 0;
+			color: #374151;
+			line-height: 1.5;
+		}
+
+		.match-grid {
+			margin-top: 14px;
+			display: grid;
+			gap: 10px;
+		}
+
+		.match-row {
+			display: grid;
+			grid-template-columns: 1.2fr 1fr auto;
+			gap: 10px;
+			align-items: center;
+			border: 1px solid var(--line);
+			border-radius: var(--radius-sm);
+			padding: 10px;
+			background: #fffdf8;
+		}
+
+		.match-row label {
+			font-size: 0.92rem;
+			color: #1f2937;
+			font-weight: 600;
+		}
+
+		select {
+			width: 100%;
+			padding: 9px 11px;
+			border-radius: 10px;
+			border: 1px solid #c7d2dd;
+			font-size: 0.95rem;
+			background: #fff;
+			font-family: inherit;
+		}
+
+		.badge {
+			font-size: 0.82rem;
+			font-weight: 700;
+			color: var(--muted);
+			min-height: 1rem;
+		}
+
+		.controls {
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+			margin-top: 12px;
+		}
+
+		button {
+			border: none;
+			border-radius: 999px;
+			padding: 10px 15px;
+			cursor: pointer;
+			font-family: inherit;
+			font-weight: 700;
+			letter-spacing: 0.01em;
+			transition: transform 120ms ease, filter 120ms ease;
+		}
+
+		button:hover {
+			transform: translateY(-1px);
+			filter: brightness(1.02);
+		}
+
+		.primary {
+			background: linear-gradient(120deg, #1d6f7a, #2c7a7b);
+			color: #fff;
+		}
+
+		.secondary {
+			background: #fff;
+			border: 1px solid #cad7e3;
+			color: #1e3a4a;
+		}
+
+		.sim-grid {
+			margin-top: 10px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 12px;
+		}
+
+		.slider-wrap {
+			border: 1px solid var(--line);
+			border-radius: var(--radius-md);
+			padding: 12px;
+			background: #fffcf4;
+		}
+
+		.slider-wrap label {
+			display: flex;
+			justify-content: space-between;
+			font-size: 0.9rem;
+			font-weight: 700;
+			margin-bottom: 8px;
+		}
+
+		input[type="range"] {
+			width: 100%;
+			accent-color: #2c7a7b;
+		}
+
+		.sim-output {
+			margin-top: 12px;
+			border-radius: var(--radius-md);
+			border: 1px solid #d7c7a2;
+			background: linear-gradient(180deg, #fffdf6, #fff9e8);
+			padding: 14px;
+			display: grid;
+			gap: 10px;
+		}
+
+		.risk-meter {
+			height: 12px;
+			background: #ece7d7;
+			border-radius: 999px;
+			overflow: hidden;
+		}
+
+		.risk-fill {
+			height: 100%;
+			width: 10%;
+			background: linear-gradient(90deg, #2f855a, #f6ad55, #c05621);
+			transition: width 220ms ease;
+		}
+
+		.sim-output ul {
+			margin: 0;
+			padding-left: 18px;
+			color: #374151;
+			line-height: 1.4;
+		}
+
+		.quiz-card {
+			margin-top: 12px;
+			border: 1px solid var(--line);
+			border-radius: var(--radius-md);
+			background: #fffcf3;
+			padding: 14px;
+		}
+
+		.quiz-card p {
+			margin: 0 0 10px;
+			font-weight: 700;
+			line-height: 1.45;
+		}
+
+		.choices {
+			display: grid;
+			gap: 8px;
+		}
+
+		.choice {
+			border-radius: 10px;
+			border: 1px solid #cbd5e1;
+			background: #fff;
+			text-align: left;
+			font-size: 0.92rem;
+			padding: 10px;
+			font-weight: 600;
+			color: #1f2937;
+		}
+
+		.choice.correct {
+			border-color: #2f855a;
+			background: #eefcf2;
+			color: #166534;
+		}
+
+		.choice.wrong {
+			border-color: #b91c1c;
+			background: #fff1f2;
+			color: #991b1b;
+		}
+
+		.status {
+			margin-top: 10px;
+			min-height: 1.2rem;
+			font-weight: 700;
+			color: var(--muted);
+		}
+
+		.status.good { color: var(--leaf); }
+		.status.warn { color: var(--rose); }
+		.status.bad { color: var(--danger); }
+
+		.mastery {
+			margin-top: 10px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+			gap: 10px;
+		}
+
+		.mastery .tile {
+			border: 1px solid var(--line);
+			border-radius: var(--radius-sm);
+			background: #fff;
+			padding: 10px;
+		}
+
+		.tile-label {
+			display: block;
+			color: var(--muted);
+			font-size: 0.8rem;
+			margin-bottom: 6px;
+		}
+
+		.tile-value {
+			font-size: 1.05rem;
+			font-weight: 700;
+		}
+
+		@media (max-width: 760px) {
+			.page {
+				padding-top: 16px;
+			}
+
+			.hero,
+			.panel {
+				border-radius: 18px;
+				padding: 18px;
+			}
+
+			.match-row {
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="page">
+		<section class="hero">
+			<h1>Inventory Types and Management Challenges</h1>
+			<p>
+				Learning Objective: Explain inventory types and diagnose trade-offs managers face when balancing stock levels, service, and cost.
+			</p>
+			<div class="score-row">
+				<div class="score-pill"><span>Concepts mastered</span><span id="masteredCount">0</span></div>
+				<div class="score-pill"><span>Challenge score</span><span id="challengeScore">0</span></div>
+				<div class="score-pill"><span>Quiz points</span><span id="quizScore">0</span></div>
+				<div class="score-pill"><span>Total score</span><span id="totalScore">0</span></div>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="section-head">
+				<h2>1. Inventory Type Explorer</h2>
+				<p>Click each card to learn why that type exists.</p>
+			</div>
+
+			<div class="cards" id="typeCards"></div>
+
+			<div class="detail-box" id="typeDetail">
+				<h3 class="detail-title">Pick a card to begin</h3>
+				<p>
+					Tip: A complete explanation should include what the inventory is, why firms hold it, and one risk if managed poorly.
+				</p>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="section-head">
+				<h2>2. Match Type to Scenario</h2>
+				<p>Choose the best inventory type for each situation.</p>
+			</div>
+
+			<div class="match-grid" id="matchGrid"></div>
+
+			<div class="controls">
+				<button class="primary" id="checkMatchesBtn">Check Matches</button>
+				<button class="secondary" id="resetMatchesBtn">Reset</button>
+			</div>
+
+			<div class="status" id="matchStatus"></div>
+		</section>
+
+		<section class="panel">
+			<div class="section-head">
+				<h2>3. Inventory Challenge Simulator</h2>
+				<p>Adjust risk conditions and see recommended actions.</p>
+			</div>
+
+			<div class="sim-grid">
+				<div class="slider-wrap">
+					<label>Demand variability <span id="demandVal">40</span></label>
+					<input type="range" min="0" max="100" value="40" id="demandRange" />
+				</div>
+				<div class="slider-wrap">
+					<label>Lead-time instability <span id="leadVal">35</span></label>
+					<input type="range" min="0" max="100" value="35" id="leadRange" />
+				</div>
+				<div class="slider-wrap">
+					<label>Perishability risk <span id="perishVal">20</span></label>
+					<input type="range" min="0" max="100" value="20" id="perishRange" />
+				</div>
+				<div class="slider-wrap">
+					<label>Target service level <span id="serviceVal">85</span></label>
+					<input type="range" min="50" max="99" value="85" id="serviceRange" />
+				</div>
+			</div>
+
+			<div class="sim-output">
+				<strong id="riskLabel">Risk level: Moderate</strong>
+				<div class="risk-meter"><div class="risk-fill" id="riskFill"></div></div>
+				<ul id="strategyList"></ul>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="section-head">
+				<h2>4. Mastery Check</h2>
+				<p>Answer four questions to complete each quiz round.</p>
+			</div>
+
+			<div class="quiz-card" id="quizCard">
+				<p id="quizPrompt"></p>
+				<div class="choices" id="quizChoices"></div>
+			</div>
+
+			<div class="controls">
+				<button class="secondary" id="nextQuestionBtn">Next Question</button>
+			</div>
+
+			<div class="status" id="quizStatus"></div>
+
+			<div class="mastery">
+				<div class="tile">
+					<span class="tile-label">Concept cards opened</span>
+					<span class="tile-value" id="tileConcepts">0 / 6</span>
+				</div>
+				<div class="tile">
+					<span class="tile-label">Matching accuracy</span>
+					<span class="tile-value" id="tileMatching">0%</span>
+				</div>
+				<div class="tile">
+					<span class="tile-label">Challenge risk diagnosed</span>
+					<span class="tile-value" id="tileRisk">Moderate</span>
+				</div>
+				<div class="tile">
+					<span class="tile-label">Quiz accuracy</span>
+					<span class="tile-value" id="tileQuiz">0%</span>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<script>
+		const inventoryTypes = [
+			{
+				id: "raw",
+				name: "Raw Materials",
+				tag: "Inputs",
+				blurb: "Basic items purchased from suppliers before production begins.",
+				detail: "Raw materials include steel, fabric, and chemicals. Firms hold them so production can run without interruptions. If managed poorly, stockouts shut down operations while overbuying ties up cash."
+			},
+			{
+				id: "wip",
+				name: "Work-in-Process",
+				tag: "Flow",
+				blurb: "Units currently in production but not yet finished.",
+				detail: "WIP buffers each step of the process and smooths minor disruptions. Too much WIP increases cycle time, hides quality issues, and consumes floor space."
+			},
+			{
+				id: "finished",
+				name: "Finished Goods",
+				tag: "Customer Ready",
+				blurb: "Completed products waiting for customer purchase or shipment.",
+				detail: "Finished goods protect customer service levels and reduce lost sales. However, demand uncertainty can leave firms with obsolete products and markdown losses."
+			},
+			{
+				id: "safety",
+				name: "Safety Stock",
+				tag: "Protection",
+				blurb: "Extra inventory held to absorb demand or lead-time variability.",
+				detail: "Safety stock acts as insurance against uncertainty. It helps prevent stockouts but raises carrying costs, so managers must balance risk and investment."
+			},
+			{
+				id: "anticipation",
+				name: "Anticipation Inventory",
+				tag: "Seasonal",
+				blurb: "Inventory built ahead of predictable spikes in demand.",
+				detail: "Firms pre-build inventory before holidays, promotions, or weather seasons. The challenge is forecasting accurately so inventory is available without excessive leftovers."
+			},
+			{
+				id: "mro",
+				name: "MRO Supplies",
+				tag: "Support",
+				blurb: "Maintenance, repair, and operating items needed to keep systems running.",
+				detail: "MRO inventory includes lubricants, spare parts, and cleaning supplies. It does not become part of the product, but shortages can still stop operations unexpectedly."
+			}
+		];
+
+		const matchPrompts = [
+			{ prompt: "A bakery buys flour and yeast for tomorrow's production.", answer: "Raw Materials" },
+			{ prompt: "A smartphone has assembled boards but still needs final testing.", answer: "Work-in-Process" },
+			{ prompt: "A retailer stores extra winter jackets before a forecasted cold season.", answer: "Anticipation Inventory" },
+			{ prompt: "A warehouse keeps extra units because suppliers are frequently late.", answer: "Safety Stock" },
+			{ prompt: "An auto plant receives steel coils and aluminum sheets for body fabrication.", answer: "Raw Materials" },
+			{ prompt: "A furniture factory has half-finished tables waiting for varnish.", answer: "Work-in-Process" },
+			{ prompt: "A beverage company stocks extra canned drinks before summer demand peaks.", answer: "Anticipation Inventory" },
+			{ prompt: "A hospital keeps backup gloves and masks in case deliveries are delayed.", answer: "Safety Stock" },
+			{ prompt: "A distribution center stores packed laptops ready to ship to customers.", answer: "Finished Goods" },
+			{ prompt: "A plant keeps spare belts and lubricants for maintenance tasks.", answer: "MRO Supplies" },
+			{ prompt: "A toy company manufactures additional units before the holiday shopping rush.", answer: "Anticipation Inventory" },
+			{ prompt: "A pharmacy holds extra critical medicine to avoid shortages from uncertain replenishment.", answer: "Safety Stock" }
+		];
+
+		const quizBank = [
+			{
+				q: "Which inventory type is designed specifically to protect against uncertainty in demand and lead time?",
+				options: ["MRO Supplies", "Safety Stock", "Finished Goods", "Work-in-Process"],
+				answer: "Safety Stock"
+			},
+			{
+				q: "What is a major risk of holding too much finished goods inventory?",
+				options: ["Longer supplier lead time", "Process downtime", "Obsolescence and markdowns", "Fewer stockouts"],
+				answer: "Obsolescence and markdowns"
+			},
+			{
+				q: "If demand is highly variable and service-level targets are very high, what usually happens to required inventory?",
+				options: ["It decreases sharply", "It remains unchanged", "It generally increases", "It becomes only raw materials"],
+				answer: "It generally increases"
+			},
+			{
+				q: "Which statement best describes a core challenge in inventory management?",
+				options: ["Eliminate all inventory regardless of context", "Always maximize inventory to avoid stockouts", "Balance stock availability with cost and risk", "Focus only on production inventory"],
+				answer: "Balance stock availability with cost and risk"
+			},
+			{
+				q: "Which inventory type includes lubricants, spare parts, and cleaning supplies used to support operations?",
+				options: ["Raw Materials", "MRO Supplies", "Finished Goods", "Anticipation Inventory"],
+				answer: "MRO Supplies"
+			},
+			{
+				q: "A company builds inventory before a major holiday promotion. What type is this?",
+				options: ["Work-in-Process", "Safety Stock", "Anticipation Inventory", "MRO Supplies"],
+				answer: "Anticipation Inventory"
+			},
+			{
+				q: "What is a likely consequence of keeping too little raw material inventory?",
+				options: ["Lower setup time", "Production stoppages", "Higher product variety", "Lower forecast error"],
+				answer: "Production stoppages"
+			},
+			{
+				q: "Which KPI is most directly used to assess how efficiently inventory is used over time?",
+				options: ["Inventory turnover", "Defect per million", "Net promoter score", "OEE availability"],
+				answer: "Inventory turnover"
+			},
+			{
+				q: "When products become outdated quickly, which inventory risk increases most?",
+				options: ["Supplier certification", "Obsolescence", "Underutilized labor", "Longer receiving time"],
+				answer: "Obsolescence"
+			},
+			{
+				q: "Which action best addresses lead-time uncertainty from suppliers?",
+				options: ["Ignore supplier variability", "Increase all SKU counts equally", "Collaborate with suppliers and monitor lead-time variation", "Eliminate finished goods inventory"],
+				answer: "Collaborate with suppliers and monitor lead-time variation"
+			},
+			{
+				q: "What is the primary trade-off when increasing safety stock?",
+				options: ["Higher stockout risk and lower carrying cost", "Lower carrying cost and lower service level", "Lower stockout risk and higher carrying cost", "Higher quality and lower demand"],
+				answer: "Lower stockout risk and higher carrying cost"
+			},
+			{
+				q: "Units that are partially assembled and waiting for the next process step are classified as:",
+				options: ["Work-in-Process", "Finished Goods", "MRO Supplies", "Safety Stock"],
+				answer: "Work-in-Process"
+			}
+		];
+
+		const QUIZ_ROUND_TARGET = 4;
+
+		const state = {
+			openedCards: new Set(),
+			matchCorrect: 0,
+			challengeScore: 0,
+			quizAsked: 0,
+			quizCorrect: 0,
+			quizCurrent: null,
+			quizRoundPool: [],
+			quizRoundAnswered: 0,
+			quizQuestionAnswered: false,
+			quizRoundCompleted: false,
+			total: 0,
+			lastRiskLabel: "Moderate"
+		};
+
+		const typeCardsEl = document.getElementById("typeCards");
+		const typeDetailEl = document.getElementById("typeDetail");
+		const matchGridEl = document.getElementById("matchGrid");
+		const matchStatusEl = document.getElementById("matchStatus");
+		const strategyListEl = document.getElementById("strategyList");
+		const riskFillEl = document.getElementById("riskFill");
+		const riskLabelEl = document.getElementById("riskLabel");
+
+		function init() {
+			buildTypeCards();
+			buildMatching();
+			bindSimulator();
+			startQuizRound();
+			updateSimulator();
+			bindButtons();
+			updateScoreboard();
+		}
+
+		function shuffleArray(items) {
+			const copy = [...items];
+			for (let i = copy.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[copy[i], copy[j]] = [copy[j], copy[i]];
+			}
+			return copy;
+		}
+
+		function buildTypeCards() {
+			typeCardsEl.innerHTML = "";
+
+			inventoryTypes.forEach((type) => {
+				const card = document.createElement("button");
+				card.className = "type-card";
+				card.type = "button";
+				card.innerHTML = `
+					<span class="tag">${type.tag}</span>
+					<h3>${type.name}</h3>
+					<p>${type.blurb}</p>
+				`;
+
+				card.addEventListener("click", () => {
+					document.querySelectorAll(".type-card").forEach((el) => el.classList.remove("active"));
+					card.classList.add("active");
+					typeDetailEl.innerHTML = `<h3 class="detail-title">${type.name}</h3><p>${type.detail}</p>`;
+
+					if (!state.openedCards.has(type.id)) {
+						state.openedCards.add(type.id);
+						state.total += 4;
+						updateScoreboard();
+					}
+				});
+
+				typeCardsEl.appendChild(card);
+			});
+		}
+
+		function buildMatching() {
+			matchGridEl.innerHTML = "";
+			const choices = inventoryTypes.map((t) => t.name);
+
+			matchPrompts.forEach((item, idx) => {
+				const row = document.createElement("div");
+				row.className = "match-row";
+				row.innerHTML = `
+					<label for="match${idx}">${item.prompt}</label>
+					<select id="match${idx}">
+						<option value="">Choose a type...</option>
+						${choices.map((choice) => `<option value="${choice}">${choice}</option>`).join("")}
+					</select>
+					<span class="badge" id="badge${idx}"></span>
+				`;
+				matchGridEl.appendChild(row);
+			});
+		}
+
+		function checkMatches() {
+			let correct = 0;
+
+			matchPrompts.forEach((item, idx) => {
+				const selected = document.getElementById(`match${idx}`).value;
+				const badge = document.getElementById(`badge${idx}`);
+				if (selected === item.answer) {
+					correct += 1;
+					badge.textContent = "Correct";
+					badge.style.color = "#166534";
+				} else {
+					badge.textContent = selected ? `Try again (${item.answer})` : "Unanswered";
+					badge.style.color = "#9b2c2c";
+				}
+			});
+
+			state.matchCorrect = correct;
+			const pct = Math.round((correct / matchPrompts.length) * 100);
+			state.total += correct * 5;
+
+			if (correct === matchPrompts.length) {
+				matchStatusEl.textContent = `Excellent: ${correct}/${matchPrompts.length}. You classified these inventory scenarios correctly.`;
+				matchStatusEl.className = "status good";
+			} else if (correct >= 2) {
+				matchStatusEl.textContent = `Solid progress: ${correct}/${matchPrompts.length}. Review the mismatch hints and recheck your logic.`;
+				matchStatusEl.className = "status warn";
+			} else {
+				matchStatusEl.textContent = `Current result: ${correct}/${matchPrompts.length}. Revisit the type explorer and try again.`;
+				matchStatusEl.className = "status bad";
+			}
+
+			document.getElementById("tileMatching").textContent = `${pct}%`;
+			updateScoreboard();
+		}
+
+		function resetMatches() {
+			matchPrompts.forEach((_, idx) => {
+				document.getElementById(`match${idx}`).value = "";
+				const badge = document.getElementById(`badge${idx}`);
+				badge.textContent = "";
+			});
+			matchStatusEl.textContent = "";
+			matchStatusEl.className = "status";
+			state.matchCorrect = 0;
+			document.getElementById("tileMatching").textContent = "0%";
+			updateScoreboard();
+		}
+
+		function bindSimulator() {
+			["demandRange", "leadRange", "perishRange", "serviceRange"].forEach((id) => {
+				document.getElementById(id).addEventListener("input", updateSimulator);
+			});
+		}
+
+		function updateSimulator() {
+			const demand = Number(document.getElementById("demandRange").value);
+			const lead = Number(document.getElementById("leadRange").value);
+			const perish = Number(document.getElementById("perishRange").value);
+			const service = Number(document.getElementById("serviceRange").value);
+
+			document.getElementById("demandVal").textContent = demand;
+			document.getElementById("leadVal").textContent = lead;
+			document.getElementById("perishVal").textContent = perish;
+			document.getElementById("serviceVal").textContent = service;
+
+			const riskScore = Math.round(0.33 * demand + 0.27 * lead + 0.2 * perish + 0.2 * (service - 50) * 2);
+			riskFillEl.style.width = `${Math.min(riskScore, 100)}%`;
+
+			let riskLabel = "Moderate";
+			let strategies = [];
+
+			if (riskScore < 35) {
+				riskLabel = "Low";
+				strategies = [
+					"Use lean replenishment and tighter reorder points.",
+					"Keep safety stock limited and monitor supplier performance monthly.",
+					"Focus on carrying-cost reduction and inventory turns."
+				];
+			} else if (riskScore < 70) {
+				riskLabel = "Moderate";
+				strategies = [
+					"Segment SKUs by demand pattern and apply differentiated safety stock.",
+					"Collaborate with suppliers to reduce lead-time variation.",
+					"Track stockout cost versus holding cost by product family."
+				];
+			} else {
+				riskLabel = "High";
+				strategies = [
+					"Increase safety stock on critical items while pruning low-value SKUs.",
+					"Shorten planning cycles and update forecasts weekly.",
+					"Use postponement or flexible capacity to limit obsolescence risk."
+				];
+			}
+
+			riskLabelEl.textContent = `Risk level: ${riskLabel} (${riskScore}/100)`;
+			strategyListEl.innerHTML = strategies.map((s) => `<li>${s}</li>`).join("");
+
+			if (riskLabel !== state.lastRiskLabel) {
+				state.challengeScore += 3;
+			}
+			state.lastRiskLabel = riskLabel;
+			document.getElementById("tileRisk").textContent = riskLabel;
+			updateScoreboard();
+		}
+
+		function startQuizRound() {
+			state.quizRoundPool = shuffleArray(quizBank).slice(0, QUIZ_ROUND_TARGET);
+			state.quizRoundAnswered = 0;
+			state.quizRoundCompleted = false;
+			document.getElementById("nextQuestionBtn").textContent = "Next Question";
+			document.getElementById("quizStatus").textContent = "Round started: answer 4 questions.";
+			document.getElementById("quizStatus").className = "status";
+			loadQuestion();
+		}
+
+		function loadQuestion() {
+			const question = state.quizRoundPool[state.quizRoundAnswered];
+			state.quizCurrent = question;
+			state.quizQuestionAnswered = false;
+
+			document.getElementById("quizPrompt").textContent = question.q;
+			const choices = document.getElementById("quizChoices");
+			choices.innerHTML = "";
+
+			const shuffled = shuffleArray(question.options);
+			shuffled.forEach((opt) => {
+				const button = document.createElement("button");
+				button.className = "choice";
+				button.type = "button";
+				button.textContent = opt;
+				button.addEventListener("click", () => gradeChoice(button, opt));
+				choices.appendChild(button);
+			});
+		}
+
+		function gradeChoice(button, value) {
+			const status = document.getElementById("quizStatus");
+			const all = document.querySelectorAll(".choice");
+			all.forEach((c) => (c.disabled = true));
+
+			state.quizQuestionAnswered = true;
+			state.quizRoundAnswered += 1;
+			state.quizAsked += 1;
+
+			if (value === state.quizCurrent.answer) {
+				button.classList.add("correct");
+				status.textContent = "Correct. Your reasoning aligns with inventory strategy principles.";
+				status.className = "status good";
+				state.quizCorrect += 1;
+				state.total += 8;
+			} else {
+				button.classList.add("wrong");
+				all.forEach((c) => {
+					if (c.textContent === state.quizCurrent.answer) c.classList.add("correct");
+				});
+				status.textContent = `Not quite. Correct answer: ${state.quizCurrent.answer}.`;
+				status.className = "status bad";
+			}
+
+			if (state.quizRoundAnswered >= QUIZ_ROUND_TARGET) {
+				state.quizRoundCompleted = true;
+				document.getElementById("nextQuestionBtn").textContent = "Start New 4-Question Round";
+				status.textContent += " Round complete.";
+			} else {
+				document.getElementById("nextQuestionBtn").textContent = `Next Question (${state.quizRoundAnswered}/${QUIZ_ROUND_TARGET})`;
+			}
+
+			updateScoreboard();
+		}
+
+		function bindButtons() {
+			document.getElementById("checkMatchesBtn").addEventListener("click", checkMatches);
+			document.getElementById("resetMatchesBtn").addEventListener("click", resetMatches);
+			document.getElementById("nextQuestionBtn").addEventListener("click", () => {
+				if (state.quizRoundCompleted) {
+					startQuizRound();
+					return;
+				}
+
+				if (!state.quizQuestionAnswered) {
+					document.getElementById("quizStatus").textContent = "Answer the current question before moving on.";
+					document.getElementById("quizStatus").className = "status warn";
+					return;
+				}
+
+				document.getElementById("quizStatus").textContent = "";
+				document.getElementById("quizStatus").className = "status";
+				loadQuestion();
+			});
+		}
+
+		function updateScoreboard() {
+			const mastered = state.openedCards.size;
+			const quizPct = state.quizAsked ? Math.round((state.quizCorrect / state.quizAsked) * 100) : 0;
+			const challenge = state.challengeScore + state.matchCorrect * 2;
+			const total = state.total + challenge;
+
+			document.getElementById("masteredCount").textContent = mastered;
+			document.getElementById("challengeScore").textContent = challenge;
+			document.getElementById("quizScore").textContent = state.quizCorrect;
+			document.getElementById("totalScore").textContent = total;
+
+			document.getElementById("tileConcepts").textContent = `${mastered} / ${inventoryTypes.length}`;
+			document.getElementById("tileQuiz").textContent = `${quizPct}%`;
+		}
+
+		init();
+	</script>
+</body>
+</html>

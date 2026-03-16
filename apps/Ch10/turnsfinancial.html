@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Turns and Days-of-Supply from Financial Reports</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet" />
+	<style>
+		:root {
+			--ink: #152033;
+			--paper: #fffefa;
+			--fog: #f0f4ff;
+			--line: #d8dfeb;
+			--brand: #1f5fbf;
+			--brand2: #0f766e;
+			--warn: #b45309;
+			--good: #166534;
+			--bad: #991b1b;
+			--muted: #5b6678;
+			--radius-lg: 20px;
+			--radius-md: 12px;
+			--shadow: 0 14px 36px rgba(21, 32, 51, 0.12);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "DM Sans", "Avenir Next", "Trebuchet MS", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 8% 8%, rgba(31, 95, 191, 0.18), transparent 35%),
+				radial-gradient(circle at 85% 10%, rgba(15, 118, 110, 0.16), transparent 30%),
+				linear-gradient(165deg, #f7fbff 0%, #fffef9 55%, #f6faf6 100%);
+			min-height: 100vh;
+		}
+
+		.page {
+			width: min(1200px, 95vw);
+			margin: 0 auto;
+			padding: 24px 0 40px;
+		}
+
+		h1, h2, h3 {
+			font-family: "Source Serif 4", Georgia, serif;
+			margin: 0;
+			line-height: 1.14;
+		}
+
+		.hero {
+			border-radius: 24px;
+			background: linear-gradient(128deg, #113868 0%, #1f5fbf 54%, #0f766e 100%);
+			color: #fff;
+			padding: 24px;
+			box-shadow: var(--shadow);
+			position: relative;
+			overflow: hidden;
+			margin-bottom: 18px;
+		}
+
+		.hero::after {
+			content: "";
+			position: absolute;
+			width: 220px;
+			height: 220px;
+			border-radius: 50%;
+			right: -70px;
+			top: -60px;
+			background: rgba(255, 255, 255, 0.14);
+		}
+
+		.hero h1 {
+			font-size: clamp(1.55rem, 3.5vw, 2.4rem);
+			margin-bottom: 10px;
+			max-width: 760px;
+			position: relative;
+			z-index: 1;
+		}
+
+		.hero p {
+			margin: 0;
+			line-height: 1.48;
+			max-width: 880px;
+			color: rgba(255, 255, 255, 0.93);
+			position: relative;
+			z-index: 1;
+		}
+
+		.score-row {
+			margin-top: 16px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+			gap: 10px;
+			position: relative;
+			z-index: 1;
+		}
+
+		.pill {
+			border-radius: 999px;
+			border: 1px solid rgba(255, 255, 255, 0.25);
+			background: rgba(255, 255, 255, 0.12);
+			padding: 9px 12px;
+			display: flex;
+			justify-content: space-between;
+			font-size: 0.88rem;
+			font-weight: 700;
+		}
+
+		.panel {
+			background: var(--paper);
+			border: 1px solid var(--line);
+			border-radius: var(--radius-lg);
+			box-shadow: 0 9px 22px rgba(21, 32, 51, 0.07);
+			padding: 18px;
+			margin-bottom: 14px;
+		}
+
+		.head {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
+			flex-wrap: wrap;
+			margin-bottom: 8px;
+		}
+
+		.head p {
+			margin: 0;
+			font-size: 0.92rem;
+			color: var(--muted);
+		}
+
+		.statement-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 12px;
+			margin-top: 10px;
+		}
+
+		.card {
+			border: 1px solid var(--line);
+			border-radius: var(--radius-md);
+			background: var(--fog);
+			padding: 12px;
+		}
+
+		.card h3 {
+			font-size: 1.02rem;
+			margin-bottom: 8px;
+		}
+
+		.line-item {
+			display: flex;
+			justify-content: space-between;
+			padding: 7px 0;
+			border-bottom: 1px dashed #ced8e8;
+			font-size: 0.93rem;
+		}
+
+		.line-item:last-child {
+			border-bottom: none;
+		}
+
+		.line-item strong {
+			font-weight: 700;
+		}
+
+		.task-grid {
+			margin-top: 10px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 10px;
+		}
+
+		label {
+			display: block;
+			font-size: 0.86rem;
+			margin-bottom: 6px;
+			color: #20314b;
+			font-weight: 700;
+		}
+
+		input, select {
+			width: 100%;
+			border: 1px solid #bfd0e2;
+			border-radius: 10px;
+			padding: 9px;
+			font-size: 0.94rem;
+			font-family: inherit;
+			background: #fff;
+			color: var(--ink);
+		}
+
+		.actions {
+			margin-top: 10px;
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		button {
+			border: none;
+			border-radius: 999px;
+			padding: 10px 14px;
+			font-family: inherit;
+			font-weight: 700;
+			cursor: pointer;
+			transition: transform 120ms ease, filter 120ms ease;
+		}
+
+		button:hover {
+			transform: translateY(-1px);
+			filter: brightness(1.03);
+		}
+
+		.primary {
+			background: linear-gradient(120deg, #1f5fbf, #0f766e);
+			color: #fff;
+		}
+
+		.secondary {
+			background: #fff;
+			border: 1px solid #c5d5e6;
+			color: #22344f;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 10px;
+			border-radius: 10px;
+			overflow: hidden;
+		}
+
+		th, td {
+			border: 1px solid #d6dfea;
+			padding: 8px;
+			text-align: center;
+			font-size: 0.9rem;
+		}
+
+		th {
+			background: #e9f1ff;
+			color: #22344f;
+		}
+
+		td:first-child {
+			text-align: left;
+			font-weight: 700;
+			color: #243652;
+		}
+
+		.feedback {
+			margin-top: 10px;
+			min-height: 1.2rem;
+			font-weight: 700;
+			color: var(--muted);
+		}
+
+		.feedback.good { color: var(--good); }
+		.feedback.warn { color: var(--warn); }
+		.feedback.bad { color: var(--bad); }
+
+		.hint {
+			margin-top: 10px;
+			border: 1px dashed #c8d4e6;
+			border-radius: 10px;
+			background: #f8fbff;
+			padding: 10px;
+			font-size: 0.87rem;
+			color: #334155;
+			line-height: 1.4;
+		}
+
+		.quiz-box {
+			border: 1px solid var(--line);
+			border-radius: var(--radius-md);
+			background: #fcfdf9;
+			padding: 12px;
+			margin-top: 10px;
+		}
+
+		.quiz-box p {
+			margin: 0 0 10px;
+			font-weight: 700;
+			line-height: 1.4;
+		}
+
+		.choice-grid {
+			display: grid;
+			gap: 8px;
+		}
+
+		.choice {
+			border-radius: 10px;
+			border: 1px solid #c5d5e6;
+			background: #fff;
+			color: #1f2f45;
+			font-size: 0.9rem;
+			font-weight: 700;
+			text-align: left;
+			padding: 10px;
+		}
+
+		.choice.correct {
+			border-color: #15803d;
+			background: #eefcf2;
+			color: #166534;
+		}
+
+		.choice.wrong {
+			border-color: #b91c1c;
+			background: #fff1f2;
+			color: #991b1b;
+		}
+
+		.mastery {
+			margin-top: 10px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 10px;
+		}
+
+		.tile {
+			border: 1px solid var(--line);
+			border-radius: 10px;
+			background: #fff;
+			padding: 10px;
+		}
+
+		.tile .k {
+			display: block;
+			color: var(--muted);
+			font-size: 0.8rem;
+			margin-bottom: 6px;
+		}
+
+		.tile .v {
+			font-weight: 700;
+			font-size: 1rem;
+		}
+
+		@media (max-width: 860px) {
+			.statement-grid {
+				grid-template-columns: 1fr;
+			}
+
+			.hero,
+			.panel {
+				border-radius: 15px;
+				padding: 15px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="page">
+		<section class="hero">
+			<h1>Turns and Days-of-Supply from Financial Reports</h1>
+			<p>Learning Objective: Evaluate turns and days-of-supply from financial reports by selecting the right financial values, computing metrics, and interpreting operational implications.</p>
+			<div class="score-row">
+				<div class="pill"><span>Cases solved</span><span id="casesSolved">0</span></div>
+				<div class="pill"><span>Computation score</span><span id="computeScore">0</span></div>
+				<div class="pill"><span>Quiz correct</span><span id="quizCorrect">0</span></div>
+				<div class="pill"><span>Total points</span><span id="totalScore">0</span></div>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="head">
+				<h2>1. Financial Report Summary</h2>
+			</div>
+			<div class="statement-grid">
+				<div class="card">
+					<h3>Income Statement (Annual, $ millions)</h3>
+					<div class="line-item"><span>Revenue</span><strong id="revLine">--</strong></div>
+					<div class="line-item"><span>Cost of Goods Sold (COGS)</span><strong id="cogsLine">--</strong></div>
+					<div class="line-item"><span>Gross Profit</span><strong id="gpLine">--</strong></div>
+					<div class="line-item"><span>SG&A Expense</span><strong id="sgaLine">--</strong></div>
+				</div>
+				<div class="card">
+					<h3>Balance Sheet (Annual, $ millions)</h3>
+					<div class="line-item"><span>Beginning Inventory</span><strong id="begInvLine">--</strong></div>
+					<div class="line-item"><span>Ending Inventory</span><strong id="endInvLine">--</strong></div>
+					<div class="line-item"><span>Average Inventory</span><strong id="avgInvLine">--</strong></div>
+					<div class="line-item"><span>Total Current Assets</span><strong id="caLine">--</strong></div>
+				</div>
+			</div>
+
+			<div class="task-grid">
+				<div>
+					<label for="daysAssumption">Days assumption</label>
+					<select id="daysAssumption">
+						<option value="365" selected>365 days</option>
+						<option value="360">360 days</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="actions">
+				<button class="primary" id="newCaseBtn">Generate New Report Case</button>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="head">
+				<h2>2. Metric Calculation Challenge</h2>
+				<p>Using the financial report summary, calculate the following inventory metrics</p>
+			</div>
+
+			<table>
+				<thead>
+					<tr>
+						<th style="text-align:left">Metric</th>
+						<th>Your Answer</th>
+						<th>Result</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Annual Inventory Turns</td>
+						<td><input id="ansTurns" type="number" step="0.001" /></td>
+						<td id="fbTurns">--</td>
+					</tr>
+					<tr>
+						<td>Annual Days-of-Supply (days)</td>
+						<td><input id="ansDos" type="number" step="0.01" /></td>
+						<td id="fbDos">--</td>
+					</tr>
+					<tr>
+						<td>Months-of-Supply</td>
+						<td><input id="ansMos" type="number" step="0.01" /></td>
+						<td id="fbMos">--</td>
+					</tr>
+					<tr>
+						<td>Weeks-of-Supply</td>
+						<td><input id="ansWos" type="number" step="0.01" /></td>
+						<td id="fbWos">--</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="actions">
+				<button class="primary" id="gradeBtn">Grade My Calculations</button>
+				<button class="secondary" id="showWorkBtn">Show Correct Metrics</button>
+				<button class="secondary" id="clearBtn">Clear Answers</button>
+			</div>
+			<div class="feedback" id="calcFeedback"></div>
+			<div class="hint" id="solutionHint" hidden></div>
+		</section>
+
+		<section class="panel">
+			<div class="head">
+				<h2>3. Short Practice Quiz</h2>
+				<p>Answer four questions per round from a 12-question bank.</p>
+			</div>
+			<div class="quiz-box">
+				<p id="quizPrompt"></p>
+				<div class="choice-grid" id="quizChoices"></div>
+			</div>
+			<div class="actions">
+				<button class="secondary" id="nextQuizBtn">Next Question</button>
+			</div>
+			<div class="feedback" id="quizFeedback"></div>
+
+			<div class="mastery">
+				<div class="tile"><span class="k">Round progress</span><span class="v" id="roundProgress">0 / 4</span></div>
+				<div class="tile"><span class="k">Quiz accuracy</span><span class="v" id="quizAccuracy">0%</span></div>
+				<div class="tile"><span class="k">Current case turns</span><span class="v" id="caseTurns">--</span></div>
+				<div class="tile"><span class="k">Current case DOS</span><span class="v" id="caseDos">--</span></div>
+			</div>
+		</section>
+	</main>
+
+	<script>
+		const QUIZ_ROUND_TARGET = 4;
+
+		const quizBank = [
+			{ q: "Which values should be used for inventory turns from financial reports?", options: ["Revenue and ending inventory", "COGS and average inventory", "Gross profit and total assets", "Revenue and beginning inventory"], answer: "COGS and average inventory" },
+			{ q: "If COGS is 900 and average inventory is 150, annual turns equals:", options: ["4", "5", "6", "7"], answer: "6" },
+			{ q: "Days-of-supply is best computed as:", options: ["Turns / days", "Days / turns", "Inventory / COGS", "COGS / days"], answer: "Days / turns" },
+			{ q: "When turns rise, days-of-supply usually:", options: ["Rises", "Falls", "Stays equal", "Becomes negative"], answer: "Falls" },
+			{ q: "A common error in turns analysis is using:", options: ["COGS", "Average inventory", "Revenue instead of COGS", "Beginning and ending inventory"], answer: "Revenue instead of COGS" },
+			{ q: "Average inventory from financial reports is often estimated as:", options: ["Beginning + ending", "(Beginning + ending) / 2", "Ending / 2", "COGS / 2"], answer: "(Beginning + ending) / 2" },
+			{ q: "Months-of-supply from annual turns is:", options: ["12 / turns", "turns / 12", "365 / turns", "52 / turns"], answer: "12 / turns" },
+			{ q: "Weeks-of-supply from annual turns is:", options: ["turns / 52", "52 / turns", "365 / turns", "12 / turns"], answer: "52 / turns" },
+			{ q: "If turns = 8 with a 365-day year, DOS is closest to:", options: ["36.5", "45.6", "52.0", "60.2"], answer: "45.6" },
+			{ q: "Lower DOS generally means inventory is:", options: ["Moving faster", "Moving slower", "Not measurable", "Always overstocked"], answer: "Moving faster" },
+			{ q: "Why might analysts compare 360-day vs 365-day assumptions?", options: ["To inflate revenue", "To test sensitivity and convention differences", "To avoid using COGS", "To remove inventory"], answer: "To test sensitivity and convention differences" },
+			{ q: "If average inventory increases while COGS is unchanged, turns usually:", options: ["Increase", "Decrease", "Stay exactly constant", "Become undefined"], answer: "Decrease" }
+		];
+
+		const state = {
+			caseData: null,
+			casesSolved: 0,
+			computeScore: 0,
+			quizCorrect: 0,
+			totalScore: 0,
+			quizAsked: 0,
+			quizRoundPool: [],
+			quizRoundAnswered: 0,
+			quizQuestionAnswered: false,
+			quizRoundCompleted: false,
+			quizCurrent: null
+		};
+
+		function round(value, digits = 3) {
+			const p = 10 ** digits;
+			return Math.round(value * p) / p;
+		}
+
+		function shuffleArray(items) {
+			const copy = [...items];
+			for (let i = copy.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[copy[i], copy[j]] = [copy[j], copy[i]];
+			}
+			return copy;
+		}
+
+		function moneyM(value) {
+			return `$${Number(value).toFixed(1)}M`;
+		}
+
+		function generateCase() {
+			const revenue = round(220 + Math.random() * 640, 1);
+			const cogs = round(revenue * (0.48 + Math.random() * 0.26), 1);
+			const beginningInventory = round(cogs / (3 + Math.random() * 8), 1);
+			const endingInventory = round(beginningInventory * (0.82 + Math.random() * 0.36), 1);
+			const averageInventory = round((beginningInventory + endingInventory) / 2, 2);
+			const grossProfit = round(revenue - cogs, 1);
+			const sga = round(revenue * (0.13 + Math.random() * 0.11), 1);
+			const currentAssets = round(averageInventory + 40 + Math.random() * 120, 1);
+
+			state.caseData = {
+				revenue,
+				cogs,
+				grossProfit,
+				sga,
+				beginningInventory,
+				endingInventory,
+				averageInventory,
+				currentAssets
+			};
+
+			renderCase();
+			clearCalculationInputs();
+			hideSolution();
+		}
+
+		function renderCase() {
+			const d = state.caseData;
+			document.getElementById("revLine").textContent = moneyM(d.revenue);
+			document.getElementById("cogsLine").textContent = moneyM(d.cogs);
+			document.getElementById("gpLine").textContent = moneyM(d.grossProfit);
+			document.getElementById("sgaLine").textContent = moneyM(d.sga);
+
+			document.getElementById("begInvLine").textContent = moneyM(d.beginningInventory);
+			document.getElementById("endInvLine").textContent = moneyM(d.endingInventory);
+			document.getElementById("avgInvLine").textContent = moneyM(d.averageInventory);
+			document.getElementById("caLine").textContent = moneyM(d.currentAssets);
+
+			const metrics = getCorrectMetrics();
+			document.getElementById("caseTurns").textContent = round(metrics.turns, 3);
+			document.getElementById("caseDos").textContent = `${round(metrics.dos, 2)} days`;
+		}
+
+		function getCorrectMetrics() {
+			const d = state.caseData;
+			const days = Number(document.getElementById("daysAssumption").value);
+			const turns = d.cogs / d.averageInventory;
+			const dos = days / turns;
+			const mos = 12 / turns;
+			const wos = 52 / turns;
+			return { turns, dos, mos, wos };
+		}
+
+		function gradeCalculations() {
+			if (!state.caseData) return;
+
+			const m = getCorrectMetrics();
+
+			const ansTurns = Number(document.getElementById("ansTurns").value);
+			const ansDos = Number(document.getElementById("ansDos").value);
+			const ansMos = Number(document.getElementById("ansMos").value);
+			const ansWos = Number(document.getElementById("ansWos").value);
+
+			const checks = [
+				{ key: "Turns", val: ansTurns, correct: m.turns, tol: 0.03, cell: "fbTurns" },
+				{ key: "DOS", val: ansDos, correct: m.dos, tol: 0.4, cell: "fbDos" },
+				{ key: "MOS", val: ansMos, correct: m.mos, tol: 0.12, cell: "fbMos" },
+				{ key: "WOS", val: ansWos, correct: m.wos, tol: 0.2, cell: "fbWos" }
+			];
+
+			let score = 0;
+
+			checks.forEach((item) => {
+				const ok = Math.abs(item.val - item.correct) <= item.tol;
+				const cell = document.getElementById(item.cell);
+
+				if (Number.isFinite(item.val) && ok) {
+					cell.textContent = "Correct";
+					cell.style.color = "#166534";
+					score += 1;
+				} else if (Number.isFinite(item.val)) {
+					cell.textContent = `Close? target ${round(item.correct, 2)}`;
+					cell.style.color = "#b45309";
+				} else {
+					cell.textContent = "Missing";
+					cell.style.color = "#991b1b";
+				}
+			});
+
+			const pct = Math.round((score / checks.length) * 100);
+			state.computeScore = Math.max(state.computeScore, pct);
+			state.totalScore += score * 7;
+			if (score === checks.length) state.casesSolved += 1;
+
+			if (pct >= 90) {
+				setCalcFeedback(`Excellent accuracy: ${score}/4. You extracted and computed from the report correctly.`, "good");
+			} else if (pct >= 50) {
+				setCalcFeedback(`Good progress: ${score}/4. Recheck whether you used COGS and average inventory consistently.`, "warn");
+			} else {
+				setCalcFeedback(`Current score: ${score}/4. Review formulas and avoid using revenue for turns.`, "bad");
+			}
+
+			updateScoreboard();
+		}
+
+		function setCalcFeedback(message, type) {
+			const el = document.getElementById("calcFeedback");
+			el.textContent = message;
+			el.className = `feedback ${type}`;
+		}
+
+		function clearCalculationInputs() {
+			["ansTurns", "ansDos", "ansMos", "ansWos"].forEach((id) => {
+				document.getElementById(id).value = "";
+			});
+			["fbTurns", "fbDos", "fbMos", "fbWos"].forEach((id) => {
+				const el = document.getElementById(id);
+				el.textContent = "--";
+				el.style.color = "";
+			});
+		}
+
+		function showSolution() {
+			const m = getCorrectMetrics();
+			const hint = document.getElementById("solutionHint");
+			hint.hidden = false;
+			hint.innerHTML = `
+				Correct metrics for this case:<br>
+				Turns = ${round(m.turns, 3)}<br>
+				Days-of-Supply = ${round(m.dos, 2)} days<br>
+				Months-of-Supply = ${round(m.mos, 2)}<br>
+				Weeks-of-Supply = ${round(m.wos, 2)}
+			`;
+		}
+
+		function hideSolution() {
+			const hint = document.getElementById("solutionHint");
+			hint.hidden = true;
+			hint.textContent = "";
+		}
+
+		function startQuizRound() {
+			state.quizRoundPool = shuffleArray(quizBank).slice(0, QUIZ_ROUND_TARGET);
+			state.quizRoundAnswered = 0;
+			state.quizQuestionAnswered = false;
+			state.quizRoundCompleted = false;
+			document.getElementById("nextQuizBtn").textContent = "Next Question";
+			setQuizFeedback("Round started: answer 4 questions.", "warn");
+			loadQuizQuestion();
+			updateScoreboard();
+		}
+
+		function loadQuizQuestion() {
+			const question = state.quizRoundPool[state.quizRoundAnswered];
+			state.quizCurrent = question;
+			state.quizQuestionAnswered = false;
+
+			document.getElementById("quizPrompt").textContent = question.q;
+			const wrap = document.getElementById("quizChoices");
+			wrap.innerHTML = "";
+
+			shuffleArray(question.options).forEach((option) => {
+				const btn = document.createElement("button");
+				btn.type = "button";
+				btn.className = "choice";
+				btn.textContent = option;
+				btn.addEventListener("click", () => gradeQuizChoice(btn, option));
+				wrap.appendChild(btn);
+			});
+		}
+
+		function gradeQuizChoice(button, selected) {
+			if (state.quizQuestionAnswered) return;
+
+			const choices = document.querySelectorAll("#quizChoices .choice");
+			choices.forEach((c) => {
+				c.disabled = true;
+			});
+
+			state.quizQuestionAnswered = true;
+			state.quizRoundAnswered += 1;
+			state.quizAsked += 1;
+
+			if (selected === state.quizCurrent.answer) {
+				button.classList.add("correct");
+				state.quizCorrect += 1;
+				state.totalScore += 8;
+				setQuizFeedback("Correct. Strong interpretation of financial-report metrics.", "good");
+			} else {
+				button.classList.add("wrong");
+				choices.forEach((c) => {
+					if (c.textContent === state.quizCurrent.answer) c.classList.add("correct");
+				});
+				setQuizFeedback(`Not quite. Correct answer: ${state.quizCurrent.answer}.`, "bad");
+			}
+
+			if (state.quizRoundAnswered >= QUIZ_ROUND_TARGET) {
+				state.quizRoundCompleted = true;
+				document.getElementById("nextQuizBtn").textContent = "Start New 4-Question Round";
+				const msg = document.getElementById("quizFeedback").textContent;
+				setQuizFeedback(`${msg} Round complete.`, document.getElementById("quizFeedback").classList.contains("good") ? "good" : "warn");
+			} else {
+				document.getElementById("nextQuizBtn").textContent = `Next Question (${state.quizRoundAnswered}/${QUIZ_ROUND_TARGET})`;
+			}
+
+			updateScoreboard();
+		}
+
+		function nextQuizStep() {
+			if (state.quizRoundCompleted) {
+				startQuizRound();
+				return;
+			}
+
+			if (!state.quizQuestionAnswered) {
+				setQuizFeedback("Answer the current question before moving on.", "warn");
+				return;
+			}
+
+			setQuizFeedback("", "");
+			loadQuizQuestion();
+			updateScoreboard();
+		}
+
+		function setQuizFeedback(message, type) {
+			const el = document.getElementById("quizFeedback");
+			el.textContent = message;
+			el.className = type ? `feedback ${type}` : "feedback";
+		}
+
+		function updateScoreboard() {
+			const acc = state.quizAsked ? Math.round((state.quizCorrect / state.quizAsked) * 100) : 0;
+
+			document.getElementById("casesSolved").textContent = state.casesSolved;
+			document.getElementById("computeScore").textContent = `${state.computeScore}%`;
+			document.getElementById("quizCorrect").textContent = state.quizCorrect;
+			document.getElementById("totalScore").textContent = state.totalScore;
+
+			document.getElementById("roundProgress").textContent = `${state.quizRoundAnswered} / ${QUIZ_ROUND_TARGET}`;
+			document.getElementById("quizAccuracy").textContent = `${acc}%`;
+		}
+
+		function bindEvents() {
+			document.getElementById("newCaseBtn").addEventListener("click", generateCase);
+			document.getElementById("gradeBtn").addEventListener("click", gradeCalculations);
+			document.getElementById("showWorkBtn").addEventListener("click", showSolution);
+			document.getElementById("clearBtn").addEventListener("click", () => {
+				clearCalculationInputs();
+				setCalcFeedback("Answers cleared.", "");
+			});
+			document.getElementById("daysAssumption").addEventListener("change", () => {
+				renderCase();
+				hideSolution();
+				setCalcFeedback("Days assumption changed. Recalculate your answers.", "warn");
+			});
+			document.getElementById("nextQuizBtn").addEventListener("click", nextQuizStep);
+		}
+
+		function init() {
+			bindEvents();
+			generateCase();
+			startQuizRound();
+			updateScoreboard();
+		}
+
+		init();
+	</script>
+</body>
+</html>
