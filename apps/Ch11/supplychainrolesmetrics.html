@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Supply Chain Roles and Metrics Challenge</title>
+	<style>
+		@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&display=swap");
+
+		:root {
+			--bg-1: #f4efe5;
+			--bg-2: #e9f2ff;
+			--ink: #1f2430;
+			--muted: #5b6578;
+			--card: #ffffff;
+			--edge: #d5dfef;
+			--accent: #0d7a6f;
+			--accent-2: #d66c1b;
+			--danger: #b42318;
+			--success: #1e8e3e;
+			--shadow: 0 14px 34px rgba(26, 31, 42, 0.12);
+			--radius: 18px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 12% 18%, rgba(13, 122, 111, 0.15), transparent 34%),
+				radial-gradient(circle at 88% 8%, rgba(214, 108, 27, 0.14), transparent 32%),
+				linear-gradient(155deg, var(--bg-1), var(--bg-2));
+			min-height: 100vh;
+		}
+
+		.app {
+			max-width: 1180px;
+			margin: 0 auto;
+			padding: 24px 16px 44px;
+			animation: fadeIn 0.5s ease;
+		}
+
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+				transform: translateY(12px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.hero {
+			background: linear-gradient(130deg, #143765, #0d7a6f 54%, #d66c1b);
+			color: #fff;
+			border-radius: 24px;
+			padding: 24px;
+			box-shadow: var(--shadow);
+			display: grid;
+			grid-template-columns: 1.5fr 1fr;
+			gap: 18px;
+			align-items: start;
+		}
+
+		.hero h1 {
+			margin: 4px 0 10px;
+			font-family: "DM Serif Display", Georgia, serif;
+			font-size: clamp(1.8rem, 4vw, 2.5rem);
+			line-height: 1.08;
+			letter-spacing: 0.02em;
+		}
+
+		.hero p {
+			margin: 0;
+			line-height: 1.55;
+			color: rgba(255, 255, 255, 0.94);
+			max-width: 70ch;
+		}
+
+		.goal-list {
+			margin: 12px 0 0;
+			padding-left: 18px;
+			line-height: 1.45;
+		}
+
+		.hud {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+
+		.hud-card {
+			background: rgba(255, 255, 255, 0.18);
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			border-radius: 14px;
+			padding: 10px 12px;
+			backdrop-filter: blur(2px);
+		}
+
+		.hud-label {
+			display: block;
+			font-size: 0.78rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			opacity: 0.9;
+			margin-bottom: 4px;
+		}
+
+		.hud-value {
+			font-size: 1.5rem;
+			font-weight: 700;
+		}
+
+		.section {
+			background: var(--card);
+			border: 1px solid var(--edge);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			padding: 20px;
+			margin-top: 18px;
+			animation: liftIn 0.45s ease;
+		}
+
+		@keyframes liftIn {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.section-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+			margin-bottom: 8px;
+		}
+
+		h2 {
+			margin: 0;
+			font-size: 1.35rem;
+			line-height: 1.15;
+		}
+
+		.description {
+			margin: 0 0 14px;
+			color: var(--muted);
+			line-height: 1.5;
+		}
+
+		.progress {
+			width: min(520px, 100%);
+		}
+
+		.progress-top {
+			display: flex;
+			justify-content: space-between;
+			font-size: 0.9rem;
+			color: var(--muted);
+			margin-bottom: 6px;
+		}
+
+		.progress-bar {
+			height: 11px;
+			border-radius: 999px;
+			overflow: hidden;
+			background: #edf1f8;
+			border: 1px solid #d8e1ef;
+		}
+
+		.progress-fill {
+			height: 100%;
+			width: 0;
+			background: linear-gradient(90deg, #0d7a6f, #d66c1b);
+			transition: width 0.25s ease;
+		}
+
+		.choice-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+			gap: 10px;
+			margin-top: 12px;
+		}
+
+		button {
+			border: none;
+			border-radius: 12px;
+			padding: 10px 12px;
+			font-size: 0.98rem;
+			font-family: inherit;
+			cursor: pointer;
+			transition: transform 0.12s ease, box-shadow 0.12s ease;
+		}
+
+		button:hover:not([disabled]) {
+			transform: translateY(-1px);
+			box-shadow: 0 8px 16px rgba(17, 24, 39, 0.12);
+		}
+
+		button:disabled {
+			opacity: 0.62;
+			cursor: not-allowed;
+		}
+
+		.chip-btn {
+			background: #eef2f9;
+			border: 1px solid #cfdaec;
+			color: #233049;
+			text-align: left;
+		}
+
+		.chip-btn.correct {
+			background: #e7f7eb;
+			border-color: #b8e0c4;
+			color: #1c6d35;
+		}
+
+		.chip-btn.wrong {
+			background: #fff1f0;
+			border-color: #f2c3bf;
+			color: #8d231c;
+		}
+
+		.primary {
+			background: linear-gradient(120deg, #1a4e8d, #0d7a6f);
+			color: #fff;
+		}
+
+		.secondary {
+			background: #f0ecdf;
+			color: #2b3449;
+			border: 1px solid #d9d2bf;
+		}
+
+		.tiny {
+			padding: 7px 10px;
+			font-size: 0.88rem;
+		}
+
+		.selected-line {
+			margin-top: 12px;
+			padding: 10px 12px;
+			border: 1px dashed #c4d2e8;
+			border-radius: 12px;
+			background: #f9fbff;
+			line-height: 1.45;
+		}
+
+		.selected-line strong {
+			color: #1d3559;
+		}
+
+		.role-grid {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 10px;
+			margin-top: 12px;
+		}
+
+		.role-row {
+			display: grid;
+			grid-template-columns: 1.2fr 1fr;
+			gap: 10px;
+			align-items: center;
+			background: #f8fbff;
+			border: 1px solid #d7e3f1;
+			border-radius: 12px;
+			padding: 10px;
+		}
+
+		.role-row label {
+			font-weight: 600;
+			color: #1f3253;
+		}
+
+		select {
+			border: 1px solid #bfd0e2;
+			border-radius: 10px;
+			padding: 9px;
+			font-size: 0.95rem;
+			font-family: inherit;
+			background: #fff;
+			width: 100%;
+		}
+
+		.feedback {
+			margin-top: 12px;
+			min-height: 24px;
+			font-weight: 600;
+		}
+
+		.feedback.ok {
+			color: var(--success);
+		}
+
+		.feedback.bad {
+			color: var(--danger);
+		}
+
+		.scenario {
+			background: #f9fbff;
+			border: 1px solid #d8e4f3;
+			border-radius: 12px;
+			padding: 12px;
+			line-height: 1.5;
+			margin-bottom: 12px;
+		}
+
+		.answer-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+			gap: 10px;
+			margin-top: 8px;
+		}
+
+		.label-strong {
+			margin: 14px 0 8px;
+			font-size: 0.96rem;
+			color: #1d3559;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+		}
+
+		.metric-board {
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 10px;
+			margin: 10px 0 14px;
+		}
+
+		.metric-card {
+			background: #f8fbff;
+			border: 1px solid #d8e4f3;
+			border-radius: 12px;
+			padding: 10px;
+		}
+
+		.metric-title {
+			color: #476084;
+			font-size: 0.82rem;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+			display: block;
+			margin-bottom: 6px;
+		}
+
+		.metric-value {
+			font-size: 1.3rem;
+			font-weight: 700;
+			color: #1f3253;
+		}
+
+		.event-box {
+			background: #fff7ec;
+			border: 1px solid #efdbbe;
+			border-radius: 12px;
+			padding: 10px;
+			line-height: 1.45;
+			margin-bottom: 12px;
+		}
+
+		.definition-box {
+			background: #eefaf7;
+			border: 1px solid #bfdfd8;
+			border-radius: 12px;
+			padding: 12px;
+			line-height: 1.45;
+			margin: 10px 0 14px;
+		}
+
+		.definition-box strong {
+			color: #12584f;
+		}
+
+		.decision-buttons {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 10px;
+		}
+
+		.decision {
+			text-align: left;
+			background: #eef4ff;
+			border: 1px solid #ccdbf5;
+			color: #173157;
+		}
+
+		.final-box {
+			background: #eefaf0;
+			border: 1px solid #c6e9cd;
+			border-radius: 12px;
+			padding: 12px;
+			line-height: 1.55;
+			margin-top: 12px;
+			display: none;
+		}
+
+		.flash {
+			animation: flash 0.25s linear;
+		}
+
+		@keyframes flash {
+			0% { transform: scale(1); }
+			50% { transform: scale(1.03); }
+			100% { transform: scale(1); }
+		}
+
+		@media (max-width: 900px) {
+			.hero {
+				grid-template-columns: 1fr;
+			}
+
+			.metric-board {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
+			.role-row {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		@media (max-width: 580px) {
+			.app {
+				padding: 14px 10px 26px;
+			}
+
+			.section {
+				padding: 14px;
+			}
+
+			.metric-board {
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="app">
+		<section class="hero">
+			<div>
+				<p>SCM 352 Interactive Lab</p>
+				<h1>Supply Chain Roles and Performance Metrics Challenge</h1>
+				<p>
+					Complete three escalating missions to master both learning objectives.
+					You will define what a supply chain is, classify each member's role,
+					and justify which metrics best diagnose performance.
+				</p>
+				<ol class="goal-list">
+					<li>Explain supply chain structure and member roles.</li>
+					<li>Select and justify metrics used to assess performance.</li>
+				</ol>
+			</div>
+
+			<div class="hud">
+				<div class="hud-card">
+					<span class="hud-label">Score</span>
+					<span class="hud-value" id="scoreValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Correct</span>
+					<span class="hud-value" id="correctValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Streak</span>
+					<span class="hud-value" id="streakValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Mastery</span>
+					<span class="hud-value" id="masteryValue">0%</span>
+				</div>
+			</div>
+		</section>
+
+		<section class="section" id="mission1">
+			<div class="section-head">
+				<h2>Mission 1: Chain Architect</h2>
+				<button class="secondary tiny" id="resetMission1Btn">Reset Mission 1</button>
+			</div>
+			<p class="description">
+				Build the physical forward flow in the right order. Ignore decoys. Then map each member to its primary responsibility.
+			</p>
+
+			<div class="progress">
+				<div class="progress-top">
+					<span>Mission 1 progress</span>
+					<span id="mission1ProgressText">0/2 complete</span>
+				</div>
+				<div class="progress-bar">
+					<div class="progress-fill" id="mission1ProgressFill"></div>
+				</div>
+			</div>
+
+			<p class="label-strong">A. Build the forward flow</p>
+			<div class="choice-grid" id="flowChoiceGrid"></div>
+			<div class="selected-line" id="selectedFlowLine"><strong>Your chain:</strong> (none selected)</div>
+			<div>
+				<button class="primary" id="checkFlowBtn">Check Flow</button>
+				<button class="secondary" id="clearFlowBtn">Clear Selection</button>
+			</div>
+
+			<p class="label-strong">B. Map each member to the best role</p>
+			<div class="role-grid" id="roleGrid"></div>
+			<button class="primary" id="checkRolesBtn">Check Role Mapping</button>
+
+			<div class="feedback" id="mission1Feedback"></div>
+		</section>
+
+		<section class="section" id="mission2">
+			<div class="section-head">
+				<h2>Mission 2: Metric Matchup</h2>
+				<button class="secondary tiny" id="nextScenarioBtn">Skip to New Scenario</button>
+			</div>
+			<p class="description">
+				For each scenario, choose the strongest metric and then choose the best reason why that metric is the right one.
+			</p>
+
+			<div class="definition-box">
+				<strong>OTIF Definition:</strong> OTIF means On-Time, In-Full. It measures the percentage of orders delivered by the promised date and with complete quantity. Formula: OTIF % = (Orders delivered on time and in full / Total orders) x 100.
+			</div>
+
+			<div class="progress">
+				<div class="progress-top">
+					<span>Mission 2 progress</span>
+					<span id="mission2ProgressText">Question 1 of 6</span>
+				</div>
+				<div class="progress-bar">
+					<div class="progress-fill" id="mission2ProgressFill"></div>
+				</div>
+			</div>
+
+			<div class="scenario" id="scenarioPrompt"></div>
+
+			<p class="label-strong">Choose metric</p>
+			<div class="answer-grid" id="metricOptions"></div>
+
+			<p class="label-strong">Choose why this metric is best</p>
+			<div class="answer-grid" id="whyOptions"></div>
+
+			<div>
+				<button class="primary" id="submitScenarioBtn">Submit Answer</button>
+			</div>
+
+			<div class="feedback" id="mission2Feedback"></div>
+		</section>
+
+		<section class="section" id="mission3">
+			<div class="section-head">
+				<h2>Mission 3: Trade-Off Control Room</h2>
+				<button class="secondary tiny" id="resetSimulationBtn">Restart Simulation</button>
+			</div>
+			<p class="description">
+				Three disruption rounds. Each decision helps some metrics and hurts others. Keep service strong while protecting working capital.
+			</p>
+
+			<div class="metric-board">
+				<div class="metric-card">
+					<span class="metric-title">OTIF %</span>
+					<span class="metric-value" id="otifValue">92</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-title">Fill Rate %</span>
+					<span class="metric-value" id="fillRateValue">94</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-title">Inventory Turns</span>
+					<span class="metric-value" id="turnsValue">8.5</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-title">Cash-to-Cash (days)</span>
+					<span class="metric-value" id="c2cValue">51</span>
+				</div>
+			</div>
+
+			<div class="event-box" id="eventBox"></div>
+			<div class="decision-buttons" id="decisionButtons"></div>
+			<div class="feedback" id="mission3Feedback"></div>
+			<div class="final-box" id="finalBox"></div>
+		</section>
+	</main>
+
+	<script>
+		const state = {
+			score: 0,
+			correct: 0,
+			streak: 0,
+
+			mission1: {
+				selectedFlow: [],
+				flowSolved: false,
+				rolesSolved: false
+			},
+
+			mission2: {
+				currentIndex: 0,
+				solvedCount: 0,
+				selectedMetric: "",
+				selectedWhy: ""
+			},
+
+			mission3: {
+				step: 0,
+				done: false,
+				metrics: {
+					otif: 92,
+					fillRate: 94,
+					turns: 8.5,
+					c2c: 51
+				}
+			}
+		};
+
+		const flowOptions = [
+			"Supplier",
+			"Manufacturer",
+			"Distribution Center",
+			"Retailer",
+			"Customer",
+			"Regulator",
+			"Bank",
+			"Marketing Agency"
+		];
+
+		const flowCorrect = [
+			"Supplier",
+			"Manufacturer",
+			"Distribution Center",
+			"Retailer",
+			"Customer"
+		];
+
+		const roleTargets = [
+			{
+				member: "Supplier",
+				correct: "Provides raw materials and component reliability"
+			},
+			{
+				member: "Manufacturer",
+				correct: "Converts inputs into finished goods efficiently"
+			},
+			{
+				member: "Distribution Center",
+				correct: "Positions inventory and fulfills replenishment orders"
+			},
+			{
+				member: "Retailer",
+				correct: "Interfaces with end demand and captures POS signals"
+			},
+			{
+				member: "Customer",
+				correct: "Generates demand and defines value expectations"
+			}
+		];
+
+		const roleOptions = [
+			"Provides raw materials and component reliability",
+			"Converts inputs into finished goods efficiently",
+			"Positions inventory and fulfills replenishment orders",
+			"Interfaces with end demand and captures POS signals",
+			"Generates demand and defines value expectations",
+			"Audits tax compliance and labor policy"
+		];
+
+		const scenarioBank = [
+			{
+				prompt: "Late deliveries to key retail accounts have increased, even though average production output is stable.",
+				metrics: ["OTIF", "Inventory Turns", "Forecast Bias", "Cash-to-Cash"],
+				why: [
+					"Directly measures promised-date and in-full service reliability",
+					"Shows how quickly inventory cycles through the network",
+					"Reveals whether planning consistently over or under predicts demand",
+					"Captures end-to-end working capital velocity"
+				],
+				answerMetric: "OTIF",
+				answerWhy: "Directly measures promised-date and in-full service reliability"
+			},
+			{
+				prompt: "The CFO wants to free trapped working capital while maintaining service levels.",
+				metrics: ["Order Cycle Time", "Cash-to-Cash", "Perfect Order Rate", "Backorder Rate"],
+				why: [
+					"Tracks days cash is tied up between paying suppliers and collecting from customers",
+					"Measures all dimensions of order execution quality",
+					"Measures speed from order entry to shipment",
+					"Measures unfilled line-item share"
+				],
+				answerMetric: "Cash-to-Cash",
+				answerWhy: "Tracks days cash is tied up between paying suppliers and collecting from customers"
+			},
+			{
+				prompt: "Stockouts are rising on fast-moving SKUs at stores, even with high total inventory in the network.",
+				metrics: ["Fill Rate", "Inventory Turns", "Supplier Lead Time", "Unit Cost"],
+				why: [
+					"Measures share of demand fulfilled immediately from available stock",
+					"Measures average inventory productivity over time",
+					"Measures replenishment delay from suppliers",
+					"Measures procurement and conversion economics"
+				],
+				answerMetric: "Fill Rate",
+				answerWhy: "Measures share of demand fulfilled immediately from available stock"
+			},
+			{
+				prompt: "A planning team suspects persistent over-forecasting that is inflating safety stock.",
+				metrics: ["Forecast Bias", "OTIF", "Perfect Order Rate", "Dock-to-Stock Time"],
+				why: [
+					"Indicates directional tendency to over or under estimate demand",
+					"Shows customer-facing delivery performance",
+					"Shows complete, damage-free, accurate order execution",
+					"Shows receiving and put-away responsiveness"
+				],
+				answerMetric: "Forecast Bias",
+				answerWhy: "Indicates directional tendency to over or under estimate demand"
+			},
+			{
+				prompt: "Leadership wants a holistic customer-facing KPI that combines timeliness, completeness, and condition.",
+				metrics: ["Perfect Order Rate", "Inventory Days of Supply", "Cash-to-Cash", "Supplier Defect PPM"],
+				why: [
+					"Integrates on-time, complete, accurate, and damage-free delivery",
+					"Measures current inventory coverage horizon",
+					"Measures working capital cycle across payables/receivables/inventory",
+					"Measures incoming quality from suppliers"
+				],
+				answerMetric: "Perfect Order Rate",
+				answerWhy: "Integrates on-time, complete, accurate, and damage-free delivery"
+			},
+			{
+				prompt: "Inventory is bloated and obsolete risk is increasing, but service performance appears acceptable.",
+				metrics: ["Inventory Turns", "OTIF", "Fill Rate", "Return Rate"],
+				why: [
+					"Measures how effectively inventory investment is converted into sales",
+					"Measures customer order promise execution",
+					"Measures immediate availability against demand",
+					"Measures reverse-flow quality and dissatisfaction"
+				],
+				answerMetric: "Inventory Turns",
+				answerWhy: "Measures how effectively inventory investment is converted into sales"
+			}
+		];
+
+		const simEvents = [
+			{
+				text: "Round 1: A port delay threatens inbound components for two high-volume SKUs.",
+				options: [
+					{
+						label: "Expedite emergency air freight for both SKUs",
+						effect: { otif: +4, fillRate: +3, turns: -0.6, c2c: +6 },
+						note: "Service recovers quickly, but cash is tied up in premium freight and buffers."
+					},
+					{
+						label: "Prioritize top-margin SKU, defer the second SKU",
+						effect: { otif: -1, fillRate: -2, turns: +0.4, c2c: -2 },
+						note: "Capital discipline improves, but customer-facing availability declines."
+					},
+					{
+						label: "Activate alternate local supplier at higher unit cost",
+						effect: { otif: +2, fillRate: +2, turns: -0.2, c2c: +2 },
+						note: "Balanced continuity plan with moderate cost and service protection."
+					}
+				]
+			},
+			{
+				text: "Round 2: Promotion demand spikes 22% above baseline in two regions.",
+				options: [
+					{
+						label: "Push all regions from central DC only",
+						effect: { otif: -2, fillRate: -3, turns: +0.8, c2c: -3 },
+						note: "Inventory efficiency rises, but service falls due to bottlenecks."
+					},
+					{
+						label: "Pre-position inventory to regional nodes before the peak",
+						effect: { otif: +3, fillRate: +3, turns: -0.7, c2c: +3 },
+						note: "Excellent customer response, but more inventory sits in the pipeline."
+					},
+					{
+						label: "Use dynamic allocation by daily POS data",
+						effect: { otif: +2, fillRate: +1, turns: +0.3, c2c: -1 },
+						note: "Data-driven response protects both service and working capital."
+					}
+				]
+			},
+			{
+				text: "Round 3: Finance requires immediate cash release to fund a new product launch.",
+				options: [
+					{
+						label: "Aggressively reduce inventory targets network-wide",
+						effect: { otif: -3, fillRate: -2, turns: +1.1, c2c: -5 },
+						note: "Cash improves fast, but service risk and stockout probability increase."
+					},
+					{
+						label: "Negotiate supplier payment terms and keep inventory stable",
+						effect: { otif: 0, fillRate: 0, turns: 0, c2c: -4 },
+						note: "Working capital improves without immediate service degradation."
+					},
+					{
+						label: "Cut slow movers and rebalance safety stock by variability",
+						effect: { otif: +1, fillRate: +1, turns: +0.7, c2c: -3 },
+						note: "Portfolio cleanup improves both service focus and capital productivity."
+					}
+				]
+			}
+		];
+
+		function shuffle(list) {
+			const arr = [...list];
+			for (let i = arr.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[arr[i], arr[j]] = [arr[j], arr[i]];
+			}
+			return arr;
+		}
+
+		function award(points) {
+			state.score += points;
+			state.correct += 1;
+			state.streak += 1;
+			renderHud();
+			flashHud();
+		}
+
+		function failAttempt() {
+			state.streak = 0;
+			renderHud();
+		}
+
+		function masteryPercent() {
+			const m1 = Number(state.mission1.flowSolved) + Number(state.mission1.rolesSolved);
+			const m2 = state.mission2.solvedCount / scenarioBank.length;
+			const m3 = Number(state.mission3.done);
+			const total = ((m1 / 2) * 40) + (m2 * 40) + (m3 * 20);
+			return `${Math.round(total)}%`;
+		}
+
+		function renderHud() {
+			document.getElementById("scoreValue").textContent = state.score;
+			document.getElementById("correctValue").textContent = state.correct;
+			document.getElementById("streakValue").textContent = state.streak;
+			document.getElementById("masteryValue").textContent = masteryPercent();
+		}
+
+		function flashHud() {
+			const hero = document.querySelector(".hero");
+			hero.classList.remove("flash");
+			void hero.offsetWidth;
+			hero.classList.add("flash");
+		}
+
+		function setFeedback(id, message, type) {
+			const el = document.getElementById(id);
+			el.textContent = message;
+			el.className = `feedback ${type}`;
+		}
+
+		function initMission1() {
+			const grid = document.getElementById("flowChoiceGrid");
+			grid.innerHTML = "";
+			shuffle(flowOptions).forEach(item => {
+				const btn = document.createElement("button");
+				btn.className = "chip-btn";
+				btn.textContent = item;
+				btn.addEventListener("click", () => addFlowItem(item, btn));
+				grid.appendChild(btn);
+			});
+
+			const roleGrid = document.getElementById("roleGrid");
+			roleGrid.innerHTML = "";
+
+			roleTargets.forEach(target => {
+				const row = document.createElement("div");
+				row.className = "role-row";
+
+				const label = document.createElement("label");
+				label.textContent = target.member;
+
+				const select = document.createElement("select");
+				select.dataset.member = target.member;
+
+				const defaultOpt = document.createElement("option");
+				defaultOpt.value = "";
+				defaultOpt.textContent = "Select primary role...";
+				select.appendChild(defaultOpt);
+
+				shuffle(roleOptions).forEach(option => {
+					const opt = document.createElement("option");
+					opt.value = option;
+					opt.textContent = option;
+					select.appendChild(opt);
+				});
+
+				row.appendChild(label);
+				row.appendChild(select);
+				roleGrid.appendChild(row);
+			});
+
+			updateSelectedFlowLine();
+			updateMission1Progress();
+			setFeedback("mission1Feedback", "", "");
+		}
+
+		function addFlowItem(item, buttonEl) {
+			if (state.mission1.selectedFlow.length >= flowCorrect.length) {
+				return;
+			}
+			if (state.mission1.selectedFlow.includes(item)) {
+				return;
+			}
+
+			state.mission1.selectedFlow.push(item);
+			buttonEl.disabled = true;
+			updateSelectedFlowLine();
+		}
+
+		function updateSelectedFlowLine() {
+			const line = document.getElementById("selectedFlowLine");
+			if (!state.mission1.selectedFlow.length) {
+				line.innerHTML = "<strong>Your chain:</strong> (none selected)";
+			} else {
+				line.innerHTML = `<strong>Your chain:</strong> ${state.mission1.selectedFlow.join(" -> ")}`;
+			}
+		}
+
+		function updateMission1Progress() {
+			const complete = Number(state.mission1.flowSolved) + Number(state.mission1.rolesSolved);
+			document.getElementById("mission1ProgressText").textContent = `${complete}/2 complete`;
+			document.getElementById("mission1ProgressFill").style.width = `${complete * 50}%`;
+		}
+
+		function checkFlow() {
+			const selected = state.mission1.selectedFlow;
+			const ok = JSON.stringify(selected) === JSON.stringify(flowCorrect);
+
+			if (ok && !state.mission1.flowSolved) {
+				state.mission1.flowSolved = true;
+				award(15);
+				setFeedback("mission1Feedback", "Flow correct. You built the canonical forward physical flow from source to demand.", "ok");
+			} else if (!ok) {
+				failAttempt();
+				setFeedback("mission1Feedback", "Flow is incorrect. Rebuild using only physical-flow members in true sequence.", "bad");
+			}
+
+			const buttons = [...document.querySelectorAll("#flowChoiceGrid .chip-btn")];
+			buttons.forEach(btn => {
+				if (flowCorrect.includes(btn.textContent)) {
+					btn.classList.add("correct");
+				}
+			});
+
+			updateMission1Progress();
+			renderHud();
+		}
+
+		function clearFlow() {
+			state.mission1.selectedFlow = [];
+			const buttons = [...document.querySelectorAll("#flowChoiceGrid .chip-btn")];
+			buttons.forEach(btn => {
+				btn.disabled = false;
+				btn.classList.remove("wrong");
+			});
+			updateSelectedFlowLine();
+			setFeedback("mission1Feedback", "Flow selection cleared.", "");
+		}
+
+		function checkRoles() {
+			const selects = [...document.querySelectorAll("#roleGrid select")];
+			let correctCount = 0;
+
+			selects.forEach(select => {
+				const member = select.dataset.member;
+				const target = roleTargets.find(r => r.member === member);
+				if (target && select.value === target.correct) {
+					correctCount += 1;
+					select.style.borderColor = "#63b77c";
+				} else {
+					select.style.borderColor = "#d17e75";
+				}
+			});
+
+			if (correctCount === roleTargets.length && !state.mission1.rolesSolved) {
+				state.mission1.rolesSolved = true;
+				award(20);
+				setFeedback("mission1Feedback", "Role mapping correct. You linked each member to its core value-creation role.", "ok");
+			} else if (correctCount === roleTargets.length) {
+				setFeedback("mission1Feedback", "Role mapping already mastered.", "ok");
+			} else {
+				failAttempt();
+				setFeedback(
+					"mission1Feedback",
+					`${correctCount}/${roleTargets.length} roles are correct. Re-check where demand sensing, production, and fulfillment belong.`,
+					"bad"
+				);
+			}
+
+			updateMission1Progress();
+			renderHud();
+		}
+
+		function loadMission2Scenario() {
+			const i = state.mission2.currentIndex;
+			const scenario = scenarioBank[i];
+			if (!scenario) {
+				document.getElementById("scenarioPrompt").textContent = "Mission complete. Continue to Mission 3 to apply metric trade-offs in a live simulation.";
+				document.getElementById("metricOptions").innerHTML = "";
+				document.getElementById("whyOptions").innerHTML = "";
+				document.getElementById("submitScenarioBtn").disabled = true;
+				document.getElementById("nextScenarioBtn").disabled = true;
+				setFeedback("mission2Feedback", "All metric scenarios completed.", "ok");
+				document.getElementById("mission2ProgressText").textContent = `Question ${scenarioBank.length} of ${scenarioBank.length}`;
+				document.getElementById("mission2ProgressFill").style.width = "100%";
+				renderHud();
+				return;
+			}
+
+			state.mission2.selectedMetric = "";
+			state.mission2.selectedWhy = "";
+
+			document.getElementById("scenarioPrompt").textContent = scenario.prompt;
+			document.getElementById("mission2ProgressText").textContent = `Question ${i + 1} of ${scenarioBank.length}`;
+			document.getElementById("mission2ProgressFill").style.width = `${((i + 1) / scenarioBank.length) * 100}%`;
+
+			renderOptionButtons(
+				"metricOptions",
+				scenario.metrics,
+				choice => {
+					state.mission2.selectedMetric = choice;
+					highlightSelected("metricOptions", choice);
+				}
+			);
+
+			renderOptionButtons(
+				"whyOptions",
+				scenario.why,
+				choice => {
+					state.mission2.selectedWhy = choice;
+					highlightSelected("whyOptions", choice);
+				}
+			);
+
+			setFeedback("mission2Feedback", "", "");
+		}
+
+		function renderOptionButtons(containerId, options, onClick) {
+			const container = document.getElementById(containerId);
+			container.innerHTML = "";
+			shuffle(options).forEach(option => {
+				const btn = document.createElement("button");
+				btn.className = "chip-btn";
+				btn.textContent = option;
+				btn.addEventListener("click", () => onClick(option));
+				container.appendChild(btn);
+			});
+		}
+
+		function highlightSelected(containerId, value) {
+			const buttons = [...document.querySelectorAll(`#${containerId} .chip-btn`)];
+			buttons.forEach(btn => {
+				if (btn.textContent === value) {
+					btn.classList.add("correct");
+				} else {
+					btn.classList.remove("correct");
+				}
+			});
+		}
+
+		function submitMission2() {
+			const scenario = scenarioBank[state.mission2.currentIndex];
+			if (!scenario) return;
+
+			if (!state.mission2.selectedMetric || !state.mission2.selectedWhy) {
+				setFeedback("mission2Feedback", "Choose both a metric and a why statement before submitting.", "bad");
+				return;
+			}
+
+			const metricOk = state.mission2.selectedMetric === scenario.answerMetric;
+			const whyOk = state.mission2.selectedWhy === scenario.answerWhy;
+
+			if (metricOk && whyOk) {
+				award(12);
+				state.mission2.solvedCount += 1;
+				setFeedback("mission2Feedback", "Excellent. You selected the right metric and justified it with the strongest logic.", "ok");
+			} else if (metricOk || whyOk) {
+				award(4);
+				failAttempt();
+				setFeedback(
+					"mission2Feedback",
+					`Partial: ${metricOk ? "metric correct" : "metric incorrect"}, ${whyOk ? "reason correct" : "reason incorrect"}. Correct pair: ${scenario.answerMetric} + ${scenario.answerWhy}.`,
+					"bad"
+				);
+			} else {
+				failAttempt();
+				setFeedback(
+					"mission2Feedback",
+					`Incorrect pair. Correct pair: ${scenario.answerMetric} + ${scenario.answerWhy}.`,
+					"bad"
+				);
+			}
+
+			state.mission2.currentIndex += 1;
+			renderHud();
+			setTimeout(loadMission2Scenario, 900);
+		}
+
+		function nextScenario() {
+			if (state.mission2.currentIndex < scenarioBank.length - 1) {
+				state.mission2.currentIndex += 1;
+				loadMission2Scenario();
+			}
+		}
+
+		function renderMission3() {
+			const m = state.mission3.metrics;
+			document.getElementById("otifValue").textContent = m.otif.toFixed(0);
+			document.getElementById("fillRateValue").textContent = m.fillRate.toFixed(0);
+			document.getElementById("turnsValue").textContent = m.turns.toFixed(1);
+			document.getElementById("c2cValue").textContent = m.c2c.toFixed(0);
+
+			const step = state.mission3.step;
+			const event = simEvents[step];
+
+			if (!event) {
+				finishMission3();
+				return;
+			}
+
+			document.getElementById("eventBox").textContent = event.text;
+			const wrap = document.getElementById("decisionButtons");
+			wrap.innerHTML = "";
+
+			event.options.forEach((option, index) => {
+				const btn = document.createElement("button");
+				btn.className = "decision";
+				btn.textContent = `${index + 1}. ${option.label}`;
+				btn.addEventListener("click", () => chooseDecision(option));
+				wrap.appendChild(btn);
+			});
+
+			setFeedback("mission3Feedback", "", "");
+		}
+
+		function chooseDecision(option) {
+			const metrics = state.mission3.metrics;
+			metrics.otif = clamp(metrics.otif + option.effect.otif, 78, 99);
+			metrics.fillRate = clamp(metrics.fillRate + option.effect.fillRate, 80, 99);
+			metrics.turns = clamp(metrics.turns + option.effect.turns, 4.5, 13.5);
+			metrics.c2c = clamp(metrics.c2c + option.effect.c2c, 28, 84);
+
+			award(8);
+			state.mission3.step += 1;
+			setFeedback("mission3Feedback", option.note, "ok");
+
+			renderMission3();
+			renderHud();
+		}
+
+		function clamp(value, min, max) {
+			return Math.min(max, Math.max(min, value));
+		}
+
+		function finishMission3() {
+			const m = state.mission3.metrics;
+			const score =
+				Number(m.otif >= 93) +
+				Number(m.fillRate >= 95) +
+				Number(m.turns >= 8.5) +
+				Number(m.c2c <= 50);
+
+			const final = document.getElementById("finalBox");
+			final.style.display = "block";
+
+			let verdict = "Needs rework";
+			let insight = "You protected one dimension but left major trade-offs unmanaged.";
+
+			if (score >= 4) {
+				verdict = "Balanced excellence";
+				insight = "You maintained customer service while improving capital efficiency across the chain.";
+				award(20);
+			} else if (score === 3) {
+				verdict = "Strong but uneven";
+				insight = "Good control overall. One weak metric shows where functional coordination can improve.";
+				award(10);
+			}
+
+			final.innerHTML =
+				`<strong>${verdict}</strong><br>` +
+				`${insight}<br><br>` +
+				`Why metrics matter: OTIF and Fill Rate protect customer experience, while Inventory Turns and Cash-to-Cash reveal whether performance is financially sustainable.`;
+
+			state.mission3.done = true;
+			document.getElementById("eventBox").textContent = "Simulation complete. Review your outcomes and replay to test a different strategy.";
+			document.getElementById("decisionButtons").innerHTML = "";
+			setFeedback("mission3Feedback", "Mission 3 complete.", "ok");
+			renderHud();
+		}
+
+		function resetMission1() {
+			state.mission1.selectedFlow = [];
+			state.mission1.flowSolved = false;
+			state.mission1.rolesSolved = false;
+			initMission1();
+			renderHud();
+		}
+
+		function resetSimulation() {
+			state.mission3.step = 0;
+			state.mission3.done = false;
+			state.mission3.metrics = { otif: 92, fillRate: 94, turns: 8.5, c2c: 51 };
+			document.getElementById("finalBox").style.display = "none";
+			document.getElementById("finalBox").innerHTML = "";
+			renderMission3();
+			renderHud();
+		}
+
+		function bindEvents() {
+			document.getElementById("checkFlowBtn").addEventListener("click", checkFlow);
+			document.getElementById("clearFlowBtn").addEventListener("click", clearFlow);
+			document.getElementById("checkRolesBtn").addEventListener("click", checkRoles);
+			document.getElementById("resetMission1Btn").addEventListener("click", resetMission1);
+
+			document.getElementById("submitScenarioBtn").addEventListener("click", submitMission2);
+			document.getElementById("nextScenarioBtn").addEventListener("click", nextScenario);
+
+			document.getElementById("resetSimulationBtn").addEventListener("click", resetSimulation);
+		}
+
+		function init() {
+			bindEvents();
+			initMission1();
+			loadMission2Scenario();
+			renderMission3();
+			renderHud();
+		}
+
+		init();
+	</script>
+</body>
+</html>

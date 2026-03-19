@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Supply Chain Strategy Command Lab</title>
+	<style>
+		@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Bitter:wght@500;700&display=swap");
+
+		:root {
+			--bg-a: #f3efe4;
+			--bg-b: #e7f0fb;
+			--card: #ffffff;
+			--ink: #1d2430;
+			--muted: #596273;
+			--edge: #cfd8ea;
+			--brand: #146c63;
+			--brand-2: #b95e1f;
+			--ok: #1f8f3f;
+			--bad: #b3261e;
+			--shadow: 0 16px 34px rgba(21, 28, 38, 0.12);
+			--radius: 18px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Archivo", "Trebuchet MS", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 6% 12%, rgba(20, 108, 99, 0.14), transparent 31%),
+				radial-gradient(circle at 89% 9%, rgba(185, 94, 31, 0.14), transparent 30%),
+				linear-gradient(158deg, var(--bg-a), var(--bg-b));
+			min-height: 100vh;
+		}
+
+		.app {
+			max-width: 1180px;
+			margin: 0 auto;
+			padding: 24px 16px 42px;
+		}
+
+		.hero {
+			background: linear-gradient(132deg, #12345f, #146c63 52%, #b95e1f);
+			color: #fff;
+			border-radius: 24px;
+			box-shadow: var(--shadow);
+			padding: 24px;
+			display: grid;
+			grid-template-columns: 1.4fr 1fr;
+			gap: 18px;
+			align-items: start;
+			animation: rise 0.5s ease;
+		}
+
+		@keyframes rise {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.hero h1 {
+			margin: 4px 0 10px;
+			font-family: "Bitter", Georgia, serif;
+			font-size: clamp(1.8rem, 3.8vw, 2.5rem);
+			line-height: 1.12;
+		}
+
+		.hero p {
+			margin: 0;
+			line-height: 1.5;
+			max-width: 72ch;
+			color: rgba(255, 255, 255, 0.94);
+		}
+
+		.goal-list {
+			margin: 12px 0 0;
+			padding-left: 18px;
+			line-height: 1.45;
+		}
+
+		.hud {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+
+		.hud-card {
+			background: rgba(255, 255, 255, 0.18);
+			border: 1px solid rgba(255, 255, 255, 0.3);
+			border-radius: 13px;
+			padding: 11px 12px;
+			backdrop-filter: blur(2px);
+		}
+
+		.hud-label {
+			display: block;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			font-size: 0.75rem;
+			opacity: 0.92;
+			margin-bottom: 4px;
+		}
+
+		.hud-value {
+			font-size: 1.45rem;
+			font-weight: 800;
+		}
+
+		.section {
+			margin-top: 18px;
+			background: var(--card);
+			border: 1px solid var(--edge);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			padding: 20px;
+			animation: rise 0.45s ease;
+		}
+
+		.section-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-bottom: 8px;
+		}
+
+		h2 {
+			margin: 0;
+			font-size: 1.3rem;
+		}
+
+		.description {
+			margin: 0 0 14px;
+			color: var(--muted);
+			line-height: 1.55;
+		}
+
+		.mini-progress {
+			width: min(530px, 100%);
+			margin-bottom: 12px;
+		}
+
+		.mini-progress-head {
+			display: flex;
+			justify-content: space-between;
+			color: var(--muted);
+			font-size: 0.9rem;
+			margin-bottom: 6px;
+		}
+
+		.bar {
+			height: 11px;
+			border-radius: 999px;
+			border: 1px solid #d8dfeb;
+			background: #edf2f9;
+			overflow: hidden;
+		}
+
+		.fill {
+			height: 100%;
+			width: 0;
+			transition: width 0.22s ease;
+			background: linear-gradient(90deg, #146c63, #b95e1f);
+		}
+
+		.prompt-box {
+			background: #f7fbff;
+			border: 1px solid #d3e1f3;
+			border-radius: 12px;
+			padding: 12px;
+			line-height: 1.45;
+			margin-bottom: 10px;
+		}
+
+		.tag {
+			display: inline-block;
+			font-size: 0.78rem;
+			text-transform: uppercase;
+			letter-spacing: 0.07em;
+			background: #f1f6ff;
+			border: 1px solid #cad9f0;
+			color: #36527e;
+			border-radius: 999px;
+			padding: 4px 9px;
+			margin-bottom: 8px;
+		}
+
+		.decision-grid,
+		.option-grid {
+			display: grid;
+			gap: 10px;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			margin-top: 10px;
+		}
+
+		button {
+			border: none;
+			border-radius: 11px;
+			padding: 10px 12px;
+			font-family: inherit;
+			font-size: 0.95rem;
+			cursor: pointer;
+			transition: transform 0.12s ease, box-shadow 0.12s ease;
+		}
+
+		button:hover:not([disabled]) {
+			transform: translateY(-1px);
+			box-shadow: 0 8px 16px rgba(21, 28, 38, 0.13);
+		}
+
+		button:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+
+		.primary {
+			background: linear-gradient(120deg, #1b4f8f, #146c63);
+			color: #fff;
+		}
+
+		.secondary {
+			background: #eee8d8;
+			border: 1px solid #d8cfb8;
+			color: #2b3545;
+		}
+
+		.chip {
+			text-align: left;
+			background: #edf2fa;
+			border: 1px solid #ccd8eb;
+			color: #23334e;
+		}
+
+		.chip.active {
+			background: #e6f7f4;
+			border-color: #9ed2ca;
+			color: #105249;
+		}
+
+		.chip.correct {
+			background: #e9f8ec;
+			border-color: #b9e0c0;
+			color: #1d6e35;
+		}
+
+		.chip.wrong {
+			background: #fff0ee;
+			border-color: #f0c0bc;
+			color: #90251d;
+		}
+
+		.controls {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-top: 10px;
+		}
+
+		.feedback {
+			margin-top: 12px;
+			min-height: 24px;
+			font-weight: 700;
+		}
+
+		.feedback.ok {
+			color: var(--ok);
+		}
+
+		.feedback.bad {
+			color: var(--bad);
+		}
+
+		.metric-grid {
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 10px;
+			margin: 10px 0 14px;
+		}
+
+		.metric-card {
+			background: #f8fbff;
+			border: 1px solid #d4e2f5;
+			border-radius: 12px;
+			padding: 10px;
+		}
+
+		.metric-label {
+			display: block;
+			font-size: 0.78rem;
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+			color: #486489;
+			margin-bottom: 5px;
+		}
+
+		.metric-value {
+			font-size: 1.3rem;
+			font-weight: 800;
+			color: #1e3150;
+		}
+
+		.final-box {
+			display: none;
+			margin-top: 12px;
+			background: #eef9f2;
+			border: 1px solid #c6e4ce;
+			border-radius: 12px;
+			padding: 12px;
+			line-height: 1.5;
+		}
+
+		.flash {
+			animation: pulse 0.24s linear;
+		}
+
+		@keyframes pulse {
+			0% { transform: scale(1); }
+			50% { transform: scale(1.02); }
+			100% { transform: scale(1); }
+		}
+
+		@media (max-width: 920px) {
+			.hero {
+				grid-template-columns: 1fr;
+			}
+
+			.metric-grid {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+
+		@media (max-width: 560px) {
+			.app {
+				padding: 14px 10px 24px;
+			}
+
+			.section {
+				padding: 14px;
+			}
+
+			.metric-grid {
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="app">
+		<section class="hero">
+			<div>
+				<p>SCM 352 Interactive Studio</p>
+				<h1>Supply Chain Strategy Command Lab</h1>
+				<p>
+					Train strategic judgment across planning horizons. Distinguish tactical and strategic decisions,
+					then choose improvement strategies that strengthen performance under real constraints.
+				</p>
+				<ol class="goal-list">
+					<li>Differentiate tactical and strategic supply chain decisions.</li>
+					<li>Choose strategies companies use to improve supply chain performance.</li>
+				</ol>
+			</div>
+
+			<div class="hud">
+				<div class="hud-card">
+					<span class="hud-label">Score</span>
+					<span class="hud-value" id="scoreValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Correct</span>
+					<span class="hud-value" id="correctValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Streak</span>
+					<span class="hud-value" id="streakValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Mastery</span>
+					<span class="hud-value" id="masteryValue">0%</span>
+				</div>
+			</div>
+		</section>
+
+		<section class="section" id="mission1">
+			<div class="section-head">
+				<h2>Mission 1: Decision Horizon Radar</h2>
+				<button class="secondary" id="resetMission1Btn">Reset Mission 1</button>
+			</div>
+			<p class="description">
+				For each decision card, classify both its level and expected time horizon. This forces you to distinguish
+				one-time structural choices from near-term operating choices.
+			</p>
+
+			<div class="mini-progress">
+				<div class="mini-progress-head">
+					<span>Mission 1 progress</span>
+					<span id="mission1ProgressText">Card 1 of 8</span>
+				</div>
+				<div class="bar"><div class="fill" id="mission1Fill"></div></div>
+			</div>
+
+			<div class="prompt-box" id="m1Prompt"></div>
+
+			<div class="tag">Pick decision level</div>
+			<div class="decision-grid" id="m1LevelOptions"></div>
+
+			<div class="tag">Pick time horizon</div>
+			<div class="decision-grid" id="m1HorizonOptions"></div>
+
+			<div class="controls">
+				<button class="primary" id="m1SubmitBtn">Submit Card</button>
+			</div>
+
+			<div class="feedback" id="m1Feedback"></div>
+		</section>
+
+		<section class="section" id="mission2">
+			<div class="section-head">
+				<h2>Mission 2: Strategy Selector</h2>
+				<button class="secondary" id="skipScenarioBtn">Skip Scenario</button>
+			</div>
+			<p class="description">
+				For each scenario choose the best improvement strategy and then the strongest reason it improves performance in that context.
+			</p>
+
+			<div class="mini-progress">
+				<div class="mini-progress-head">
+					<span>Mission 2 progress</span>
+					<span id="mission2ProgressText">Scenario 1 of 6</span>
+				</div>
+				<div class="bar"><div class="fill" id="mission2Fill"></div></div>
+			</div>
+
+			<div class="prompt-box" id="m2Prompt"></div>
+
+			<div class="tag">Best strategy</div>
+			<div class="option-grid" id="m2StrategyOptions"></div>
+
+			<div class="tag">Best why</div>
+			<div class="option-grid" id="m2WhyOptions"></div>
+
+			<div class="controls">
+				<button class="primary" id="m2SubmitBtn">Submit Scenario</button>
+			</div>
+
+			<div class="feedback" id="m2Feedback"></div>
+		</section>
+
+		<section class="section" id="mission3">
+			<div class="section-head">
+				<h2>Mission 3: Performance War Room</h2>
+				<button class="secondary" id="resetSimBtn">Restart Simulation</button>
+			</div>
+			<p class="description">
+				You have three rounds to improve performance with strategy choices under volatility. Every move changes
+				service, cost, inventory productivity, and resilience.
+			</p>
+
+			<div class="metric-grid">
+				<div class="metric-card">
+					<span class="metric-label">Service Level %</span>
+					<span class="metric-value" id="serviceValue">90</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Supply Chain Cost % of Sales</span>
+					<span class="metric-value" id="costValue">13.0</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Inventory Turns</span>
+					<span class="metric-value" id="turnsValue">7.8</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Resilience Index</span>
+					<span class="metric-value" id="resilienceValue">58</span>
+				</div>
+			</div>
+
+			<div class="prompt-box" id="m3EventBox"></div>
+			<div class="option-grid" id="m3DecisionOptions"></div>
+			<div class="feedback" id="m3Feedback"></div>
+			<div class="final-box" id="m3Final"></div>
+		</section>
+	</main>
+
+	<script>
+		const state = {
+			score: 0,
+			correct: 0,
+			streak: 0,
+			mission1Done: 0,
+			mission2Done: 0,
+			mission3Done: false,
+
+			mission1: {
+				index: 0,
+				levelChoice: "",
+				horizonChoice: "",
+				bank: []
+			},
+
+			mission2: {
+				index: 0,
+				strategyChoice: "",
+				whyChoice: "",
+				bank: []
+			},
+
+			mission3: {
+				step: 0,
+				metrics: {
+					service: 90,
+					cost: 13.0,
+					turns: 7.8,
+					resilience: 58
+				}
+			}
+		};
+
+		const decisionCards = [
+			{
+				prompt: "Choose a new global distribution network footprint for the next 5 years.",
+				level: "Strategic",
+				horizon: "Long-term"
+			},
+			{
+				prompt: "Adjust weekly production schedule due to a temporary demand spike.",
+				level: "Tactical",
+				horizon: "Short-term"
+			},
+			{
+				prompt: "Select whether to build dual-sourcing capability for a critical component family.",
+				level: "Strategic",
+				horizon: "Long-term"
+			},
+			{
+				prompt: "Reallocate finished goods inventory across two regional DCs this month.",
+				level: "Tactical",
+				horizon: "Short-term"
+			},
+			{
+				prompt: "Commit to an end-to-end visibility platform integration across suppliers.",
+				level: "Strategic",
+				horizon: "Long-term"
+			},
+			{
+				prompt: "Tune reorder points and safety stock parameters for next quarter.",
+				level: "Tactical",
+				horizon: "Short-term"
+			},
+			{
+				prompt: "Redesign product architecture to support postponement at final assembly.",
+				level: "Strategic",
+				horizon: "Long-term"
+			},
+			{
+				prompt: "Prioritize constrained capacity across SKUs for the next two weeks.",
+				level: "Tactical",
+				horizon: "Short-term"
+			}
+		];
+
+		const strategyScenarios = [
+			{
+				prompt: "Forecast error is high for configurable products, causing expensive finished-goods obsolescence.",
+				strategies: ["Postponement", "Single Sourcing", "Longer Production Runs", "Centralized Purchasing Only"],
+				whys: [
+					"Delays final differentiation until demand is clearer, reducing mismatch risk",
+					"Concentrates spend for lower unit price but increases concentration risk",
+					"Improves line efficiency but can worsen inventory mismatch",
+					"Standardizes buying process but does not solve demand variability"
+				],
+				answerStrategy: "Postponement",
+				answerWhy: "Delays final differentiation until demand is clearer, reducing mismatch risk"
+			},
+			{
+				prompt: "A key component shortage repeatedly shuts down production.",
+				strategies: ["Dual Sourcing", "Reduce Quality Inspections", "Increase Promotions", "Freeze Product Portfolio"],
+				whys: [
+					"Creates qualified alternate supply paths and lowers disruption exposure",
+					"Cuts processing time but increases defect and recall risk",
+					"Can increase demand but does not address constrained supply",
+					"Simplifies planning but does not build supplier redundancy"
+				],
+				answerStrategy: "Dual Sourcing",
+				answerWhy: "Creates qualified alternate supply paths and lowers disruption exposure"
+			},
+			{
+				prompt: "Customer lead times are inconsistent across channels because functional plans are misaligned.",
+				strategies: ["S&OP Discipline", "Bigger Lot Sizes", "Vendor Rebates", "No-Forecast Policy"],
+				whys: [
+					"Integrates demand, supply, finance, and inventory plans into one cadence",
+					"Can reduce setup frequency but may increase cycle stock and delay response",
+					"Improves purchase economics but does not coordinate operating plans",
+					"Removes planning structure and increases volatility"
+				],
+				answerStrategy: "S&OP Discipline",
+				answerWhy: "Integrates demand, supply, finance, and inventory plans into one cadence"
+			},
+			{
+				prompt: "Service levels vary by region because the current node layout is outdated after market growth.",
+				strategies: ["Network Redesign", "Manual Expediting", "Lower Fill Rate Target", "Supplier Penalties Only"],
+				whys: [
+					"Realigns facility locations and flow paths with demand geography",
+					"Can fix urgent orders but is costly and not structurally stable",
+					"Lowers customer experience and does not improve capability",
+					"May change behavior but not necessarily physical network fit"
+				],
+				answerStrategy: "Network Redesign",
+				answerWhy: "Realigns facility locations and flow paths with demand geography"
+			},
+			{
+				prompt: "Planners cannot detect in-transit exceptions early enough to avoid stockouts.",
+				strategies: ["End-to-End Visibility Tools", "Lower Safety Stock", "Shrink Supplier Base to One", "Less Frequent Planning"],
+				whys: [
+					"Improves real-time exception detection and coordinated response speed",
+					"Reduces inventory buffer and can increase stockout risk",
+					"Simplifies coordination but creates major concentration risk",
+					"Reduces planning effort but delays issue detection"
+				],
+				answerStrategy: "End-to-End Visibility Tools",
+				answerWhy: "Improves real-time exception detection and coordinated response speed"
+			},
+			{
+				prompt: "Frequent supplier defects create warranty cost and unstable downstream flow.",
+				strategies: ["Supplier Development", "High Overtime", "More Finished-Goods Buffer", "Ignore Minor Defects"],
+				whys: [
+					"Builds upstream process capability and quality consistency at the source",
+					"Raises short-term output but does not address root-cause quality",
+					"Masks problems with inventory and ties up working capital",
+					"Increases latent quality failure risk"
+				],
+				answerStrategy: "Supplier Development",
+				answerWhy: "Builds upstream process capability and quality consistency at the source"
+			}
+		];
+
+		const simEvents = [
+			{
+				event: "Round 1: Demand volatility rises 25% after a competitor exit.",
+				options: [
+					{
+						label: "Deploy postponement and dynamic allocation",
+						effect: { service: +4, cost: +0.3, turns: +0.5, resilience: +4 },
+						note: "Great agility response. Slight cost pressure from flexibility infrastructure."
+					},
+					{
+						label: "Run larger fixed batches to maximize line efficiency",
+						effect: { service: -2, cost: -0.4, turns: -0.6, resilience: -1 },
+						note: "Unit cost falls, but responsiveness and inventory productivity weaken."
+					},
+					{
+						label: "Expedite freight only when stockouts occur",
+						effect: { service: +1, cost: +0.7, turns: -0.2, resilience: 0 },
+						note: "Symptom treatment helps service but is expensive and reactive."
+					}
+				]
+			},
+			{
+				event: "Round 2: A tier-2 supplier plant outage cuts component availability.",
+				options: [
+					{
+						label: "Activate dual-source contracts and qualified alternates",
+						effect: { service: +3, cost: +0.2, turns: +0.2, resilience: +8 },
+						note: "Strong continuity move that significantly boosts resilience."
+					},
+					{
+						label: "Hold pricing and accept temporary backorders",
+						effect: { service: -4, cost: -0.1, turns: +0.1, resilience: -3 },
+						note: "Short-term margin protected, but service and continuity suffer."
+					},
+					{
+						label: "Buy spot-market supply at any cost",
+						effect: { service: +2, cost: +1.1, turns: -0.1, resilience: +1 },
+						note: "Recovers supply quickly, but total cost escalates sharply."
+					}
+				]
+			},
+			{
+				event: "Round 3: Executive team demands both higher service and lower cost next year.",
+				options: [
+					{
+						label: "Institutionalize monthly S&OP with shared performance targets",
+						effect: { service: +2, cost: -0.4, turns: +0.6, resilience: +3 },
+						note: "Cross-functional alignment improves multiple dimensions at once."
+					},
+					{
+						label: "Cut planning headcount and reduce cadence",
+						effect: { service: -3, cost: -0.3, turns: -0.4, resilience: -2 },
+						note: "Cost appears lower short-term, but performance control degrades."
+					},
+					{
+						label: "Raise inventory targets across all categories",
+						effect: { service: +2, cost: +0.5, turns: -0.9, resilience: +1 },
+						note: "Service can improve, but cost and capital productivity worsen."
+					}
+				]
+			}
+		];
+
+		function shuffle(arr) {
+			const copy = [...arr];
+			for (let i = copy.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[copy[i], copy[j]] = [copy[j], copy[i]];
+			}
+			return copy;
+		}
+
+		function clamp(value, min, max) {
+			return Math.max(min, Math.min(max, value));
+		}
+
+		function award(points) {
+			state.score += points;
+			state.correct += 1;
+			state.streak += 1;
+			renderHud();
+			flashHero();
+		}
+
+		function breakStreak() {
+			state.streak = 0;
+			renderHud();
+		}
+
+		function flashHero() {
+			const hero = document.querySelector(".hero");
+			hero.classList.remove("flash");
+			void hero.offsetWidth;
+			hero.classList.add("flash");
+		}
+
+		function mastery() {
+			const m1 = (state.mission1Done / decisionCards.length) * 35;
+			const m2 = (state.mission2Done / strategyScenarios.length) * 45;
+			const m3 = state.mission3Done ? 20 : 0;
+			return `${Math.round(m1 + m2 + m3)}%`;
+		}
+
+		function renderHud() {
+			document.getElementById("scoreValue").textContent = state.score;
+			document.getElementById("correctValue").textContent = state.correct;
+			document.getElementById("streakValue").textContent = state.streak;
+			document.getElementById("masteryValue").textContent = mastery();
+		}
+
+		function setFeedback(id, text, type) {
+			const el = document.getElementById(id);
+			el.textContent = text;
+			el.className = `feedback ${type}`;
+		}
+
+		function initMission1() {
+			state.mission1.bank = shuffle(decisionCards);
+			state.mission1.index = 0;
+			state.mission1.levelChoice = "";
+			state.mission1.horizonChoice = "";
+			state.mission1Done = 0;
+			loadMission1Card();
+			renderHud();
+		}
+
+		function loadMission1Card() {
+			const i = state.mission1.index;
+			const card = state.mission1.bank[i];
+
+			if (!card) {
+				document.getElementById("m1Prompt").textContent = "Mission 1 complete. You can now move to strategy scenarios and the war room.";
+				document.getElementById("m1LevelOptions").innerHTML = "";
+				document.getElementById("m1HorizonOptions").innerHTML = "";
+				document.getElementById("m1SubmitBtn").disabled = true;
+				document.getElementById("mission1ProgressText").textContent = `Card ${decisionCards.length} of ${decisionCards.length}`;
+				document.getElementById("mission1Fill").style.width = "100%";
+				setFeedback("m1Feedback", "Mission 1 completed.", "ok");
+				return;
+			}
+
+			state.mission1.levelChoice = "";
+			state.mission1.horizonChoice = "";
+			document.getElementById("m1Prompt").textContent = card.prompt;
+			document.getElementById("mission1ProgressText").textContent = `Card ${i + 1} of ${decisionCards.length}`;
+			document.getElementById("mission1Fill").style.width = `${((i + 1) / decisionCards.length) * 100}%`;
+
+			renderSelectableButtons(
+				"m1LevelOptions",
+				["Strategic", "Tactical"],
+				choice => {
+					state.mission1.levelChoice = choice;
+					highlightChoice("m1LevelOptions", choice);
+				}
+			);
+
+			renderSelectableButtons(
+				"m1HorizonOptions",
+				["Long-term", "Short-term"],
+				choice => {
+					state.mission1.horizonChoice = choice;
+					highlightChoice("m1HorizonOptions", choice);
+				}
+			);
+
+			setFeedback("m1Feedback", "", "");
+		}
+
+		function submitMission1() {
+			const card = state.mission1.bank[state.mission1.index];
+			if (!card) return;
+
+			if (!state.mission1.levelChoice || !state.mission1.horizonChoice) {
+				setFeedback("m1Feedback", "Select both a decision level and a horizon before submitting.", "bad");
+				return;
+			}
+
+			const levelOk = state.mission1.levelChoice === card.level;
+			const horizonOk = state.mission1.horizonChoice === card.horizon;
+
+			if (levelOk && horizonOk) {
+				award(10);
+				state.mission1Done += 1;
+				setFeedback("m1Feedback", "Correct classification. You matched both level and time horizon.", "ok");
+			} else if (levelOk || horizonOk) {
+				award(3);
+				breakStreak();
+				setFeedback(
+					"m1Feedback",
+					`Partial. Correct answer: ${card.level} and ${card.horizon}.`,
+					"bad"
+				);
+			} else {
+				breakStreak();
+				setFeedback(
+					"m1Feedback",
+					`Incorrect. Correct answer: ${card.level} and ${card.horizon}.`,
+					"bad"
+				);
+			}
+
+			state.mission1.index += 1;
+			renderHud();
+			setTimeout(loadMission1Card, 700);
+		}
+
+		function initMission2() {
+			state.mission2.bank = shuffle(strategyScenarios);
+			state.mission2.index = 0;
+			state.mission2.strategyChoice = "";
+			state.mission2.whyChoice = "";
+			state.mission2Done = 0;
+			loadMission2Scenario();
+			renderHud();
+		}
+
+		function loadMission2Scenario() {
+			const i = state.mission2.index;
+			const scenario = state.mission2.bank[i];
+
+			if (!scenario) {
+				document.getElementById("m2Prompt").textContent = "Mission 2 complete. Continue to Mission 3 to test strategy portfolios in a dynamic system.";
+				document.getElementById("m2StrategyOptions").innerHTML = "";
+				document.getElementById("m2WhyOptions").innerHTML = "";
+				document.getElementById("m2SubmitBtn").disabled = true;
+				document.getElementById("skipScenarioBtn").disabled = true;
+				document.getElementById("mission2ProgressText").textContent = `Scenario ${strategyScenarios.length} of ${strategyScenarios.length}`;
+				document.getElementById("mission2Fill").style.width = "100%";
+				setFeedback("m2Feedback", "Mission 2 completed.", "ok");
+				return;
+			}
+
+			state.mission2.strategyChoice = "";
+			state.mission2.whyChoice = "";
+
+			document.getElementById("m2Prompt").textContent = scenario.prompt;
+			document.getElementById("mission2ProgressText").textContent = `Scenario ${i + 1} of ${strategyScenarios.length}`;
+			document.getElementById("mission2Fill").style.width = `${((i + 1) / strategyScenarios.length) * 100}%`;
+
+			renderSelectableButtons(
+				"m2StrategyOptions",
+				scenario.strategies,
+				choice => {
+					state.mission2.strategyChoice = choice;
+					highlightChoice("m2StrategyOptions", choice);
+				}
+			);
+
+			renderSelectableButtons(
+				"m2WhyOptions",
+				scenario.whys,
+				choice => {
+					state.mission2.whyChoice = choice;
+					highlightChoice("m2WhyOptions", choice);
+				}
+			);
+
+			setFeedback("m2Feedback", "", "");
+		}
+
+		function submitMission2() {
+			const scenario = state.mission2.bank[state.mission2.index];
+			if (!scenario) return;
+
+			if (!state.mission2.strategyChoice || !state.mission2.whyChoice) {
+				setFeedback("m2Feedback", "Choose both a strategy and a why statement before submitting.", "bad");
+				return;
+			}
+
+			const strategyOk = state.mission2.strategyChoice === scenario.answerStrategy;
+			const whyOk = state.mission2.whyChoice === scenario.answerWhy;
+
+			if (strategyOk && whyOk) {
+				award(12);
+				state.mission2Done += 1;
+				setFeedback("m2Feedback", "Excellent. You selected the right strategy for the performance gap.", "ok");
+			} else if (strategyOk || whyOk) {
+				award(4);
+				breakStreak();
+				setFeedback(
+					"m2Feedback",
+					`Partial. Correct pair: ${scenario.answerStrategy} + ${scenario.answerWhy}.`,
+					"bad"
+				);
+			} else {
+				breakStreak();
+				setFeedback(
+					"m2Feedback",
+					`Incorrect pair. Correct pair: ${scenario.answerStrategy} + ${scenario.answerWhy}.`,
+					"bad"
+				);
+			}
+
+			state.mission2.index += 1;
+			renderHud();
+			setTimeout(loadMission2Scenario, 800);
+		}
+
+		function skipMission2Scenario() {
+			if (state.mission2.index < state.mission2.bank.length - 1) {
+				state.mission2.index += 1;
+				loadMission2Scenario();
+			}
+		}
+
+		function initMission3() {
+			state.mission3.step = 0;
+			state.mission3.metrics = {
+				service: 90,
+				cost: 13.0,
+				turns: 7.8,
+				resilience: 58
+			};
+			state.mission3Done = false;
+			document.getElementById("m3Final").style.display = "none";
+			document.getElementById("m3Final").innerHTML = "";
+			renderMission3();
+			renderHud();
+		}
+
+		function renderMission3() {
+			const step = state.mission3.step;
+			const event = simEvents[step];
+
+			updateM3Metrics();
+
+			if (!event) {
+				finishMission3();
+				return;
+			}
+
+			document.getElementById("m3EventBox").textContent = event.event;
+			const wrap = document.getElementById("m3DecisionOptions");
+			wrap.innerHTML = "";
+
+			event.options.forEach((opt, idx) => {
+				const btn = document.createElement("button");
+				btn.className = "chip";
+				btn.textContent = `${idx + 1}. ${opt.label}`;
+				btn.addEventListener("click", () => applyMission3Choice(opt));
+				wrap.appendChild(btn);
+			});
+
+			setFeedback("m3Feedback", "", "");
+		}
+
+		function applyMission3Choice(option) {
+			const m = state.mission3.metrics;
+			m.service = clamp(m.service + option.effect.service, 76, 99);
+			m.cost = clamp(m.cost + option.effect.cost, 10.6, 16.4);
+			m.turns = clamp(m.turns + option.effect.turns, 5.0, 12.5);
+			m.resilience = clamp(m.resilience + option.effect.resilience, 35, 95);
+
+			award(8);
+			state.mission3.step += 1;
+			setFeedback("m3Feedback", option.note, "ok");
+
+			renderMission3();
+			renderHud();
+		}
+
+		function updateM3Metrics() {
+			const m = state.mission3.metrics;
+			document.getElementById("serviceValue").textContent = m.service.toFixed(0);
+			document.getElementById("costValue").textContent = m.cost.toFixed(1);
+			document.getElementById("turnsValue").textContent = m.turns.toFixed(1);
+			document.getElementById("resilienceValue").textContent = m.resilience.toFixed(0);
+		}
+
+		function finishMission3() {
+			const m = state.mission3.metrics;
+
+			const score =
+				Number(m.service >= 93) +
+				Number(m.cost <= 12.8) +
+				Number(m.turns >= 8.2) +
+				Number(m.resilience >= 66);
+
+			let verdict = "Needs redesign";
+			let explanation = "Your choices improved isolated metrics, but cross-functional trade-offs were not balanced.";
+
+			if (score === 4) {
+				verdict = "High-performance strategy set";
+				explanation = "You balanced service, cost, flow productivity, and resilience. This mirrors a mature supply chain strategy system.";
+				award(22);
+			} else if (score === 3) {
+				verdict = "Competitive but uneven";
+				explanation = "Most performance dimensions improved, but one gap still limits total performance.";
+				award(12);
+			}
+
+			const final = document.getElementById("m3Final");
+			final.style.display = "block";
+			final.innerHTML =
+				`<strong>${verdict}</strong><br>` +
+				`${explanation}<br><br>` +
+				`Why companies use strategy tools:<br>` +
+				`- Postponement and S&OP align supply with uncertain demand.<br>` +
+				`- Dual sourcing and supplier development reduce disruption risk.<br>` +
+				`- Network redesign and visibility tools improve end-to-end responsiveness.`;
+
+			state.mission3Done = true;
+			document.getElementById("m3EventBox").textContent = "Simulation complete. Restart to test another strategy portfolio.";
+			document.getElementById("m3DecisionOptions").innerHTML = "";
+			setFeedback("m3Feedback", "Mission 3 completed.", "ok");
+			renderHud();
+		}
+
+		function renderSelectableButtons(containerId, options, onPick) {
+			const wrap = document.getElementById(containerId);
+			wrap.innerHTML = "";
+			shuffle(options).forEach(option => {
+				const btn = document.createElement("button");
+				btn.className = "chip";
+				btn.textContent = option;
+				btn.addEventListener("click", () => onPick(option));
+				wrap.appendChild(btn);
+			});
+		}
+
+		function highlightChoice(containerId, value) {
+			const buttons = [...document.querySelectorAll(`#${containerId} .chip`)];
+			buttons.forEach(btn => {
+				if (btn.textContent === value) {
+					btn.classList.add("active");
+				} else {
+					btn.classList.remove("active");
+				}
+			});
+		}
+
+		function bindEvents() {
+			document.getElementById("m1SubmitBtn").addEventListener("click", submitMission1);
+			document.getElementById("resetMission1Btn").addEventListener("click", initMission1);
+
+			document.getElementById("m2SubmitBtn").addEventListener("click", submitMission2);
+			document.getElementById("skipScenarioBtn").addEventListener("click", skipMission2Scenario);
+
+			document.getElementById("resetSimBtn").addEventListener("click", initMission3);
+		}
+
+		function init() {
+			bindEvents();
+			initMission1();
+			initMission2();
+			initMission3();
+			renderHud();
+		}
+
+		init();
+	</script>
+</body>
+</html>

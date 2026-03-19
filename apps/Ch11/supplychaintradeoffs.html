@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Supply Chain Trade-Offs and Variability Lab</title>
+	<style>
+		@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap");
+
+		:root {
+			--bg-1: #efe8dc;
+			--bg-2: #e8f2fb;
+			--card: #ffffff;
+			--ink: #1e2430;
+			--muted: #5c6678;
+			--edge: #ced9ea;
+			--brand: #0f6a67;
+			--brand-2: #c26524;
+			--ok: #1f8f42;
+			--bad: #b92a1d;
+			--hint: #7b5500;
+			--hint-bg: #fff8e6;
+			--shadow: 0 14px 34px rgba(18, 28, 41, 0.12);
+			--radius: 18px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Manrope", "Trebuchet MS", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 8% 16%, rgba(15, 106, 103, 0.15), transparent 33%),
+				radial-gradient(circle at 92% 8%, rgba(194, 101, 36, 0.14), transparent 31%),
+				linear-gradient(158deg, var(--bg-1), var(--bg-2));
+			min-height: 100vh;
+		}
+
+		.app {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 24px 16px 44px;
+			animation: entry 0.5s ease;
+		}
+
+		@keyframes entry {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.hero {
+			background: linear-gradient(130deg, #123a66, #0f6a67 54%, #c26524);
+			color: #fff;
+			border-radius: 24px;
+			box-shadow: var(--shadow);
+			padding: 24px;
+			display: grid;
+			grid-template-columns: 1.45fr 1fr;
+			gap: 18px;
+			align-items: start;
+		}
+
+		.hero h1 {
+			margin: 4px 0 10px;
+			font-family: "Fraunces", Georgia, serif;
+			font-size: clamp(1.8rem, 3.8vw, 2.55rem);
+			line-height: 1.1;
+		}
+
+		.hero p {
+			margin: 0;
+			line-height: 1.55;
+			max-width: 72ch;
+			color: rgba(255, 255, 255, 0.95);
+		}
+
+		.goal-list {
+			margin: 12px 0 0;
+			padding-left: 18px;
+			line-height: 1.45;
+		}
+
+		.hud {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+
+		.hud-card {
+			background: rgba(255, 255, 255, 0.17);
+			border: 1px solid rgba(255, 255, 255, 0.3);
+			border-radius: 13px;
+			padding: 10px 12px;
+		}
+
+		.hud-label {
+			display: block;
+			font-size: 0.75rem;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			margin-bottom: 4px;
+			opacity: 0.9;
+		}
+
+		.hud-value {
+			font-size: 1.5rem;
+			font-weight: 800;
+		}
+
+		.section {
+			margin-top: 18px;
+			background: var(--card);
+			border: 1px solid var(--edge);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			padding: 20px;
+			animation: lift 0.45s ease;
+		}
+
+		@keyframes lift {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.section-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-bottom: 8px;
+		}
+
+		h2 {
+			margin: 0;
+			font-size: 1.35rem;
+		}
+
+		.description {
+			margin: 0 0 14px;
+			color: var(--muted);
+			line-height: 1.55;
+		}
+
+		.progress {
+			width: min(560px, 100%);
+			margin-bottom: 12px;
+		}
+
+		.progress-head {
+			display: flex;
+			justify-content: space-between;
+			color: var(--muted);
+			font-size: 0.9rem;
+			margin-bottom: 6px;
+		}
+
+		.bar {
+			height: 11px;
+			border-radius: 999px;
+			border: 1px solid #d8dfeb;
+			overflow: hidden;
+			background: #ecf2fa;
+		}
+
+		.fill {
+			height: 100%;
+			width: 0;
+			transition: width 0.22s ease;
+			background: linear-gradient(90deg, #0f6a67, #c26524);
+		}
+
+		.tag {
+			display: inline-block;
+			font-size: 0.78rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: #35537f;
+			background: #eff4ff;
+			border: 1px solid #cbd8ef;
+			border-radius: 999px;
+			padding: 4px 9px;
+			margin-bottom: 8px;
+		}
+
+		.prompt-box,
+		.formula-box,
+		.hint-box,
+		.metric-card {
+			background: #f8fbff;
+			border: 1px solid #d5e2f4;
+			border-radius: 12px;
+		}
+
+		.prompt-box {
+			padding: 12px;
+			line-height: 1.45;
+			margin-bottom: 10px;
+		}
+
+		.formula-box {
+			padding: 12px;
+			line-height: 1.45;
+			margin: 12px 0;
+		}
+
+		.formula-line {
+			display: block;
+			background: #eff5ff;
+			border: 1px solid #cad9ef;
+			border-radius: 8px;
+			padding: 7px 8px;
+			margin: 7px 0;
+			font-family: "Cambria Math", "Times New Roman", serif;
+			color: #213557;
+			font-size: 0.93rem;
+		}
+
+		.hint-box {
+			background: var(--hint-bg);
+			border-color: #efd8a0;
+			color: var(--hint);
+			padding: 10px;
+			margin: 10px 0;
+		}
+
+		.grid,
+		.option-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 10px;
+			margin: 10px 0;
+		}
+
+		button {
+			border: none;
+			border-radius: 11px;
+			padding: 10px 12px;
+			font-family: inherit;
+			font-size: 0.95rem;
+			cursor: pointer;
+			transition: transform 0.12s ease, box-shadow 0.12s ease;
+		}
+
+		button:hover:not([disabled]) {
+			transform: translateY(-1px);
+			box-shadow: 0 8px 16px rgba(18, 28, 41, 0.13);
+		}
+
+		button:disabled {
+			opacity: 0.62;
+			cursor: not-allowed;
+		}
+
+		.primary {
+			background: linear-gradient(120deg, #1b4f8f, #0f6a67);
+			color: #fff;
+		}
+
+		.secondary {
+			background: #f0ebdd;
+			border: 1px solid #d9cfb8;
+			color: #2f3850;
+		}
+
+		.chip {
+			text-align: left;
+			background: #edf3fb;
+			border: 1px solid #ccd9ec;
+			color: #233452;
+		}
+
+		.chip.active {
+			background: #e5f8f4;
+			border-color: #9ed5cc;
+			color: #0f5852;
+		}
+
+		.controls {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+
+		.input-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+			gap: 10px;
+			margin-top: 8px;
+		}
+
+		label {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			font-size: 0.9rem;
+			color: #324765;
+			font-weight: 700;
+		}
+
+		input {
+			width: 100%;
+			border: 1px solid #bfd1e7;
+			border-radius: 10px;
+			padding: 10px;
+			font-size: 0.95rem;
+			font-family: inherit;
+			color: #22354f;
+			background: #fff;
+		}
+
+		.feedback {
+			margin-top: 12px;
+			min-height: 24px;
+			font-weight: 700;
+		}
+
+		.feedback.ok {
+			color: var(--ok);
+		}
+
+		.feedback.bad {
+			color: var(--bad);
+		}
+
+		.metric-grid {
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 10px;
+			margin-bottom: 12px;
+		}
+
+		.metric-card {
+			padding: 10px;
+		}
+
+		.metric-label {
+			display: block;
+			font-size: 0.78rem;
+			text-transform: uppercase;
+			letter-spacing: 0.07em;
+			color: #466287;
+			margin-bottom: 5px;
+		}
+
+		.metric-value {
+			font-size: 1.3rem;
+			font-weight: 800;
+			color: #203455;
+		}
+
+		.final-box {
+			display: none;
+			margin-top: 12px;
+			background: #eef9f2;
+			border: 1px solid #c7e5cf;
+			border-radius: 12px;
+			padding: 12px;
+			line-height: 1.5;
+		}
+
+		@media (max-width: 920px) {
+			.hero {
+				grid-template-columns: 1fr;
+			}
+
+			.metric-grid {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+
+		@media (max-width: 560px) {
+			.app {
+				padding: 14px 10px 26px;
+			}
+
+			.section {
+				padding: 14px;
+			}
+
+			.metric-grid {
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="app">
+		<section class="hero">
+			<div>
+				<p>SCM 352 Advanced Learning Lab</p>
+				<h1>Supply Chain Trade-Offs and Variability Studio</h1>
+				<p>
+					Tackle three escalating missions to master design trade-offs, variability sources,
+					and quantitative speed-versus-inventory decisions.
+				</p>
+				<ol class="goal-list">
+					<li>Explain trade-offs companies make when designing supply chains.</li>
+					<li>Identify what causes variability across the chain.</li>
+					<li>Calculate speed-inventory trade-offs using operations data.</li>
+				</ol>
+			</div>
+
+			<div class="hud">
+				<div class="hud-card">
+					<span class="hud-label">Score</span>
+					<span class="hud-value" id="scoreValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Correct</span>
+					<span class="hud-value" id="correctValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Streak</span>
+					<span class="hud-value" id="streakValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Mastery</span>
+					<span class="hud-value" id="masteryValue">0%</span>
+				</div>
+			</div>
+		</section>
+
+		<section class="section" id="mission1">
+			<div class="section-head">
+				<h2>Mission 1: Design Trade-Off Arena</h2>
+				<button class="secondary" id="resetM1Btn">Reset Mission 1</button>
+			</div>
+			<p class="description">
+				For each design scenario, choose what improves most and what is typically sacrificed.
+				This simulates real trade-off logic in network design decisions.
+			</p>
+
+			<div class="progress">
+				<div class="progress-head">
+					<span>Mission 1 progress</span>
+					<span id="m1ProgressText">Scenario 1 of 7</span>
+				</div>
+				<div class="bar"><div class="fill" id="m1Fill"></div></div>
+			</div>
+
+			<div class="prompt-box" id="m1Prompt"></div>
+
+			<div class="tag">What improves the most?</div>
+			<div class="option-grid" id="m1ImproveOptions"></div>
+
+			<div class="tag">What is usually sacrificed?</div>
+			<div class="option-grid" id="m1SacrificeOptions"></div>
+
+			<div class="controls">
+				<button class="primary" id="m1SubmitBtn">Submit Scenario</button>
+			</div>
+
+			<div class="feedback" id="m1Feedback"></div>
+		</section>
+
+		<section class="section" id="mission2">
+			<div class="section-head">
+				<h2>Mission 2: Variability Detective</h2>
+				<button class="secondary" id="skipM2Btn">Skip Scenario</button>
+			</div>
+			<p class="description">
+				Diagnose each variability event by selecting both the root cause and the variability type.
+			</p>
+
+			<div class="progress">
+				<div class="progress-head">
+					<span>Mission 2 progress</span>
+					<span id="m2ProgressText">Scenario 1 of 6</span>
+				</div>
+				<div class="bar"><div class="fill" id="m2Fill"></div></div>
+			</div>
+
+			<div class="prompt-box" id="m2Prompt"></div>
+
+			<div class="tag">Most likely root cause</div>
+			<div class="option-grid" id="m2CauseOptions"></div>
+
+			<div class="tag">Variability type</div>
+			<div class="option-grid" id="m2TypeOptions"></div>
+
+			<div class="controls">
+				<button class="primary" id="m2SubmitBtn">Submit Scenario</button>
+			</div>
+
+			<div class="feedback" id="m2Feedback"></div>
+		</section>
+
+		<section class="section" id="mission3">
+			<div class="section-head">
+				<h2>Mission 3: Speed vs Inventory Calculator</h2>
+				<button class="secondary" id="resetM3Btn">Restart Mission 3</button>
+			</div>
+			<p class="description">
+				Use formulas to quantify safety stock and annual net benefit of faster replenishment.
+				You must pass the math before choosing a policy decision.
+			</p>
+
+			<div class="progress">
+				<div class="progress-head">
+					<span>Mission 3 progress</span>
+					<span id="m3ProgressText">Case 1 of 3</span>
+				</div>
+				<div class="bar"><div class="fill" id="m3Fill"></div></div>
+			</div>
+
+			<div class="metric-grid">
+				<div class="metric-card">
+					<span class="metric-label">Service Speed Index</span>
+					<span class="metric-value" id="speedValue">72</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Avg Inventory (units)</span>
+					<span class="metric-value" id="invValue">0</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Annual Holding Cost</span>
+					<span class="metric-value" id="holdValue">0</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Policy Value ($/yr)</span>
+					<span class="metric-value" id="policyValue">0</span>
+				</div>
+			</div>
+
+			<div class="prompt-box" id="m3CasePrompt"></div>
+
+			<div class="formula-box">
+				<strong>Formulas for this mission</strong>
+				<div>Definition: <strong>SS</strong> means <strong>Safety Stock</strong>.</div>
+				<div class="formula-line">\[\text{Safety Stock} = z \cdot \sigma_{\text{daily}} \cdot \sqrt{L}\]</div>
+				<div class="formula-line">\[\text{Average Inventory} = \frac{Q}{2} + \text{Safety Stock}\]</div>
+				<div class="formula-line">\[\text{Net Annual Benefit} = (SS_{\text{slow}} - SS_{\text{fast}})\cdot h - \text{Annual Premium}\]</div>
+			</div>
+
+			<div class="hint-box" id="m3Hint"></div>
+
+			<div class="input-grid">
+				<label>
+					SS (Safety Stock) with slow lead time
+					<input id="ssSlowInput" type="number" step="0.1" />
+				</label>
+				<label>
+					SS (Safety Stock) with fast lead time
+					<input id="ssFastInput" type="number" step="0.1" />
+				</label>
+				<label>
+					Net annual benefit ($)
+					<input id="netBenefitInput" type="number" step="1" />
+				</label>
+			</div>
+
+			<div class="controls" style="margin-top:10px;">
+				<button class="primary" id="checkCalcBtn">Check Calculations</button>
+			</div>
+
+			<div class="tag" style="margin-top:12px;">Decision after calculations</div>
+			<div class="grid" id="m3DecisionOptions"></div>
+
+			<div class="feedback" id="m3Feedback"></div>
+			<div class="final-box" id="m3Final"></div>
+		</section>
+	</main>
+
+	<script>
+		window.MathJax = {
+			tex: {
+				inlineMath: [["\\(", "\\)"]],
+				displayMath: [["\\[", "\\]"]]
+			},
+			options: {
+				skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+			}
+		};
+	</script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+	<script>
+		const state = {
+			score: 0,
+			correct: 0,
+			streak: 0,
+
+			m1Solved: 0,
+			m2Solved: 0,
+			m3Solved: 0,
+
+			mission1: {
+				index: 0,
+				improveChoice: "",
+				sacrificeChoice: "",
+				bank: []
+			},
+
+			mission2: {
+				index: 0,
+				causeChoice: "",
+				typeChoice: "",
+				bank: []
+			},
+
+			mission3: {
+				index: 0,
+				calcPassed: false,
+				decisionChoice: ""
+			},
+
+			dashboard: {
+				speedIndex: 72,
+				avgInventory: 0,
+				annualHolding: 0,
+				policyValue: 0
+			}
+		};
+
+		const tradeoffScenarios = [
+			{
+				prompt: "Add regional fulfillment centers closer to customers to reduce delivery time.",
+				improve: "Delivery Speed",
+				sacrifice: "Total Cost"
+			},
+			{
+				prompt: "Consolidate inventory into one national DC to reduce duplicated stock.",
+				improve: "Inventory Efficiency",
+				sacrifice: "Responsiveness"
+			},
+			{
+				prompt: "Dual-source critical components from two approved suppliers.",
+				improve: "Resilience",
+				sacrifice: "Unit Cost"
+			},
+			{
+				prompt: "Increase product variety with many localized SKUs.",
+				improve: "Responsiveness",
+				sacrifice: "Forecast Accuracy"
+			},
+			{
+				prompt: "Operate with very low safety stock to free working capital.",
+				improve: "Inventory Efficiency",
+				sacrifice: "Responsiveness"
+			},
+			{
+				prompt: "Commit to frequent small replenishments to stores.",
+				improve: "Delivery Speed",
+				sacrifice: "Total Cost"
+			},
+			{
+				prompt: "Centralize planning decisions to one global team for consistency.",
+				improve: "Inventory Efficiency",
+				sacrifice: "Local Flexibility"
+			}
+		];
+
+		const m1Options = [
+			"Delivery Speed",
+			"Total Cost",
+			"Inventory Efficiency",
+			"Responsiveness",
+			"Resilience",
+			"Unit Cost",
+			"Forecast Accuracy",
+			"Local Flexibility"
+		];
+
+		const variabilityScenarios = [
+			{
+				prompt: "Retail promotions are announced late and orders jump 3x in one week.",
+				cause: "Promotion-driven demand spikes",
+				type: "Demand Variability"
+			},
+			{
+				prompt: "Supplier lead times swing between 8 and 20 days due to port congestion.",
+				cause: "Inbound lead-time instability",
+				type: "Supply Variability"
+			},
+			{
+				prompt: "Forecast updates are delayed; each tier orders based on old data, amplifying swings.",
+				cause: "Bullwhip from information delays",
+				type: "Information Variability"
+			},
+			{
+				prompt: "Machine downtime at a plant creates uneven daily output and missed schedules.",
+				cause: "Internal process unreliability",
+				type: "Process Variability"
+			},
+			{
+				prompt: "Large order batching from distributors causes erratic upstream replenishment waves.",
+				cause: "Order batching behavior",
+				type: "Information Variability"
+			},
+			{
+				prompt: "Quality failures at supplier sites trigger rework and inconsistent shipment release.",
+				cause: "Supplier quality instability",
+				type: "Supply Variability"
+			}
+		];
+
+		const m2CauseOptions = [
+			"Promotion-driven demand spikes",
+			"Inbound lead-time instability",
+			"Bullwhip from information delays",
+			"Internal process unreliability",
+			"Order batching behavior",
+			"Supplier quality instability",
+			"Overstaffed warehouses"
+		];
+
+		const m2TypeOptions = [
+			"Demand Variability",
+			"Supply Variability",
+			"Information Variability",
+			"Process Variability"
+		];
+
+		const calcCases = [
+			{
+				prompt: "Case A: A retailer can reduce lead time from 12 to 5 days by expediting replenishment.",
+				z: 1.65,
+				sigmaDaily: 42,
+				leadSlow: 12,
+				leadFast: 5,
+				q: 900,
+				holding: 26,
+				premiumAnnual: 3800
+			},
+			{
+				prompt: "Case B: A medical distributor can reduce lead time from 9 to 4 days with faster inbound lanes.",
+				z: 1.88,
+				sigmaDaily: 30,
+				leadSlow: 9,
+				leadFast: 4,
+				q: 700,
+				holding: 31,
+				premiumAnnual: 4200
+			},
+			{
+				prompt: "Case C: An electronics firm can reduce lead time from 15 to 6 days by nearshoring one subassembly.",
+				z: 1.65,
+				sigmaDaily: 55,
+				leadSlow: 15,
+				leadFast: 6,
+				q: 1100,
+				holding: 24,
+				premiumAnnual: 6100
+			}
+		];
+
+		function shuffle(arr) {
+			const copy = [...arr];
+			for (let i = copy.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[copy[i], copy[j]] = [copy[j], copy[i]];
+			}
+			return copy;
+		}
+
+		function round1(value) {
+			return Math.round(value * 10) / 10;
+		}
+
+		function round0(value) {
+			return Math.round(value);
+		}
+
+		function closeEnough(value, expected, tolerance) {
+			return Math.abs(value - expected) <= tolerance;
+		}
+
+		function award(points) {
+			state.score += points;
+			state.correct += 1;
+			state.streak += 1;
+			renderHud();
+		}
+
+		function breakStreak() {
+			state.streak = 0;
+			renderHud();
+		}
+
+		function masteryPercent() {
+			const m1 = (state.m1Solved / tradeoffScenarios.length) * 35;
+			const m2 = (state.m2Solved / variabilityScenarios.length) * 35;
+			const m3 = (state.m3Solved / calcCases.length) * 30;
+			return `${Math.round(m1 + m2 + m3)}%`;
+		}
+
+		function setFeedback(id, message, type) {
+			const el = document.getElementById(id);
+			el.textContent = message;
+			el.className = `feedback ${type}`;
+		}
+
+		function renderHud() {
+			document.getElementById("scoreValue").textContent = state.score;
+			document.getElementById("correctValue").textContent = state.correct;
+			document.getElementById("streakValue").textContent = state.streak;
+			document.getElementById("masteryValue").textContent = masteryPercent();
+		}
+
+		function renderChoices(containerId, options, onPick) {
+			const container = document.getElementById(containerId);
+			container.innerHTML = "";
+			shuffle(options).forEach(option => {
+				const btn = document.createElement("button");
+				btn.className = "chip";
+				btn.textContent = option;
+				btn.addEventListener("click", () => onPick(option));
+				container.appendChild(btn);
+			});
+		}
+
+		function highlightChoice(containerId, selected) {
+			const buttons = [...document.querySelectorAll(`#${containerId} .chip`)];
+			buttons.forEach(btn => {
+				if (btn.textContent === selected) {
+					btn.classList.add("active");
+				} else {
+					btn.classList.remove("active");
+				}
+			});
+		}
+
+		function initMission1() {
+			state.mission1.bank = shuffle(tradeoffScenarios);
+			state.mission1.index = 0;
+			state.mission1.improveChoice = "";
+			state.mission1.sacrificeChoice = "";
+			state.m1Solved = 0;
+			loadMission1Card();
+			renderHud();
+		}
+
+		function loadMission1Card() {
+			const i = state.mission1.index;
+			const card = state.mission1.bank[i];
+
+			if (!card) {
+				document.getElementById("m1Prompt").textContent = "Mission 1 complete. You can continue improving your mastery in Missions 2 and 3.";
+				document.getElementById("m1ImproveOptions").innerHTML = "";
+				document.getElementById("m1SacrificeOptions").innerHTML = "";
+				document.getElementById("m1SubmitBtn").disabled = true;
+				document.getElementById("m1ProgressText").textContent = `Scenario ${tradeoffScenarios.length} of ${tradeoffScenarios.length}`;
+				document.getElementById("m1Fill").style.width = "100%";
+				setFeedback("m1Feedback", "Mission 1 completed.", "ok");
+				return;
+			}
+
+			state.mission1.improveChoice = "";
+			state.mission1.sacrificeChoice = "";
+
+			document.getElementById("m1Prompt").textContent = card.prompt;
+			document.getElementById("m1ProgressText").textContent = `Scenario ${i + 1} of ${tradeoffScenarios.length}`;
+			document.getElementById("m1Fill").style.width = `${((i + 1) / tradeoffScenarios.length) * 100}%`;
+
+			renderChoices("m1ImproveOptions", m1Options, choice => {
+				state.mission1.improveChoice = choice;
+				highlightChoice("m1ImproveOptions", choice);
+			});
+
+			renderChoices("m1SacrificeOptions", m1Options, choice => {
+				state.mission1.sacrificeChoice = choice;
+				highlightChoice("m1SacrificeOptions", choice);
+			});
+
+			setFeedback("m1Feedback", "", "");
+		}
+
+		function submitMission1() {
+			const card = state.mission1.bank[state.mission1.index];
+			if (!card) return;
+
+			if (!state.mission1.improveChoice || !state.mission1.sacrificeChoice) {
+				setFeedback("m1Feedback", "Select both an improvement and a sacrifice before submitting.", "bad");
+				return;
+			}
+
+			const improveOk = state.mission1.improveChoice === card.improve;
+			const sacrificeOk = state.mission1.sacrificeChoice === card.sacrifice;
+
+			if (improveOk && sacrificeOk) {
+				award(11);
+				state.m1Solved += 1;
+				setFeedback(
+					"m1Feedback",
+					`Correct trade-off logic. Improve: ${card.improve}; Sacrifice: ${card.sacrifice}.`,
+					"ok"
+				);
+			} else if (improveOk || sacrificeOk) {
+				award(4);
+				breakStreak();
+				setFeedback(
+					"m1Feedback",
+					`Partial. Expected pair: improve ${card.improve}; sacrifice ${card.sacrifice}.`,
+					"bad"
+				);
+			} else {
+				breakStreak();
+				setFeedback(
+					"m1Feedback",
+					`Incorrect. Expected pair: improve ${card.improve}; sacrifice ${card.sacrifice}.`,
+					"bad"
+				);
+			}
+
+			state.mission1.index += 1;
+			renderHud();
+			setTimeout(loadMission1Card, 2600);
+		}
+
+		function initMission2() {
+			state.mission2.bank = shuffle(variabilityScenarios);
+			state.mission2.index = 0;
+			state.mission2.causeChoice = "";
+			state.mission2.typeChoice = "";
+			state.m2Solved = 0;
+			loadMission2Card();
+			renderHud();
+		}
+
+		function loadMission2Card() {
+			const i = state.mission2.index;
+			const card = state.mission2.bank[i];
+
+			if (!card) {
+				document.getElementById("m2Prompt").textContent = "Mission 2 complete. Continue to Mission 3 to quantify variability implications.";
+				document.getElementById("m2CauseOptions").innerHTML = "";
+				document.getElementById("m2TypeOptions").innerHTML = "";
+				document.getElementById("m2SubmitBtn").disabled = true;
+				document.getElementById("skipM2Btn").disabled = true;
+				document.getElementById("m2ProgressText").textContent = `Scenario ${variabilityScenarios.length} of ${variabilityScenarios.length}`;
+				document.getElementById("m2Fill").style.width = "100%";
+				setFeedback("m2Feedback", "Mission 2 completed.", "ok");
+				return;
+			}
+
+			state.mission2.causeChoice = "";
+			state.mission2.typeChoice = "";
+
+			document.getElementById("m2Prompt").textContent = card.prompt;
+			document.getElementById("m2ProgressText").textContent = `Scenario ${i + 1} of ${variabilityScenarios.length}`;
+			document.getElementById("m2Fill").style.width = `${((i + 1) / variabilityScenarios.length) * 100}%`;
+
+			renderChoices("m2CauseOptions", m2CauseOptions, choice => {
+				state.mission2.causeChoice = choice;
+				highlightChoice("m2CauseOptions", choice);
+			});
+
+			renderChoices("m2TypeOptions", m2TypeOptions, choice => {
+				state.mission2.typeChoice = choice;
+				highlightChoice("m2TypeOptions", choice);
+			});
+
+			setFeedback("m2Feedback", "", "");
+		}
+
+		function submitMission2() {
+			const card = state.mission2.bank[state.mission2.index];
+			if (!card) return;
+
+			if (!state.mission2.causeChoice || !state.mission2.typeChoice) {
+				setFeedback("m2Feedback", "Select both a root cause and a variability type before submitting.", "bad");
+				return;
+			}
+
+			const causeOk = state.mission2.causeChoice === card.cause;
+			const typeOk = state.mission2.typeChoice === card.type;
+
+			if (causeOk && typeOk) {
+				award(11);
+				state.m2Solved += 1;
+				setFeedback("m2Feedback", "Correct diagnosis. You identified source and class of variability.", "ok");
+			} else if (causeOk || typeOk) {
+				award(4);
+				breakStreak();
+				setFeedback(
+					"m2Feedback",
+					`Partial. Correct pair: ${card.cause} + ${card.type}.`,
+					"bad"
+				);
+			} else {
+				breakStreak();
+				setFeedback(
+					"m2Feedback",
+					`Incorrect. Correct pair: ${card.cause} + ${card.type}.`,
+					"bad"
+				);
+			}
+
+			state.mission2.index += 1;
+			renderHud();
+			setTimeout(loadMission2Card, 2400);
+		}
+
+		function skipMission2() {
+			if (state.mission2.index < state.mission2.bank.length - 1) {
+				state.mission2.index += 1;
+				loadMission2Card();
+			}
+		}
+
+		function getCaseAnswers(caseData) {
+			const ssSlow = caseData.z * caseData.sigmaDaily * Math.sqrt(caseData.leadSlow);
+			const ssFast = caseData.z * caseData.sigmaDaily * Math.sqrt(caseData.leadFast);
+			const avgInventoryFast = (caseData.q / 2) + ssFast;
+			const annualHoldingFast = avgInventoryFast * caseData.holding;
+			const netBenefit = (ssSlow - ssFast) * caseData.holding - caseData.premiumAnnual;
+			return {
+				ssSlow: round1(ssSlow),
+				ssFast: round1(ssFast),
+				avgInventoryFast: round0(avgInventoryFast),
+				annualHoldingFast: round0(annualHoldingFast),
+				netBenefit: round0(netBenefit)
+			};
+		}
+
+		function initMission3() {
+			state.mission3.index = 0;
+			state.mission3.calcPassed = false;
+			state.mission3.decisionChoice = "";
+			state.m3Solved = 0;
+			state.dashboard.speedIndex = 72;
+			state.dashboard.avgInventory = 0;
+			state.dashboard.annualHolding = 0;
+			state.dashboard.policyValue = 0;
+			document.getElementById("m3Final").style.display = "none";
+			document.getElementById("m3Final").innerHTML = "";
+			loadMission3Case();
+			renderHud();
+		}
+
+		function loadMission3Case() {
+			const i = state.mission3.index;
+			const caseData = calcCases[i];
+
+			if (!caseData) {
+				finishMission3();
+				return;
+			}
+
+			state.mission3.calcPassed = false;
+			state.mission3.decisionChoice = "";
+
+			document.getElementById("m3CasePrompt").innerHTML =
+				`${caseData.prompt}<br><br>` +
+				String.raw`<div class="formula-line">\[z=${caseData.z},\;\sigma_{\text{daily}}=${caseData.sigmaDaily},\;L_{\text{slow}}=${caseData.leadSlow},\;L_{\text{fast}}=${caseData.leadFast},\;Q=${caseData.q},\;h=\$${caseData.holding}/\text{unit-year},\;\text{Annual Premium}=\$${caseData.premiumAnnual}\]</div>`;
+
+			document.getElementById("m3Hint").textContent =
+				"SS means Safety Stock. Here, h is annual holding cost in dollars per unit-year. Enter SS values to one decimal and net annual benefit to nearest dollar.";
+
+			if (window.MathJax && window.MathJax.typesetPromise) {
+				window.MathJax.typesetPromise([document.getElementById("m3CasePrompt")]);
+			}
+
+			document.getElementById("m3ProgressText").textContent = `Case ${i + 1} of ${calcCases.length}`;
+			document.getElementById("m3Fill").style.width = `${((i + 1) / calcCases.length) * 100}%`;
+
+			document.getElementById("ssSlowInput").value = "";
+			document.getElementById("ssFastInput").value = "";
+			document.getElementById("netBenefitInput").value = "";
+
+			const decisionOptions = [
+				"Choose faster lead time",
+				"Keep slower lead time"
+			];
+
+			renderChoices("m3DecisionOptions", decisionOptions, choice => {
+				state.mission3.decisionChoice = choice;
+				highlightChoice("m3DecisionOptions", choice);
+			});
+
+			setFeedback("m3Feedback", "", "");
+			renderMission3Dashboard();
+		}
+
+		function renderMission3Dashboard() {
+			document.getElementById("speedValue").textContent = round0(state.dashboard.speedIndex);
+			document.getElementById("invValue").textContent = round0(state.dashboard.avgInventory);
+			document.getElementById("holdValue").textContent = round0(state.dashboard.annualHolding);
+			document.getElementById("policyValue").textContent = round0(state.dashboard.policyValue);
+		}
+
+		function checkMission3Calcs() {
+			const caseData = calcCases[state.mission3.index];
+			if (!caseData) return;
+
+			const expected = getCaseAnswers(caseData);
+
+			const ssSlow = Number(document.getElementById("ssSlowInput").value);
+			const ssFast = Number(document.getElementById("ssFastInput").value);
+			const netBenefit = Number(document.getElementById("netBenefitInput").value);
+
+			if (Number.isNaN(ssSlow) || Number.isNaN(ssFast) || Number.isNaN(netBenefit)) {
+				setFeedback("m3Feedback", "Enter all three calculation fields before checking.", "bad");
+				return;
+			}
+
+			const ssSlowOk = closeEnough(ssSlow, expected.ssSlow, 0.8);
+			const ssFastOk = closeEnough(ssFast, expected.ssFast, 0.8);
+			const netOk = closeEnough(netBenefit, expected.netBenefit, 180);
+
+			if (ssSlowOk && ssFastOk && netOk) {
+				state.mission3.calcPassed = true;
+				award(12);
+				setFeedback("m3Feedback", "Calculations are correct. Now choose the policy decision.", "ok");
+			} else {
+				breakStreak();
+				state.mission3.calcPassed = false;
+				setFeedback(
+					"m3Feedback",
+					`Not yet. Expected approximately SSslow=${expected.ssSlow}, SSfast=${expected.ssFast}, Net=${expected.netBenefit}.`,
+					"bad"
+				);
+			}
+		}
+
+		function submitMission3Decision() {
+			const caseData = calcCases[state.mission3.index];
+			if (!caseData || !state.mission3.calcPassed) {
+				setFeedback("m3Feedback", "Complete correct calculations before selecting a decision.", "bad");
+				return;
+			}
+
+			if (!state.mission3.decisionChoice) {
+				setFeedback("m3Feedback", "Choose a decision option after calculation.", "bad");
+				return;
+			}
+
+			const expected = getCaseAnswers(caseData);
+			const shouldChooseFast = expected.netBenefit > 0;
+			const correctDecision = shouldChooseFast ? "Choose faster lead time" : "Keep slower lead time";
+
+			if (state.mission3.decisionChoice === correctDecision) {
+				award(10);
+				state.m3Solved += 1;
+				setFeedback("m3Feedback", "Correct policy choice based on your computed trade-off.", "ok");
+			} else {
+				breakStreak();
+				setFeedback("m3Feedback", `Decision mismatch. Better policy here is: ${correctDecision}.`, "bad");
+			}
+
+			state.dashboard.speedIndex = shouldChooseFast
+				? state.dashboard.speedIndex + 8
+				: state.dashboard.speedIndex - 2;
+			state.dashboard.avgInventory = expected.avgInventoryFast;
+			state.dashboard.annualHolding = expected.annualHoldingFast;
+			state.dashboard.policyValue = expected.netBenefit;
+			renderMission3Dashboard();
+
+			state.mission3.index += 1;
+			renderHud();
+			setTimeout(loadMission3Case, 900);
+		}
+
+		function finishMission3() {
+			const final = document.getElementById("m3Final");
+			final.style.display = "block";
+
+			let verdict = "Needs more quantitative rigor";
+			let insight = "You practiced the workflow, but more precision is needed to convert math into policy decisions.";
+
+			if (state.m3Solved === calcCases.length) {
+				verdict = "Quantitative mastery achieved";
+				insight = "You correctly calculated safety-stock effects and made evidence-based speed-inventory decisions.";
+				award(18);
+			} else if (state.m3Solved >= 2) {
+				verdict = "Strong analytical control";
+				insight = "You solved most cases and linked lead-time compression to inventory economics effectively.";
+				award(8);
+			}
+
+			final.innerHTML =
+				`<strong>${verdict}</strong><br>` +
+				`${insight}<br><br>` +
+				`Key takeaway: Faster lead times reduce safety stock through sqrt(L), but premiums can offset savings. ` +
+				`The right policy depends on net annual value, not speed alone.`;
+
+			setFeedback("m3Feedback", "Mission 3 complete.", "ok");
+			document.getElementById("m3CasePrompt").textContent = "All calculation cases completed. Restart Mission 3 to practice again.";
+			document.getElementById("m3DecisionOptions").innerHTML = "";
+			document.getElementById("checkCalcBtn").disabled = true;
+			renderHud();
+		}
+
+		function bindEvents() {
+			document.getElementById("m1SubmitBtn").addEventListener("click", submitMission1);
+			document.getElementById("resetM1Btn").addEventListener("click", initMission1);
+
+			document.getElementById("m2SubmitBtn").addEventListener("click", submitMission2);
+			document.getElementById("skipM2Btn").addEventListener("click", skipMission2);
+
+			document.getElementById("checkCalcBtn").addEventListener("click", () => {
+				checkMission3Calcs();
+			});
+
+			document.getElementById("m3DecisionOptions").addEventListener("click", () => {
+				if (state.mission3.calcPassed && state.mission3.decisionChoice) {
+					submitMission3Decision();
+				}
+			});
+
+			document.getElementById("resetM3Btn").addEventListener("click", () => {
+				document.getElementById("checkCalcBtn").disabled = false;
+				initMission3();
+			});
+		}
+
+		function init() {
+			bindEvents();
+			initMission1();
+			initMission2();
+			initMission3();
+			renderHud();
+		}
+
+		init();
+	</script>
+</body>
+</html>

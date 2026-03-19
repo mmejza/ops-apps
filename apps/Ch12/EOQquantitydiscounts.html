@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>EOQ Constraints and Quantity Discounts Lab</title>
+	<style>
+		@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap");
+
+		:root {
+			--bg: #f6f0e6;
+			--bg2: #eaf3f4;
+			--card: #fffdf9;
+			--ink: #1e2830;
+			--muted: #5d6971;
+			--line: #d8ccb8;
+			--brand: #0d6f73;
+			--brand2: #b55f1f;
+			--accent: #18456f;
+			--ok: #238154;
+			--bad: #b74237;
+			--chip: #f0e6d6;
+			--shadow: 0 18px 36px rgba(24, 39, 56, 0.12);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Outfit", "Trebuchet MS", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 8% 10%, rgba(181, 95, 31, 0.14), transparent 26%),
+				radial-gradient(circle at 92% 8%, rgba(13, 111, 115, 0.14), transparent 24%),
+				linear-gradient(165deg, var(--bg), var(--bg2));
+			min-height: 100vh;
+		}
+
+		.app {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 24px 16px 44px;
+		}
+
+		.hero {
+			background: linear-gradient(135deg, #15385d, #0d6f73 55%, #b55f1f);
+			color: #f5fbfc;
+			border-radius: 26px;
+			box-shadow: var(--shadow);
+			padding: 24px;
+			display: grid;
+			grid-template-columns: 1.5fr 1fr;
+			gap: 18px;
+		}
+
+		.hero h1 {
+			margin: 0 0 8px;
+			font-family: "Fraunces", Georgia, serif;
+			font-size: clamp(1.9rem, 4vw, 2.8rem);
+			line-height: 1.08;
+		}
+
+		.hero p {
+			margin: 0;
+			line-height: 1.55;
+			max-width: 72ch;
+		}
+
+		.goal-list {
+			margin: 12px 0 0;
+			padding-left: 18px;
+			line-height: 1.5;
+		}
+
+		.hud {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+
+		.hud-card {
+			background: rgba(255, 255, 255, 0.16);
+			border: 1px solid rgba(255, 255, 255, 0.26);
+			border-radius: 14px;
+			padding: 10px 12px;
+		}
+
+		.hud-card span {
+			display: block;
+		}
+
+		.hud-card .label {
+			font-size: 0.76rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			opacity: 0.88;
+		}
+
+		.hud-card .value {
+			font-size: 1.4rem;
+			font-weight: 800;
+			margin-top: 4px;
+		}
+
+		.formula-panel {
+			margin-top: 16px;
+			background: rgba(255, 255, 255, 0.14);
+			border: 1px solid rgba(255, 255, 255, 0.22);
+			border-radius: 16px;
+			padding: 12px 14px;
+		}
+
+		.formula-panel strong {
+			display: block;
+			margin-bottom: 8px;
+		}
+
+		.grid {
+			display: grid;
+			gap: 16px;
+			margin-top: 18px;
+		}
+
+		.section {
+			background: var(--card);
+			border: 1px solid var(--line);
+			border-radius: 18px;
+			padding: 16px;
+			box-shadow: var(--shadow);
+		}
+
+		.topline {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.section h2 {
+			margin: 0;
+			font-size: 1.12rem;
+		}
+
+		.badge-wrap {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+
+		.badge {
+			padding: 6px 10px;
+			border-radius: 999px;
+			background: var(--chip);
+			font-weight: 700;
+			font-size: 0.82rem;
+		}
+
+		.prompt,
+		.hint,
+		.final {
+			margin-top: 10px;
+			border-radius: 14px;
+			padding: 11px 12px;
+			line-height: 1.5;
+		}
+
+		.prompt {
+			background: #fff6e9;
+			border: 1px solid #ecd6ab;
+		}
+
+		.hint {
+			background: #e8f4f6;
+			border: 1px solid #c6dfe4;
+			color: #23444a;
+		}
+
+		.final {
+			display: none;
+			background: #eef8f2;
+			border: 1px solid #c7e2d1;
+		}
+
+		.metrics {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 10px;
+			margin-top: 12px;
+		}
+
+		.metric-card {
+			background: #faf4ea;
+			border: 1px solid #e4d5bf;
+			border-radius: 14px;
+			padding: 10px;
+		}
+
+		.metric-card .label {
+			display: block;
+			font-size: 0.76rem;
+			text-transform: uppercase;
+			letter-spacing: 0.07em;
+			color: var(--muted);
+		}
+
+		.metric-card .value {
+			display: block;
+			font-size: 1.18rem;
+			font-weight: 800;
+			margin-top: 4px;
+		}
+
+		.inputs {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+			gap: 10px;
+			margin-top: 10px;
+		}
+
+		label {
+			display: block;
+			font-size: 0.82rem;
+			font-weight: 700;
+			margin-bottom: 5px;
+		}
+
+		input[type="number"] {
+			width: 100%;
+			padding: 9px 10px;
+			border-radius: 10px;
+			border: 1px solid #ccbda7;
+			background: #fffdfa;
+			font: inherit;
+		}
+
+		.actions {
+			display: flex;
+			gap: 8px;
+			margin-top: 10px;
+			flex-wrap: wrap;
+		}
+
+		button {
+			border: 0;
+			border-radius: 11px;
+			padding: 9px 12px;
+			font: inherit;
+			font-weight: 800;
+			cursor: pointer;
+		}
+
+		button.primary {
+			background: var(--brand);
+			color: #fff;
+		}
+
+		button.secondary {
+			background: #eee4d5;
+			color: var(--ink);
+		}
+
+		button:disabled {
+			opacity: 0.58;
+			cursor: not-allowed;
+		}
+
+		.choice-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 8px;
+			margin-top: 10px;
+		}
+
+		.choice {
+			text-align: left;
+			padding: 10px;
+			border-radius: 12px;
+			border: 1px solid #dbcbb2;
+			background: #f7efe2;
+			font-weight: 700;
+		}
+
+		.choice.active {
+			outline: 2px solid #3d9daf;
+			background: #def2f5;
+		}
+
+		.bar {
+			height: 9px;
+			border-radius: 999px;
+			background: #eadfcd;
+			overflow: hidden;
+			margin-top: 10px;
+		}
+
+		.fill {
+			height: 100%;
+			width: 0;
+			background: linear-gradient(90deg, #0d6f73, #b55f1f);
+		}
+
+		.feedback {
+			min-height: 42px;
+			margin-top: 10px;
+			padding: 10px 12px;
+			border-radius: 12px;
+			font-weight: 700;
+		}
+
+		.feedback.ok {
+			background: #e7f7ec;
+			border: 1px solid #bfe4ca;
+			color: var(--ok);
+		}
+
+		.feedback.bad {
+			background: #fcebe8;
+			border: 1px solid #efc8c1;
+			color: var(--bad);
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 10px;
+			font-size: 0.94rem;
+		}
+
+		th,
+		td {
+			border: 1px solid #dfcfb6;
+			padding: 8px;
+			text-align: left;
+		}
+
+		th {
+			background: #f3ead8;
+		}
+
+		.small {
+			margin-top: 8px;
+			font-size: 0.88rem;
+			color: var(--muted);
+		}
+
+		@media (max-width: 860px) {
+			.hero {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		@media (max-width: 640px) {
+			.app {
+				padding: 16px 12px 32px;
+			}
+
+			.hero,
+			.section {
+				padding: 14px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="app">
+		<section class="hero">
+			<div>
+				<h1>EOQ Constraints and Quantity Discounts Lab</h1>
+				<p>
+					Work through increasingly difficult order-quantity decisions. First, adjust EOQ when a supplier or operation imposes minimum or maximum lot sizes. Then compare discount tiers where the cheapest unit price may or may not create the lowest total annual cost.
+				</p>
+				<ul class="goal-list">
+					<li>Determine how quantity constraints change the feasible optimal order quantity.</li>
+					<li>Evaluate all-units quantity discounts using total annual cost, not unit price alone.</li>
+					<li>Choose the best policy when constraints and discounts compete.</li>
+				</ul>
+				<div class="formula-panel">
+					<strong>Core formulas</strong>
+					<div>\[EOQ=\sqrt{\frac{2DS}{H}}\]</div>
+					<div>\[TAC=DC + \frac{D}{Q}S + \frac{Q}{2}H\]</div>
+					<div>\[H = iC \text{ when holding cost is a carrying-rate times item price}\]</div>
+				</div>
+			</div>
+			<div class="hud">
+				<div class="hud-card"><span class="label">Score</span><span class="value" id="scoreValue">0</span></div>
+				<div class="hud-card"><span class="label">Correct</span><span class="value" id="correctValue">0</span></div>
+				<div class="hud-card"><span class="label">Streak</span><span class="value" id="streakValue">0</span></div>
+				<div class="hud-card"><span class="label">Mastery</span><span class="value" id="masteryValue">0%</span></div>
+			</div>
+		</section>
+
+		<div class="grid">
+			<section class="section" id="mission1">
+				<div class="topline">
+					<h2>Mission 1: Constraint Gatekeeper</h2>
+					<div class="badge-wrap">
+						<span class="badge" id="m1ProgressText">Case 1 of 5</span>
+						<button class="secondary" id="resetM1Btn">Reset Mission 1</button>
+					</div>
+				</div>
+				<div class="prompt" id="m1Prompt"></div>
+				<div class="hint" id="m1Hint">
+					If the unconstrained EOQ is below the minimum quantity, use the minimum. If it is above the maximum quantity, use the maximum. Otherwise keep EOQ.
+				</div>
+				<div class="inputs">
+					<div>
+						<label for="m1EoqInput">Unconstrained EOQ</label>
+						<input type="number" id="m1EoqInput" step="1" placeholder="Enter EOQ" />
+					</div>
+					<div>
+						<label for="m1FeasibleInput">Feasible Order Quantity</label>
+						<input type="number" id="m1FeasibleInput" step="1" placeholder="Enter feasible Q" />
+					</div>
+				</div>
+				<div class="small">Choose why the feasible order quantity changes:</div>
+				<div class="choice-grid" id="m1Choices"></div>
+				<div class="actions">
+					<button class="primary" id="m1SubmitBtn">Check Case</button>
+				</div>
+				<div class="bar"><div class="fill" id="m1Fill"></div></div>
+				<div class="feedback" id="m1Feedback"></div>
+			</section>
+
+			<section class="section" id="mission2">
+				<div class="topline">
+					<h2>Mission 2: Discount Ladder</h2>
+					<div class="badge-wrap">
+						<span class="badge" id="m2ProgressText">Case 1 of 4</span>
+						<button class="secondary" id="resetM2Btn">Reset Mission 2</button>
+					</div>
+				</div>
+				<div class="prompt" id="m2Prompt"></div>
+				<div class="hint" id="m2Hint"></div>
+				<div class="metrics">
+					<div class="metric-card"><span class="label">Demand</span><span class="value" id="m2DemandValue">0</span></div>
+					<div class="metric-card"><span class="label">Ordering Cost</span><span class="value" id="m2SetupValue">$0</span></div>
+					<div class="metric-card"><span class="label">Carrying Rate</span><span class="value" id="m2RateValue">0%</span></div>
+				</div>
+				<div class="inputs">
+					<div>
+						<label for="m2BestQInput">Best Order Quantity</label>
+						<input type="number" id="m2BestQInput" step="1" placeholder="Enter Q" />
+					</div>
+					<div>
+						<label for="m2BestTacInput">Lowest Annual Cost</label>
+						<input type="number" id="m2BestTacInput" step="1" placeholder="Enter TAC" />
+					</div>
+				</div>
+				<div class="small">Select the price tier that actually wins after all annual costs are included.</div>
+				<div class="choice-grid" id="m2Choices"></div>
+				<div class="actions">
+					<button class="primary" id="m2SubmitBtn">Check Ladder</button>
+				</div>
+				<div class="bar"><div class="fill" id="m2Fill"></div></div>
+				<div class="feedback" id="m2Feedback"></div>
+			</section>
+
+			<section class="section" id="mission3">
+				<div class="topline">
+					<h2>Mission 3: Policy Board</h2>
+					<div class="badge-wrap">
+						<span class="badge" id="m3ProgressText">Round 1 of 3</span>
+						<button class="secondary" id="resetM3Btn">Reset Mission 3</button>
+					</div>
+				</div>
+				<div class="prompt" id="m3Prompt"></div>
+				<table>
+					<thead>
+						<tr>
+							<th>Policy</th>
+							<th>Unconstrained EOQ</th>
+							<th>Constraint / Discount Rule</th>
+							<th>Feasible Q</th>
+							<th>Total Annual Cost</th>
+						</tr>
+						</thead>
+					<tbody id="m3TableBody"></tbody>
+				</table>
+				<div class="small">Pick the policy with the lowest defensible annual cost.</div>
+				<div class="choice-grid" id="m3Choices"></div>
+				<div class="actions">
+					<button class="primary" id="m3SubmitBtn">Submit Policy</button>
+				</div>
+				<div class="bar"><div class="fill" id="m3Fill"></div></div>
+				<div class="feedback" id="m3Feedback"></div>
+				<div class="final" id="m3Final"></div>
+			</section>
+		</div>
+	</main>
+
+	<script>
+		window.MathJax = {
+			tex: {
+				inlineMath: [["\\(", "\\)"]],
+				displayMath: [["\\[", "\\]"]]
+			},
+			options: {
+				skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+			}
+		};
+	</script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+	<script>
+		const state = {
+			score: 0,
+			correct: 0,
+			streak: 0,
+			m1Solved: 0,
+			m2Solved: 0,
+			m3Solved: 0,
+			mission1: { index: 0, bank: [], selected: "" },
+			mission2: { index: 0, bank: [], selectedTier: "" },
+			mission3: { index: 0, rounds: [], selected: "" }
+		};
+
+		const m1Cases = [
+			{ D: 24000, S: 180, H: 6, minQ: 900, maxQ: 1800 },
+			{ D: 18000, S: 140, H: 5, minQ: 1200, maxQ: 2500 },
+			{ D: 32000, S: 110, H: 8, minQ: 400, maxQ: 1100 },
+			{ D: 15000, S: 260, H: 4, minQ: 1000, maxQ: 3200 },
+			{ D: 21000, S: 150, H: 7.5, minQ: 500, maxQ: 700 }
+		];
+
+		const m2CasesPool = [
+			{
+				D: 24000,
+				S: 190,
+				rate: 0.2,
+				tiers: [
+					{ name: "Tier A", minQ: 0, C: 10.2 },
+					{ name: "Tier B", minQ: 1200, C: 9.8 },
+					{ name: "Tier C", minQ: 2400, C: 9.45 }
+				]
+			},
+			{
+				D: 18000,
+				S: 240,
+				rate: 0.18,
+				tiers: [
+					{ name: "Tier A", minQ: 0, C: 16.5 },
+					{ name: "Tier B", minQ: 900, C: 16.1 },
+					{ name: "Tier C", minQ: 1800, C: 15.85 }
+				]
+			},
+			{
+				D: 30000,
+				S: 150,
+				rate: 0.22,
+				tiers: [
+					{ name: "Tier A", minQ: 0, C: 8.9 },
+					{ name: "Tier B", minQ: 1500, C: 8.6 },
+					{ name: "Tier C", minQ: 3000, C: 8.3 }
+				]
+			},
+			{
+				D: 22000,
+				S: 210,
+				rate: 0.25,
+				tiers: [
+					{ name: "Tier A", minQ: 0, C: 12.8 },
+					{ name: "Tier B", minQ: 1000, C: 12.35 },
+					{ name: "Tier C", minQ: 2200, C: 11.95 }
+				]
+			},
+			{
+				D: 26000,
+				S: 170,
+				rate: 0.16,
+				tiers: [
+					{ name: "Tier A", minQ: 0, C: 14.4 },
+					{ name: "Tier B", minQ: 800, C: 14.0 },
+					{ name: "Tier C", minQ: 2000, C: 13.7 }
+				]
+			}
+		];
+
+		function shuffle(arr) {
+			const copy = [...arr];
+			for (let i = copy.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[copy[i], copy[j]] = [copy[j], copy[i]];
+			}
+			return copy;
+		}
+
+		function round0(value) {
+			return Math.round(value);
+		}
+
+		function round1(value) {
+			return Math.round(value * 10) / 10;
+		}
+
+		function round2(value) {
+			return Math.round(value * 100) / 100;
+		}
+
+		function money(value) {
+			return `$${round0(value).toLocaleString()}`;
+		}
+
+		function masteryPercent() {
+			const m1 = (state.m1Solved / m1Cases.length) * 34;
+			const m2 = (state.m2Solved / 4) * 33;
+			const m3 = (state.m3Solved / 3) * 33;
+			return `${Math.round(m1 + m2 + m3)}%`;
+		}
+
+		function renderHud() {
+			document.getElementById("scoreValue").textContent = state.score;
+			document.getElementById("correctValue").textContent = state.correct;
+			document.getElementById("streakValue").textContent = state.streak;
+			document.getElementById("masteryValue").textContent = masteryPercent();
+		}
+
+		function award(points) {
+			state.score += points;
+			state.correct += 1;
+			state.streak += 1;
+			renderHud();
+		}
+
+		function breakStreak() {
+			state.streak = 0;
+			renderHud();
+		}
+
+		function setFeedback(id, text, ok) {
+			const el = document.getElementById(id);
+			el.textContent = text;
+			el.className = ok === null ? "feedback" : `feedback ${ok ? "ok" : "bad"}`;
+		}
+
+		function setChoices(containerId, values, onPick) {
+			const wrap = document.getElementById(containerId);
+			wrap.innerHTML = "";
+			values.forEach(value => {
+				const btn = document.createElement("button");
+				btn.className = "choice";
+				btn.textContent = value;
+				btn.addEventListener("click", () => onPick(value));
+				wrap.appendChild(btn);
+			});
+		}
+
+		function markChoice(containerId, value) {
+			const buttons = [...document.querySelectorAll(`#${containerId} .choice`)];
+			buttons.forEach(btn => btn.classList.toggle("active", btn.textContent === value));
+		}
+
+		function updateFill(id, done, total) {
+			document.getElementById(id).style.width = `${(done / total) * 100}%`;
+		}
+
+		function calcEOQ(D, S, H) {
+			return Math.sqrt((2 * D * S) / H);
+		}
+
+		function calcTac(D, Q, S, H, C) {
+			return D * C + (D / Q) * S + (Q / 2) * H;
+		}
+
+		function explainConstraint(eoq, minQ, maxQ) {
+			if (eoq < minQ) {
+				return "Raise the order quantity to the minimum constraint";
+			}
+			if (eoq > maxQ) {
+				return "Cap the order quantity at the maximum constraint";
+			}
+			return "Keep EOQ because it already lies inside the feasible range";
+		}
+
+		function feasibleQ(eoq, minQ, maxQ) {
+			return Math.min(Math.max(eoq, minQ), maxQ);
+		}
+
+		function analyzeDiscountCase(caseData) {
+			const options = caseData.tiers.map((tier, index) => {
+				const nextTierMin = index < caseData.tiers.length - 1 ? caseData.tiers[index + 1].minQ : Infinity;
+				const H = caseData.rate * tier.C;
+				const eoq = calcEOQ(caseData.D, caseData.S, H);
+				let candidateQ = eoq;
+				if (candidateQ < tier.minQ) {
+					candidateQ = tier.minQ;
+				}
+				if (candidateQ >= nextTierMin) {
+					candidateQ = tier.minQ;
+				}
+				const tac = calcTac(caseData.D, candidateQ, caseData.S, H, tier.C);
+				return {
+					name: tier.name,
+					price: tier.C,
+					minQ: tier.minQ,
+					H,
+					eoq: round0(eoq),
+					candidateQ: round0(candidateQ),
+					tac: round0(tac)
+				};
+			});
+
+			const best = [...options].sort((a, b) => a.tac - b.tac)[0];
+			return { options, best };
+		}
+
+		function initMission1() {
+			state.mission1.bank = shuffle(m1Cases);
+			state.mission1.index = 0;
+			state.mission1.selected = "";
+			state.m1Solved = 0;
+			document.getElementById("m1SubmitBtn").disabled = false;
+			loadMission1();
+			renderHud();
+		}
+
+		function loadMission1() {
+			const i = state.mission1.index;
+			const c = state.mission1.bank[i];
+			if (!c) {
+				document.getElementById("m1Prompt").textContent = "Mission 1 complete. Move to discount comparisons in Mission 2.";
+				document.getElementById("m1Choices").innerHTML = "";
+				document.getElementById("m1SubmitBtn").disabled = true;
+				document.getElementById("m1ProgressText").textContent = `Case ${m1Cases.length} of ${m1Cases.length}`;
+				updateFill("m1Fill", m1Cases.length, m1Cases.length);
+				setFeedback("m1Feedback", "Mission 1 completed.", true);
+				return;
+			}
+
+			const eoq = calcEOQ(c.D, c.S, c.H);
+			state.mission1.selected = "";
+			document.getElementById("m1EoqInput").value = "";
+			document.getElementById("m1FeasibleInput").value = "";
+			document.getElementById("m1Prompt").innerHTML =
+				`Case ${i + 1}: D=${c.D.toLocaleString()} units per year, S=$${c.S}, H=$${c.H} per unit per year, minimum order = ${c.minQ}, maximum order = ${c.maxQ}.<br>Find the unconstrained EOQ and then the feasible order quantity.`;
+			setChoices(
+				"m1Choices",
+				[
+					"Raise the order quantity to the minimum constraint",
+					"Cap the order quantity at the maximum constraint",
+					"Keep EOQ because it already lies inside the feasible range"
+				],
+				value => {
+					state.mission1.selected = value;
+					markChoice("m1Choices", value);
+				}
+			);
+			document.getElementById("m1ProgressText").textContent = `Case ${i + 1} of ${m1Cases.length}`;
+			updateFill("m1Fill", i + 1, m1Cases.length);
+			setFeedback("m1Feedback", `Constraint tension check: unconstrained EOQ will be about ${round0(eoq)}.`, null);
+		}
+
+		function submitMission1() {
+			const c = state.mission1.bank[state.mission1.index];
+			if (!c) return;
+
+			const eoqIn = Number(document.getElementById("m1EoqInput").value);
+			const feasibleIn = Number(document.getElementById("m1FeasibleInput").value);
+			if (Number.isNaN(eoqIn) || Number.isNaN(feasibleIn) || !state.mission1.selected) {
+				setFeedback("m1Feedback", "Enter both quantities and select the explanation.", false);
+				return;
+			}
+
+			const eoq = calcEOQ(c.D, c.S, c.H);
+			const q = feasibleQ(eoq, c.minQ, c.maxQ);
+			const eoqOk = Math.abs(eoqIn - eoq) <= Math.max(1, eoq * 0.02);
+			const feasibleOk = Math.abs(feasibleIn - q) <= 1;
+			const reasonOk = state.mission1.selected === explainConstraint(eoq, c.minQ, c.maxQ);
+
+			if (eoqOk && feasibleOk && reasonOk) {
+				state.m1Solved += 1;
+				award(10);
+				setFeedback("m1Feedback", `Correct. EOQ is about ${round0(eoq)} and the feasible order quantity is ${round0(q)}.`, true);
+			} else if (eoqOk || feasibleOk || reasonOk) {
+				award(4);
+				breakStreak();
+				setFeedback("m1Feedback", `Partial. EOQ is about ${round0(eoq)} and feasible Q is ${round0(q)}.`, false);
+			} else {
+				breakStreak();
+				setFeedback("m1Feedback", `Not yet. EOQ is about ${round0(eoq)} and feasible Q is ${round0(q)}.`, false);
+			}
+
+			state.mission1.index += 1;
+			renderHud();
+			setTimeout(loadMission1, 2600);
+		}
+
+		function initMission2() {
+			state.mission2.bank = shuffle(m2CasesPool).slice(0, 4).map(caseData => ({ ...caseData, analysis: analyzeDiscountCase(caseData) }));
+			state.mission2.index = 0;
+			state.mission2.selectedTier = "";
+			state.m2Solved = 0;
+			document.getElementById("m2SubmitBtn").disabled = false;
+			loadMission2();
+			renderHud();
+		}
+
+		function loadMission2() {
+			const i = state.mission2.index;
+			const c = state.mission2.bank[i];
+			if (!c) {
+				document.getElementById("m2Prompt").textContent = "Mission 2 complete. Move to integrated policy choices in Mission 3.";
+				document.getElementById("m2Choices").innerHTML = "";
+				document.getElementById("m2SubmitBtn").disabled = true;
+				document.getElementById("m2ProgressText").textContent = "Case 4 of 4";
+				updateFill("m2Fill", 4, 4);
+				setFeedback("m2Feedback", "Mission 2 completed.", true);
+				return;
+			}
+
+			state.mission2.selectedTier = "";
+			document.getElementById("m2BestQInput").value = "";
+			document.getElementById("m2BestTacInput").value = "";
+			document.getElementById("m2Prompt").textContent =
+				`Case ${i + 1}: Compute the lowest-cost order quantity under all-units discounts. Compare feasible candidates at each price tier.`;
+			document.getElementById("m2DemandValue").textContent = `${c.D.toLocaleString()} units/yr`;
+			document.getElementById("m2SetupValue").textContent = `$${c.S}`;
+			document.getElementById("m2RateValue").textContent = `${round1(c.rate * 100)}%`;
+			document.getElementById("m2Hint").innerHTML = c.tiers
+				.map(tier => `${tier.name}: minimum ${tier.minQ} units, price = $${tier.C.toFixed(2)}`)
+				.join("<br>");
+			setChoices("m2Choices", c.analysis.options.map(option => option.name), value => {
+				state.mission2.selectedTier = value;
+				markChoice("m2Choices", value);
+			});
+			document.getElementById("m2ProgressText").textContent = `Case ${i + 1} of 4`;
+			updateFill("m2Fill", i + 1, 4);
+			setFeedback("m2Feedback", "Evaluate candidate Q in each tier, then compare total annual cost.", null);
+		}
+
+		function submitMission2() {
+			const c = state.mission2.bank[state.mission2.index];
+			if (!c) return;
+
+			const qIn = Number(document.getElementById("m2BestQInput").value);
+			const tacIn = Number(document.getElementById("m2BestTacInput").value);
+			if (Number.isNaN(qIn) || Number.isNaN(tacIn) || !state.mission2.selectedTier) {
+				setFeedback("m2Feedback", "Enter the best quantity, the lowest annual cost, and the winning tier.", false);
+				return;
+			}
+
+			const best = c.analysis.best;
+			const qOk = Math.abs(qIn - best.candidateQ) <= 1;
+			const tacOk = Math.abs(tacIn - best.tac) <= Math.max(40, best.tac * 0.002);
+			const tierOk = state.mission2.selectedTier === best.name;
+
+			if (qOk && tacOk && tierOk) {
+				state.m2Solved += 1;
+				award(14);
+				setFeedback("m2Feedback", `Correct. ${best.name} wins with Q=${best.candidateQ} and annual cost ${money(best.tac)}.`, true);
+			} else if (qOk || tacOk || tierOk) {
+				award(5);
+				breakStreak();
+				setFeedback("m2Feedback", `Partial. Best policy is ${best.name} with Q=${best.candidateQ} and annual cost ${money(best.tac)}.`, false);
+			} else {
+				breakStreak();
+				setFeedback("m2Feedback", `Not yet. Best policy is ${best.name} with Q=${best.candidateQ} and annual cost ${money(best.tac)}.`, false);
+			}
+
+			state.mission2.index += 1;
+			renderHud();
+			setTimeout(loadMission2, 3000);
+		}
+
+		function makeBoardRound(seed) {
+			const constraintEoq = calcEOQ(seed.D, seed.S, seed.H);
+			const constraintQ = feasibleQ(constraintEoq, seed.minQ, seed.maxQ);
+			const constraintTac = calcTac(seed.D, constraintQ, seed.S, seed.H, seed.baseC);
+
+			const discountAnalysis = analyzeDiscountCase({
+				D: seed.D,
+				S: seed.S,
+				rate: seed.rate,
+				tiers: seed.tiers
+			});
+
+			const hybridTier = discountAnalysis.options[1];
+			const hybridQ = feasibleQ(hybridTier.candidateQ, seed.minQ, seed.maxQ);
+			const hybridTac = calcTac(seed.D, hybridQ, seed.S, seed.rate * hybridTier.price, hybridTier.price);
+
+			const policies = [
+				{
+					name: "Policy A",
+					eoq: round0(constraintEoq),
+					rule: `Constraint only: min ${seed.minQ}, max ${seed.maxQ}`,
+					q: round0(constraintQ),
+					tac: round0(constraintTac)
+				},
+				{
+					name: "Policy B",
+					eoq: round0(discountAnalysis.best.eoq),
+					rule: `Best pure discount tier: ${discountAnalysis.best.name} at $${discountAnalysis.best.price.toFixed(2)}`,
+					q: discountAnalysis.best.candidateQ,
+					tac: discountAnalysis.best.tac
+				},
+				{
+					name: "Policy C",
+					eoq: hybridTier.eoq,
+					rule: `Discount tier ${hybridTier.name} plus feasible band ${seed.minQ}-${seed.maxQ}`,
+					q: round0(hybridQ),
+					tac: round0(hybridTac)
+				}
+			];
+
+			const answer = [...policies].sort((a, b) => a.tac - b.tac)[0].name;
+			return { seed, policies, answer };
+		}
+
+		function initMission3() {
+			const roundSeeds = [
+				{
+					D: 24000,
+					S: 180,
+					H: 2.1,
+					baseC: 10.1,
+					minQ: 900,
+					maxQ: 2100,
+					rate: 0.2,
+					tiers: [
+						{ name: "Tier A", minQ: 0, C: 10.1 },
+						{ name: "Tier B", minQ: 1200, C: 9.8 },
+						{ name: "Tier C", minQ: 2400, C: 9.45 }
+					]
+				},
+				{
+					D: 20000,
+					S: 210,
+					H: 3.0,
+					baseC: 15.8,
+					minQ: 700,
+					maxQ: 1800,
+					rate: 0.18,
+					tiers: [
+						{ name: "Tier A", minQ: 0, C: 15.8 },
+						{ name: "Tier B", minQ: 1000, C: 15.35 },
+						{ name: "Tier C", minQ: 2000, C: 15.0 }
+					]
+				},
+				{
+					D: 28000,
+					S: 140,
+					H: 1.9,
+					baseC: 8.7,
+					minQ: 600,
+					maxQ: 1600,
+					rate: 0.22,
+					tiers: [
+						{ name: "Tier A", minQ: 0, C: 8.7 },
+						{ name: "Tier B", minQ: 1200, C: 8.45 },
+						{ name: "Tier C", minQ: 2600, C: 8.12 }
+					]
+				}
+			];
+
+			state.mission3.rounds = shuffle(roundSeeds).map(makeBoardRound);
+			state.mission3.index = 0;
+			state.mission3.selected = "";
+			state.m3Solved = 0;
+			document.getElementById("m3SubmitBtn").disabled = false;
+			document.getElementById("m3Final").style.display = "none";
+			document.getElementById("m3Final").innerHTML = "";
+			loadMission3();
+			renderHud();
+		}
+
+		function loadMission3() {
+			const i = state.mission3.index;
+			const round = state.mission3.rounds[i];
+			if (!round) {
+				finishMission3();
+				return;
+			}
+
+			state.mission3.selected = "";
+			document.getElementById("m3Prompt").textContent =
+				`Round ${i + 1}: Compare a constraint policy, a discount policy, and a hybrid policy. Select the lowest-cost defensible choice.`;
+			const tbody = document.getElementById("m3TableBody");
+			tbody.innerHTML = "";
+			round.policies.forEach(policy => {
+				const tr = document.createElement("tr");
+				tr.innerHTML = `<td>${policy.name}</td><td>${policy.eoq}</td><td>${policy.rule}</td><td>${policy.q}</td><td>${money(policy.tac)}</td>`;
+				tbody.appendChild(tr);
+			});
+
+			setChoices("m3Choices", round.policies.map(policy => policy.name), value => {
+				state.mission3.selected = value;
+				markChoice("m3Choices", value);
+			});
+			document.getElementById("m3ProgressText").textContent = `Round ${i + 1} of 3`;
+			updateFill("m3Fill", i + 1, 3);
+			setFeedback("m3Feedback", "Lowest unit price is not automatically the winner; focus on annual cost.", null);
+		}
+
+		function submitMission3() {
+			const round = state.mission3.rounds[state.mission3.index];
+			if (!round) return;
+			if (!state.mission3.selected) {
+				setFeedback("m3Feedback", "Select one policy before submitting.", false);
+				return;
+			}
+
+			if (state.mission3.selected === round.answer) {
+				state.m3Solved += 1;
+				award(16);
+				setFeedback("m3Feedback", `Correct. ${round.answer} has the lowest defensible annual cost.`, true);
+			} else {
+				breakStreak();
+				setFeedback("m3Feedback", `Not quite. ${round.answer} is the best policy in this round.`, false);
+			}
+
+			state.mission3.index += 1;
+			renderHud();
+			setTimeout(loadMission3, 2700);
+		}
+
+		function finishMission3() {
+			const final = document.getElementById("m3Final");
+			final.style.display = "block";
+			let verdict = "Developing lot-size judgment";
+			let detail = "You are learning to separate unconstrained EOQ from the feasible or lowest-cost policy.";
+
+			if (state.m3Solved === 3) {
+				verdict = "Constraint and discount mastery achieved";
+				detail = "You consistently identified when a binding quantity rule or a discount tier changes the best order quantity.";
+				award(18);
+			} else if (state.m3Solved >= 2) {
+				verdict = "Strong order-quantity reasoning";
+				detail = "You usually chose the correct tradeoff between feasibility and annual cost.";
+				award(9);
+			}
+
+			final.innerHTML = `<strong>${verdict}</strong><br>${detail}<br><br>Rule reinforced: first find EOQ, then adjust for any binding quantity rule, then compare full annual cost across feasible discount candidates.`;
+			document.getElementById("m3Prompt").textContent = "Mission 3 complete. Reset to generate new integrated policy rounds.";
+			document.getElementById("m3Choices").innerHTML = "";
+			document.getElementById("m3SubmitBtn").disabled = true;
+			setFeedback("m3Feedback", "Mission 3 completed.", true);
+			renderHud();
+		}
+
+		function bindEvents() {
+			document.getElementById("m1SubmitBtn").addEventListener("click", submitMission1);
+			document.getElementById("resetM1Btn").addEventListener("click", initMission1);
+
+			document.getElementById("m2SubmitBtn").addEventListener("click", submitMission2);
+			document.getElementById("resetM2Btn").addEventListener("click", initMission2);
+
+			document.getElementById("m3SubmitBtn").addEventListener("click", submitMission3);
+			document.getElementById("resetM3Btn").addEventListener("click", initMission3);
+		}
+
+		function init() {
+			bindEvents();
+			initMission1();
+			initMission2();
+			initMission3();
+			renderHud();
+			if (window.MathJax && window.MathJax.typesetPromise) {
+				window.MathJax.typesetPromise();
+			}
+		}
+
+		init();
+	</script>
+</body>
+</html>

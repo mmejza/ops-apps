@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Product Variety and EOQ Challenge</title>
+	<style>
+		:root {
+			--bg: #f5f1e8;
+			--panel: #fffdf8;
+			--ink: #1f292a;
+			--muted: #59686a;
+			--line: #ddcfb8;
+			--accent: #0f6f78;
+			--accent2: #be5a2b;
+			--ok: #2f8b64;
+			--bad: #b44a43;
+			--chip: #efe5d3;
+			--shadow: 0 10px 24px rgba(41, 34, 22, 0.12);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Avenir Next", "Segoe UI", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(800px 420px at -4% -8%, #efe2c4 0%, rgba(239, 226, 196, 0) 60%),
+				radial-gradient(780px 360px at 108% -4%, #d4ece8 0%, rgba(212, 236, 232, 0) 62%),
+				var(--bg);
+			min-height: 100vh;
+		}
+
+		.wrap {
+			max-width: 1100px;
+			margin: 0 auto;
+			padding: 20px 16px 50px;
+		}
+
+		header {
+			background: linear-gradient(130deg, #17363b, #0f6f78 72%, #4ba9b7);
+			color: #f4fcfd;
+			padding: 20px;
+			border-radius: 16px;
+			box-shadow: var(--shadow);
+		}
+
+		h1 {
+			margin: 0 0 6px;
+			font-size: clamp(1.35rem, 3vw, 2rem);
+		}
+
+		header p {
+			margin: 0;
+			line-height: 1.45;
+			color: #e4f5f7;
+		}
+
+		.summary {
+			margin-top: 12px;
+			background: rgba(255, 255, 255, 0.12);
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			padding: 10px 12px;
+			border-radius: 12px;
+			line-height: 1.4;
+		}
+
+		.summary ul {
+			margin: 8px 0 0 20px;
+		}
+
+		.hud {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+			gap: 10px;
+			margin-top: 14px;
+		}
+
+		.metric {
+			background: rgba(255, 255, 255, 0.14);
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			border-radius: 12px;
+			padding: 10px;
+		}
+
+		.metric .k {
+			display: block;
+			font-size: 0.76rem;
+			text-transform: uppercase;
+			letter-spacing: 0.07em;
+			opacity: 0.9;
+		}
+
+		.metric .v {
+			font-weight: 700;
+			font-size: 1.2rem;
+		}
+
+		.grid {
+			display: grid;
+			gap: 14px;
+			margin-top: 16px;
+		}
+
+		.section {
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 16px;
+			padding: 14px;
+			box-shadow: var(--shadow);
+		}
+
+		.section h2 {
+			margin: 0;
+			font-size: 1.08rem;
+		}
+
+		.bar {
+			height: 8px;
+			background: #e7dcc6;
+			border-radius: 999px;
+			overflow: hidden;
+			margin-top: 8px;
+		}
+
+		.fill {
+			height: 100%;
+			background: linear-gradient(90deg, #0f6f78, #33a2b2);
+			width: 0;
+		}
+
+		.topline {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 8px;
+		}
+
+		.badge {
+			padding: 5px 10px;
+			background: var(--chip);
+			border-radius: 999px;
+			font-size: 0.8rem;
+			font-weight: 700;
+		}
+
+		.prompt {
+			margin-top: 10px;
+			background: #fff6e5;
+			border: 1px solid #f0dcb0;
+			border-radius: 12px;
+			padding: 10px;
+			line-height: 1.45;
+		}
+
+		.hint {
+			margin-top: 8px;
+			background: #e7f4f8;
+			border: 1px solid #c4e1e8;
+			border-radius: 12px;
+			padding: 10px;
+			line-height: 1.45;
+			font-size: 0.92rem;
+		}
+
+		.choices {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 8px;
+			margin-top: 8px;
+		}
+
+		.choice {
+			border: 1px solid #dfd0b7;
+			background: #f5eee1;
+			padding: 9px;
+			border-radius: 10px;
+			font-weight: 600;
+			text-align: left;
+			cursor: pointer;
+		}
+
+		.choice.active {
+			outline: 2px solid #3a9bad;
+			background: #ddf0f4;
+		}
+
+		.inputs {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+			gap: 8px;
+			margin-top: 8px;
+		}
+
+		input[type="number"] {
+			width: 100%;
+			padding: 8px;
+			border-radius: 8px;
+			border: 1px solid #cfbea1;
+		}
+
+		.actions {
+			display: flex;
+			gap: 8px;
+			margin-top: 10px;
+			flex-wrap: wrap;
+		}
+
+		button {
+			border: 0;
+			border-radius: 10px;
+			padding: 8px 11px;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		button.primary {
+			background: var(--accent);
+			color: #fff;
+		}
+
+		button.secondary {
+			background: #ece4d6;
+			color: var(--ink);
+		}
+
+		button:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+
+		.feedback {
+			margin-top: 8px;
+			min-height: 40px;
+			padding: 9px;
+			border-radius: 10px;
+			font-weight: 600;
+		}
+
+		.feedback.ok {
+			background: #e5f7ed;
+			border: 1px solid #bbe5cd;
+			color: var(--ok);
+		}
+
+		.feedback.bad {
+			background: #fcebe9;
+			border: 1px solid #f0c7c2;
+			color: var(--bad);
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 8px;
+			font-size: 0.92rem;
+		}
+
+		th,
+		td {
+			border: 1px solid #dfcfb6;
+			padding: 7px;
+			text-align: left;
+		}
+
+		th {
+			background: #f2e9d8;
+		}
+
+		.small {
+			font-size: 0.84rem;
+			color: var(--muted);
+		}
+
+		.final {
+			display: none;
+			margin-top: 8px;
+			background: #eff8fa;
+			border: 1px solid #bfdce3;
+			padding: 10px;
+			border-radius: 12px;
+			line-height: 1.45;
+		}
+
+		@media (max-width: 640px) {
+			header,
+			.section {
+				padding: 12px;
+			}
+
+			.metric .v {
+				font-size: 1.06rem;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<header>
+			<h1>Product Variety and EOQ</h1>
+			<p>Challenge objective: decide when expanding product variety helps versus when it increases inventory carrying cost with limited demand gain.</p>
+			<div class="summary">
+				<strong>Core content</strong>
+				<ul>
+					<li>Product substitution occurs when people are willing to buy a less-preferred version if their preferred version is not available.</li>
+					<li>Expanding product variety is good if rate of product substitution is low, so total demand for all versions rises.</li>
+					<li>Expanding product variety is costly if rate of product substitution is high, so total demand for all versions rises little or decreases.</li>
+				</ul>
+			</div>
+			<div class="hud">
+				<div class="metric"><span class="k">Score</span><span class="v" id="scoreValue">0</span></div>
+				<div class="metric"><span class="k">Correct</span><span class="v" id="correctValue">0</span></div>
+				<div class="metric"><span class="k">Streak</span><span class="v" id="streakValue">0</span></div>
+				<div class="metric"><span class="k">Mastery</span><span class="v" id="masteryValue">0%</span></div>
+			</div>
+		</header>
+
+		<div class="grid">
+			<section class="section" id="mission1">
+				<div class="topline">
+					<h2>Mission 1: Substitution Logic Drill</h2>
+					<div>
+						<span class="badge" id="m1ProgressText">Case 1 of 5</span>
+						<button class="secondary" id="resetM1Btn">Reset Mission 1</button>
+					</div>
+				</div>
+				<div class="prompt" id="m1Prompt"></div>
+				<div class="choices" id="m1Choices"></div>
+				<div class="actions">
+					<button class="primary" id="m1SubmitBtn">Check Answer</button>
+				</div>
+				<div class="bar"><div class="fill" id="m1Fill"></div></div>
+				<div class="feedback" id="m1Feedback"></div>
+			</section>
+
+			<section class="section" id="mission3">
+				<div class="topline">
+					<h2>Mission 2: Portfolio Recommendation Board</h2>
+					<div>
+						<span class="badge" id="m3ProgressText">Round 1 of 3</span>
+						<button class="secondary" id="resetM3Btn">Reset Mission 2</button>
+					</div>
+				</div>
+				<div class="prompt" id="m3Prompt"></div>
+				<table>
+					<thead>
+						<tr>
+							<th>Option</th>
+							<th>Substitution Rate</th>
+							<th>Demand Lift %</th>
+							<th>Carrying Penalty %</th>
+							<th>Net Signal</th>
+						</tr>
+					</thead>
+					<tbody id="m3TableBody"></tbody>
+				</table>
+				<div class="small" style="margin-top:8px;">Choose the option that best supports expansion under the objective above.</div>
+				<div class="choices" id="m3Choices"></div>
+				<div class="actions">
+					<button class="primary" id="m3SubmitBtn">Submit Round</button>
+				</div>
+				<div class="bar"><div class="fill" id="m3Fill"></div></div>
+				<div class="feedback" id="m3Feedback"></div>
+				<div class="final" id="m3Final"></div>
+			</section>
+		</div>
+	</div>
+
+	<script>
+		window.MathJax = {
+			tex: {
+				inlineMath: [["\\(", "\\)"]],
+				displayMath: [["\\[", "\\]"]]
+			},
+			options: {
+				skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+			}
+		};
+	</script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+	<script>
+		const state = {
+			score: 0,
+			correct: 0,
+			streak: 0,
+			m1Solved: 0,
+			m3Solved: 0,
+			mission1: { index: 0, bank: [], selected: "" },
+			mission3: { index: 0, rounds: [], selected: "" }
+		};
+
+		const m1Cases = [
+			{
+				prompt: "Substitution rate is 18%. After introducing more versions, total category demand grows by 16%.",
+				choices: [
+					"Expansion is generally supported",
+					"Expansion is generally costly"
+				],
+				answer: "Expansion is generally supported",
+				reason: "Low substitution with clear demand growth aligns with beneficial expansion."
+			},
+			{
+				prompt: "Substitution rate is 72%. New variants mostly cannibalize each other and total demand changes by +2%.",
+				choices: [
+					"Expansion is generally supported",
+					"Expansion is generally costly"
+				],
+				answer: "Expansion is generally costly",
+				reason: "High substitution and weak demand gain indicate cost-heavy expansion."
+			},
+			{
+				prompt: "Substitution rate is 65%. Total demand falls by 3% after a variety push.",
+				choices: [
+					"Expansion is generally supported",
+					"Expansion is generally costly"
+				],
+				answer: "Expansion is generally costly",
+				reason: "Demand decline with high substitution is the strongest warning signal."
+			},
+			{
+				prompt: "Substitution rate is 25%. Variety introduction attracts new buyers and total demand increases 14%.",
+				choices: [
+					"Expansion is generally supported",
+					"Expansion is generally costly"
+				],
+				answer: "Expansion is generally supported",
+				reason: "Low substitution with meaningful growth supports broader assortment."
+			},
+			{
+				prompt: "Substitution rate is 55%. Total demand increases 1% while inventory complexity jumps.",
+				choices: [
+					"Expansion is generally supported",
+					"Expansion is generally costly"
+				],
+				answer: "Expansion is generally costly",
+				reason: "High substitution with minimal growth suggests little revenue upside versus carrying burden."
+			}
+		];
+
+		const m2CasesPool = [
+			{ D0: 24000, S: 140, H: 5.2, V: 4, g: 0.24, s: 0.22 },
+			{ D0: 26000, S: 120, H: 4.6, V: 5, g: 0.20, s: 0.68 },
+			{ D0: 20000, S: 155, H: 6.1, V: 3, g: 0.18, s: 0.35 },
+			{ D0: 30000, S: 110, H: 4.2, V: 6, g: 0.25, s: 0.74 },
+			{ D0: 22000, S: 170, H: 6.8, V: 4, g: 0.16, s: 0.52 },
+			{ D0: 28000, S: 130, H: 5.0, V: 5, g: 0.22, s: 0.28 }
+		];
+
+		function shuffle(arr) {
+			const copy = [...arr];
+			for (let i = copy.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[copy[i], copy[j]] = [copy[j], copy[i]];
+			}
+			return copy;
+		}
+
+		function round1(v) {
+			return Math.round(v * 10) / 10;
+		}
+
+		function round0(v) {
+			return Math.round(v);
+		}
+
+		function mastery() {
+			const m1 = (state.m1Solved / m1Cases.length) * 50;
+			const m2 = (state.m3Solved / 3) * 50;
+			return `${Math.round(m1 + m2)}%`;
+		}
+
+		function renderHud() {
+			document.getElementById("scoreValue").textContent = state.score;
+			document.getElementById("correctValue").textContent = state.correct;
+			document.getElementById("streakValue").textContent = state.streak;
+			document.getElementById("masteryValue").textContent = mastery();
+		}
+
+		function award(points) {
+			state.score += points;
+			state.correct += 1;
+			state.streak += 1;
+			renderHud();
+		}
+
+		function breakStreak() {
+			state.streak = 0;
+			renderHud();
+		}
+
+		function setFeedback(id, text, ok) {
+			const el = document.getElementById(id);
+			el.textContent = text;
+			el.className = ok === null ? "feedback" : `feedback ${ok ? "ok" : "bad"}`;
+		}
+
+		function setChoices(containerId, values, onPick) {
+			const wrap = document.getElementById(containerId);
+			wrap.innerHTML = "";
+			values.forEach(v => {
+				const btn = document.createElement("button");
+				btn.className = "choice";
+				btn.textContent = v;
+				btn.addEventListener("click", () => onPick(v));
+				wrap.appendChild(btn);
+			});
+		}
+
+		function markChoice(containerId, selected) {
+			const btns = [...document.querySelectorAll(`#${containerId} .choice`)];
+			btns.forEach(btn => btn.classList.toggle("active", btn.textContent === selected));
+		}
+
+		function updateFill(id, done, total) {
+			document.getElementById(id).style.width = `${(done / total) * 100}%`;
+		}
+
+		function initMission1() {
+			state.mission1.bank = shuffle(m1Cases);
+			state.mission1.index = 0;
+			state.mission1.selected = "";
+			state.m1Solved = 0;
+			document.getElementById("m1SubmitBtn").disabled = false;
+			loadMission1();
+			renderHud();
+		}
+
+		function loadMission1() {
+			const i = state.mission1.index;
+			const c = state.mission1.bank[i];
+
+			if (!c) {
+				document.getElementById("m1Prompt").textContent = "Mission 1 complete. Move to portfolio recommendations in Mission 2.";
+				document.getElementById("m1Choices").innerHTML = "";
+				document.getElementById("m1SubmitBtn").disabled = true;
+				document.getElementById("m1ProgressText").textContent = `Case ${m1Cases.length} of ${m1Cases.length}`;
+				updateFill("m1Fill", m1Cases.length, m1Cases.length);
+				setFeedback("m1Feedback", "Mission 1 completed.", true);
+				return;
+			}
+
+			state.mission1.selected = "";
+			document.getElementById("m1Prompt").textContent = c.prompt;
+			setChoices("m1Choices", c.choices, value => {
+				state.mission1.selected = value;
+				markChoice("m1Choices", value);
+			});
+			document.getElementById("m1ProgressText").textContent = `Case ${i + 1} of ${m1Cases.length}`;
+			updateFill("m1Fill", i + 1, m1Cases.length);
+			setFeedback("m1Feedback", "", null);
+		}
+
+		function submitMission1() {
+			const c = state.mission1.bank[state.mission1.index];
+			if (!c) return;
+			if (!state.mission1.selected) {
+				setFeedback("m1Feedback", "Select one decision before checking.", false);
+				return;
+			}
+
+			if (state.mission1.selected === c.answer) {
+				state.m1Solved += 1;
+				award(8);
+				setFeedback("m1Feedback", `Correct. ${c.reason}`, true);
+			} else {
+				breakStreak();
+				setFeedback("m1Feedback", `Not yet. ${c.reason}`, false);
+			}
+
+			state.mission1.index += 1;
+			renderHud();
+			setTimeout(loadMission1, 2600);
+		}
+
+		function computeM2Case(c) {
+			const Dnew = c.D0 * (1 + c.g * (1 - c.s));
+			const baseAEC = Math.sqrt(2 * c.D0 * c.S * c.H);
+			const varAEC = Math.sqrt(c.V) * Math.sqrt(2 * Dnew * c.S * c.H);
+			const liftPct = ((Dnew - c.D0) / c.D0) * 100;
+			const penaltyPct = ((varAEC - baseAEC) / baseAEC) * 100;
+			const supported = c.s < 0.45 && liftPct >= penaltyPct;
+			return {
+				Dnew,
+				baseAEC,
+				varAEC,
+				liftPct,
+				penaltyPct,
+				decision: supported ? "Good to expand variety" : "Costly to expand variety"
+			};
+		}
+
+		function makeRoundOption(name, s, lift, penalty) {
+			const signal = lift - penalty;
+			return {
+				name,
+				s,
+				lift,
+				penalty,
+				signal,
+				rating: signal >= 0 ? "Positive" : "Negative"
+			};
+		}
+
+		function buildM3Round() {
+			const seed = m2CasesPool[Math.floor(Math.random() * m2CasesPool.length)];
+			const r = computeM2Case(seed);
+			const options = [
+				makeRoundOption("Option A", round1(seed.s * 100), round1(r.liftPct), round1(r.penaltyPct)),
+				makeRoundOption("Option B", round1(seed.s * 100 + 18), round1(Math.max(-3, r.liftPct - 7)), round1(r.penaltyPct + 6)),
+				makeRoundOption("Option C", round1(Math.max(8, seed.s * 100 - 16)), round1(r.liftPct + 5), round1(Math.max(1, r.penaltyPct - 4)))
+			];
+
+			options.forEach(o => {
+				o.support = o.s < 45 && o.lift >= o.penalty;
+			});
+
+			let best = options.filter(o => o.support).sort((a, b) => (b.lift - b.penalty) - (a.lift - a.penalty))[0];
+			if (!best) {
+				best = options.sort((a, b) => b.signal - a.signal)[0];
+			}
+
+			return { options, answer: best.name };
+		}
+
+		function initMission3() {
+			state.mission3.rounds = [buildM3Round(), buildM3Round(), buildM3Round()];
+			state.mission3.index = 0;
+			state.mission3.selected = "";
+			state.m3Solved = 0;
+			document.getElementById("m3SubmitBtn").disabled = false;
+			document.getElementById("m3Final").style.display = "none";
+			document.getElementById("m3Final").innerHTML = "";
+			loadMission3();
+			renderHud();
+		}
+
+		function loadMission3() {
+			const i = state.mission3.index;
+			const round = state.mission3.rounds[i];
+			if (!round) {
+				finishMission3();
+				return;
+			}
+
+			state.mission3.selected = "";
+			document.getElementById("m3Prompt").textContent =
+				`Round ${i + 1}: Recommend the best expansion option under the rule: low substitution + demand lift that at least offsets carrying penalty.`;
+
+			const tbody = document.getElementById("m3TableBody");
+			tbody.innerHTML = "";
+			round.options.forEach(o => {
+				const tr = document.createElement("tr");
+				tr.innerHTML = `<td>${o.name}</td><td>${o.s}%</td><td>${o.lift}%</td><td>${o.penalty}%</td><td>${o.rating}</td>`;
+				tbody.appendChild(tr);
+			});
+
+			setChoices("m3Choices", round.options.map(o => o.name), value => {
+				state.mission3.selected = value;
+				markChoice("m3Choices", value);
+			});
+
+			document.getElementById("m3ProgressText").textContent = `Round ${i + 1} of 3`;
+			updateFill("m3Fill", i + 1, 3);
+			setFeedback("m3Feedback", "", null);
+		}
+
+		function submitMission3() {
+			const round = state.mission3.rounds[state.mission3.index];
+			if (!round) return;
+			if (!state.mission3.selected) {
+				setFeedback("m3Feedback", "Select one option before submitting.", false);
+				return;
+			}
+
+			if (state.mission3.selected === round.answer) {
+				state.m3Solved += 1;
+				award(14);
+				setFeedback("m3Feedback", "Correct recommendation for this round.", true);
+			} else {
+				breakStreak();
+				setFeedback("m3Feedback", `Not the best fit. Recommended option was ${round.answer}.`, false);
+			}
+
+			state.mission3.index += 1;
+			renderHud();
+			setTimeout(loadMission3, 2700);
+		}
+
+		function finishMission3() {
+			const final = document.getElementById("m3Final");
+			final.style.display = "block";
+			let verdict = "Developing substitution intuition";
+			let detail = "You are improving at linking substitution behavior to variety economics.";
+			if (state.m3Solved === 3) {
+				verdict = "Product variety mastery achieved";
+				detail = "You consistently selected options with low substitution and favorable demand-versus-carrying tradeoffs.";
+				award(16);
+			} else if (state.m3Solved >= 2) {
+				verdict = "Strong recommendation quality";
+				detail = "You usually balanced substitution risk against EOQ carrying penalty correctly.";
+				award(8);
+			}
+
+			final.innerHTML = `<strong>${verdict}</strong><br>${detail}<br><br>Rule reinforced: expansion works when substitution is low and total demand rise outweighs the inventory carrying-cost increase from greater variety.`;
+			document.getElementById("m3Prompt").textContent = "Mission 2 complete. Reset to generate new recommendation rounds.";
+			document.getElementById("m3Choices").innerHTML = "";
+			document.getElementById("m3SubmitBtn").disabled = true;
+			setFeedback("m3Feedback", "Mission 2 completed.", true);
+			renderHud();
+		}
+
+		function bindEvents() {
+			document.getElementById("m1SubmitBtn").addEventListener("click", submitMission1);
+			document.getElementById("resetM1Btn").addEventListener("click", initMission1);
+
+			document.getElementById("m3SubmitBtn").addEventListener("click", submitMission3);
+			document.getElementById("resetM3Btn").addEventListener("click", initMission3);
+		}
+
+		function init() {
+			bindEvents();
+			initMission1();
+			initMission3();
+			renderHud();
+		}
+
+		init();
+	</script>
+</body>
+</html>

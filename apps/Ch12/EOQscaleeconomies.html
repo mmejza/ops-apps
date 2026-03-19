@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>EOQ and Economies of Scale Lab</title>
+	<style>
+		@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Literata:ital,wght@0,600;0,700;1,600&display=swap");
+
+		:root {
+			--bg-1: #f3eee1;
+			--bg-2: #e7f1fd;
+			--ink: #1d2430;
+			--muted: #5c667a;
+			--card: #ffffff;
+			--edge: #cfdbef;
+			--brand: #0f6f6d;
+			--brand-2: #c26a23;
+			--ok: #1f8f42;
+			--bad: #b92d20;
+			--shadow: 0 14px 34px rgba(18, 28, 41, 0.12);
+			--radius: 18px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Outfit", "Trebuchet MS", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 10% 16%, rgba(15, 111, 109, 0.14), transparent 32%),
+				radial-gradient(circle at 90% 8%, rgba(194, 106, 35, 0.14), transparent 30%),
+				linear-gradient(160deg, var(--bg-1), var(--bg-2));
+			min-height: 100vh;
+		}
+
+		.app {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 24px 16px 44px;
+			animation: fadeIn 0.45s ease;
+		}
+
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.hero {
+			background: linear-gradient(130deg, #133a65, #0f6f6d 52%, #c26a23);
+			border-radius: 24px;
+			box-shadow: var(--shadow);
+			color: white;
+			padding: 24px;
+			display: grid;
+			grid-template-columns: 1.45fr 1fr;
+			gap: 18px;
+		}
+
+		.hero h1 {
+			margin: 4px 0 10px;
+			font-family: "Literata", Georgia, serif;
+			font-size: clamp(1.8rem, 3.8vw, 2.55rem);
+			line-height: 1.12;
+		}
+
+		.hero p {
+			margin: 0;
+			line-height: 1.55;
+			color: rgba(255, 255, 255, 0.95);
+			max-width: 72ch;
+		}
+
+		.goal-list {
+			margin: 12px 0 0;
+			padding-left: 18px;
+			line-height: 1.45;
+		}
+
+		.hud {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+
+		.hud-card {
+			background: rgba(255, 255, 255, 0.18);
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			border-radius: 13px;
+			padding: 10px 12px;
+		}
+
+		.hud-label {
+			display: block;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			font-size: 0.75rem;
+			margin-bottom: 4px;
+			opacity: 0.9;
+		}
+
+		.hud-value {
+			font-size: 1.5rem;
+			font-weight: 800;
+		}
+
+		.section {
+			margin-top: 18px;
+			background: var(--card);
+			border: 1px solid var(--edge);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			padding: 20px;
+			animation: rise 0.4s ease;
+		}
+
+		@keyframes rise {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.section-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-bottom: 8px;
+		}
+
+		h2 {
+			margin: 0;
+			font-size: 1.35rem;
+		}
+
+		.description {
+			margin: 0 0 14px;
+			color: var(--muted);
+			line-height: 1.55;
+		}
+
+		.formula-box,
+		.prompt-box,
+		.table-wrap,
+		.metric-card,
+		.hint-box {
+			background: #f8fbff;
+			border: 1px solid #d5e2f4;
+			border-radius: 12px;
+		}
+
+		.formula-box,
+		.prompt-box,
+		.hint-box {
+			padding: 12px;
+			line-height: 1.45;
+			margin-bottom: 10px;
+		}
+
+		.formula-line {
+			display: block;
+			margin: 6px 0;
+			padding: 6px 8px;
+			border: 1px solid #cad9ef;
+			border-radius: 8px;
+			background: #eff5ff;
+			font-family: "Cambria Math", "Times New Roman", serif;
+		}
+
+		.progress {
+			width: min(560px, 100%);
+			margin-bottom: 12px;
+		}
+
+		.progress-head {
+			display: flex;
+			justify-content: space-between;
+			color: var(--muted);
+			font-size: 0.9rem;
+			margin-bottom: 6px;
+		}
+
+		.bar {
+			height: 11px;
+			border-radius: 999px;
+			border: 1px solid #d8dfeb;
+			background: #ecf2fa;
+			overflow: hidden;
+		}
+
+		.fill {
+			height: 100%;
+			width: 0;
+			transition: width 0.24s ease;
+			background: linear-gradient(90deg, #0f6f6d, #c26a23);
+		}
+
+		.tag {
+			display: inline-block;
+			font-size: 0.78rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: #365381;
+			background: #eff4ff;
+			border: 1px solid #cad8ef;
+			border-radius: 999px;
+			padding: 4px 9px;
+			margin-bottom: 8px;
+		}
+
+		.input-grid,
+		.option-grid,
+		.metrics {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 10px;
+			margin: 10px 0;
+		}
+
+		label {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			font-size: 0.9rem;
+			color: #334867;
+			font-weight: 700;
+		}
+
+		input {
+			width: 100%;
+			padding: 10px;
+			border-radius: 10px;
+			border: 1px solid #bfd1e8;
+			font-size: 0.95rem;
+			font-family: inherit;
+		}
+
+		button {
+			border: none;
+			border-radius: 11px;
+			padding: 10px 12px;
+			font-size: 0.95rem;
+			font-family: inherit;
+			cursor: pointer;
+			transition: transform 0.12s ease, box-shadow 0.12s ease;
+		}
+
+		button:hover:not([disabled]) {
+			transform: translateY(-1px);
+			box-shadow: 0 8px 16px rgba(18, 28, 41, 0.14);
+		}
+
+		button:disabled {
+			opacity: 0.62;
+			cursor: not-allowed;
+		}
+
+		.primary {
+			background: linear-gradient(120deg, #1b4f8f, #0f6f6d);
+			color: white;
+		}
+
+		.secondary {
+			background: #efe9dc;
+			border: 1px solid #d9cfb8;
+			color: #2f3850;
+		}
+
+		.chip {
+			text-align: left;
+			background: #edf3fb;
+			border: 1px solid #ccd9ec;
+			color: #233452;
+		}
+
+		.chip.active {
+			background: #e4f7f4;
+			border-color: #99d1c9;
+			color: #0f5952;
+		}
+
+		.metric-card {
+			padding: 10px;
+		}
+
+		.metric-label {
+			display: block;
+			font-size: 0.78rem;
+			text-transform: uppercase;
+			letter-spacing: 0.07em;
+			color: #486388;
+			margin-bottom: 5px;
+		}
+
+		.metric-value {
+			font-size: 1.3rem;
+			font-weight: 800;
+			color: #203556;
+		}
+
+		.table-wrap {
+			padding: 10px;
+			overflow-x: auto;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			border: 1px solid #d6e2f3;
+			padding: 9px 10px;
+			text-align: center;
+			font-size: 0.92rem;
+		}
+
+		th {
+			background: #eef4fd;
+		}
+
+		.hint-box {
+			background: #fff8e6;
+			border-color: #efd8a0;
+			color: #7a5600;
+		}
+
+		.feedback {
+			margin-top: 12px;
+			min-height: 24px;
+			font-weight: 700;
+		}
+
+		.feedback.ok { color: var(--ok); }
+		.feedback.bad { color: var(--bad); }
+
+		.final-box {
+			display: none;
+			margin-top: 12px;
+			padding: 12px;
+			border-radius: 12px;
+			border: 1px solid #c7e5cf;
+			background: #eef9f2;
+			line-height: 1.5;
+		}
+
+		@media (max-width: 920px) {
+			.hero { grid-template-columns: 1fr; }
+		}
+
+		@media (max-width: 560px) {
+			.app { padding: 14px 10px 26px; }
+			.section { padding: 14px; }
+		}
+	</style>
+</head>
+<body>
+	<main class="app">
+		<section class="hero">
+			<div>
+				<p>SCM 352 Quantitative Challenge</p>
+				<h1>EOQ and Economies of Scale Mastery Lab</h1>
+				<p>
+					Build fluency with EOQ calculations, compare competing order quantities,
+					and test how EOQ demonstrates economies of scale through square-root scaling.
+				</p>
+				<ol class="goal-list">
+					<li>Calculate and evaluate order quantities using EOQ.</li>
+					<li>Explain how EOQ exhibits economies of scale.</li>
+				</ol>
+			</div>
+
+			<div class="hud">
+				<div class="hud-card">
+					<span class="hud-label">Score</span>
+					<span class="hud-value" id="scoreValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Correct</span>
+					<span class="hud-value" id="correctValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Streak</span>
+					<span class="hud-value" id="streakValue">0</span>
+				</div>
+				<div class="hud-card">
+					<span class="hud-label">Mastery</span>
+					<span class="hud-value" id="masteryValue">0%</span>
+				</div>
+			</div>
+		</section>
+
+		<section class="section" id="mission1">
+			<div class="section-head">
+				<h2>Mission 1: EOQ Compute Sprint</h2>
+				<button class="secondary" id="resetM1Btn">Reset Mission 1</button>
+			</div>
+			<p class="description">
+				For each case, compute EOQ, number of orders per year, and annual EOQ cost at EOQ.
+			</p>
+
+			<div class="formula-box">
+				<strong>Core formulas</strong>
+				<div class="formula-line">\[EOQ = \sqrt{\frac{2DS}{H}}\]</div>
+				<div class="formula-line">\[N = \frac{D}{Q},\quad \text{Annual EOQ Cost} = \frac{D}{Q}S + \frac{Q}{2}H\]</div>
+			</div>
+
+			<div class="progress">
+				<div class="progress-head">
+					<span>Mission 1 progress</span>
+					<span id="m1ProgressText">Case 1 of 5</span>
+				</div>
+				<div class="bar"><div class="fill" id="m1Fill"></div></div>
+			</div>
+
+			<div class="prompt-box" id="m1Prompt"></div>
+
+			<div class="input-grid">
+				<label>
+					EOQ (units)
+					<input id="m1EoqInput" type="number" step="0.1" />
+				</label>
+				<label>
+					Orders per year N
+					<input id="m1OrdersInput" type="number" step="0.01" />
+				</label>
+				<label>
+					Annual EOQ cost ($)
+					<input id="m1AnnualCostInput" type="number" step="1" />
+				</label>
+			</div>
+
+			<button class="primary" id="m1SubmitBtn">Check Case</button>
+			<div class="feedback" id="m1Feedback"></div>
+		</section>
+
+		<section class="section" id="mission2">
+			<div class="section-head">
+				<h2>Mission 2: Quantity Evaluation Arena</h2>
+				<button class="secondary" id="skipM2Btn">Skip Case</button>
+			</div>
+			<p class="description">
+				Evaluate candidate order quantities and pick the one with the lowest annual EOQ cost. Then justify your choice.
+			</p>
+
+			<div class="progress">
+				<div class="progress-head">
+					<span>Mission 2 progress</span>
+					<span id="m2ProgressText">Case 1 of 4</span>
+				</div>
+				<div class="bar"><div class="fill" id="m2Fill"></div></div>
+			</div>
+
+			<div class="prompt-box" id="m2Prompt"></div>
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr>
+							<th>Candidate Q</th>
+							<th>Ordering Cost</th>
+							<th>Holding Cost</th>
+							<th>Annual EOQ Cost</th>
+						</tr>
+					</thead>
+					<tbody id="m2TableBody"></tbody>
+				</table>
+			</div>
+
+			<div class="tag">Choose best order quantity</div>
+			<div class="option-grid" id="m2QtyOptions"></div>
+
+			<div class="tag">Choose best explanation</div>
+			<div class="option-grid" id="m2WhyOptions"></div>
+
+			<button class="primary" id="m2SubmitBtn">Submit Evaluation</button>
+			<div class="feedback" id="m2Feedback"></div>
+		</section>
+
+		<section class="section" id="mission3">
+			<div class="section-head">
+				<h2>Mission 3: Demand-Scale Scenario Lab</h2>
+				<button class="secondary" id="resetM3Btn">Reset Mission 3</button>
+			</div>
+			<p class="description">
+				Complete the demand-scaling table using the current scenario and then interpret what the table reveals about EOQ economies of scale.
+			</p>
+
+			<div class="formula-box">
+				<strong>Demand-scale economics</strong>
+				<div class="formula-line">\[\text{Annual EOQ Cost}=\frac{D}{Q}S + \frac{Q}{2}H\]</div>
+				<div class="formula-line">\[\text{EOQ as percent of Purchase Cost}=\frac{\text{Annual EOQ Cost}}{DC}\times 100\]</div>
+				<div class="formula-line">\[C=\text{purchase cost per item}\]</div>
+			</div>
+
+			<div class="progress">
+				<div class="progress-head">
+					<span>Mission 3 progress</span>
+					<span id="m3ProgressText">Stage 1 of 2</span>
+				</div>
+				<div class="bar"><div class="fill" id="m3Fill"></div></div>
+			</div>
+
+			<div class="metrics">
+				<div class="metric-card">
+					<span class="metric-label">Capstone Progress</span>
+					<span class="metric-value" id="scaleScoreValue">0/2</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Current EOQ as %</span>
+					<span class="metric-value" id="multiplierValue">4.00%</span>
+				</div>
+			</div>
+
+			<div class="prompt-box" id="m3Prompt"></div>
+			<div class="hint-box" id="m3Hint"></div>
+
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr>
+							<th rowspan="2">Measure</th>
+							<th colspan="3">Scenario</th>
+						</tr>
+						<tr>
+							<th>II</th>
+							<th>Current</th>
+							<th>III</th>
+						</tr>
+					</thead>
+					<tbody id="m3ScaleTableBody"></tbody>
+				</table>
+			</div>
+
+			<div class="metrics">
+				<div class="metric-card">
+					<span class="metric-label">Order Cost ($ per order)</span>
+					<span class="metric-value" id="m3OrderCostValue">$6.00</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Holding Cost ($ per unit per yr.)</span>
+					<span class="metric-value" id="m3HoldingCostValue">$0.75</span>
+				</div>
+				<div class="metric-card">
+					<span class="metric-label">Purchase Cost ($ per unit)</span>
+					<span class="metric-value" id="m3PurchaseCostValue">$3.00</span>
+				</div>
+			</div>
+
+			<button class="primary" id="checkM3TableBtn">Check Table</button>
+
+			<div class="tag" style="margin-top:12px;">Select decision interpretation</div>
+			<div class="option-grid" id="m3WhyOptions"></div>
+
+			<button class="primary" id="m3SubmitBtn">Submit Interpretation</button>
+			<div class="feedback" id="m3Feedback"></div>
+			<div class="final-box" id="m3Final"></div>
+		</section>
+	</main>
+
+	<script>
+		window.MathJax = {
+			tex: {
+				inlineMath: [["\\(", "\\)"]],
+				displayMath: [["\\[", "\\]"]]
+			},
+			options: {
+				skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+			}
+		};
+	</script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+	<script>
+		const state = {
+			score: 0,
+			correct: 0,
+			streak: 0,
+
+			m1Solved: 0,
+			m2Solved: 0,
+			m3Solved: 0,
+
+			mission1: {
+				index: 0,
+				bank: []
+			},
+
+			mission2: {
+				index: 0,
+				bank: [],
+				selectedQ: "",
+				selectedWhy: ""
+			},
+
+			mission3: {
+				tableSolved: false,
+				selectedWhy: "",
+				currentPercent: 0,
+				lastCaseKey: ""
+			}
+		};
+
+		const m1Cases = [
+			{ D: 24000, S: 180, H: 6 },
+			{ D: 18000, S: 240, H: 8 },
+			{ D: 32000, S: 150, H: 5 },
+			{ D: 12500, S: 220, H: 11 },
+			{ D: 28000, S: 130, H: 7 }
+		];
+
+		const m2Cases = [
+			{ D: 20000, S: 160, H: 8 },
+			{ D: 15000, S: 240, H: 10 },
+			{ D: 30000, S: 120, H: 6 },
+			{ D: 22000, S: 210, H: 9 }
+		];
+
+		const M3_PARTS = 2;
+
+		const m3Capstone = {
+			currentDemand: 624,
+			setupCost: 6,
+			holdingCost: 0.75,
+			purchaseCost: 3,
+			labels: ["II", "Current", "III"],
+			multipliers: [0.5, 1, 2],
+			interpretation:
+				"As demand rises, annual EOQ cost grows more slowly than annual purchase cost, so EOQ cost as a percent of purchase cost falls."
+		};
+
+		const m3WhyOptions = [
+			"As demand rises, annual EOQ cost grows more slowly than annual purchase cost, so EOQ cost as a percent of purchase cost falls.",
+			"EOQ cost percentage stays constant because order cost and holding cost per unit stay constant.",
+			"Purchase cost grows more slowly than annual EOQ cost as demand rises, so EOQ cost percentage increases.",
+			"EOQ cost percentage rises with demand because firms place more orders each year."
+		];
+
+		function shuffle(arr) {
+			const copy = [...arr];
+			for (let i = copy.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[copy[i], copy[j]] = [copy[j], copy[i]];
+			}
+			return copy;
+		}
+
+		function round2(v) {
+			return Math.round(v * 100) / 100;
+		}
+
+		function round1(v) {
+			return Math.round(v * 10) / 10;
+		}
+
+		function round0(v) {
+			return Math.round(v);
+		}
+
+		function formatMoney(v) {
+			return Number.isInteger(v) ? String(v) : v.toFixed(2);
+		}
+
+		function pick(arr) {
+			return arr[Math.floor(Math.random() * arr.length)];
+		}
+
+		function reseedMission3CurrentCase() {
+			const demandOptions = [480, 576, 624, 720, 840, 960, 1080];
+			const setupOptions = [4, 5, 6, 7, 8, 9];
+			const holdingOptions = [0.5, 0.75, 1, 1.25, 1.5];
+			const purchaseOptions = [2, 2.5, 3, 3.5, 4, 4.5];
+
+			let candidate = null;
+			for (let i = 0; i < 12; i += 1) {
+				candidate = {
+					D: pick(demandOptions),
+					S: pick(setupOptions),
+					H: pick(holdingOptions),
+					C: pick(purchaseOptions)
+				};
+				const key = `${candidate.D}|${candidate.S}|${candidate.H}|${candidate.C}`;
+				if (key !== state.mission3.lastCaseKey) {
+					state.mission3.lastCaseKey = key;
+					m3Capstone.currentDemand = candidate.D;
+					m3Capstone.setupCost = candidate.S;
+					m3Capstone.holdingCost = candidate.H;
+					m3Capstone.purchaseCost = candidate.C;
+					return;
+				}
+			}
+
+			if (candidate) {
+				state.mission3.lastCaseKey = `${candidate.D}|${candidate.S}|${candidate.H}|${candidate.C}`;
+				m3Capstone.currentDemand = candidate.D;
+				m3Capstone.setupCost = candidate.S;
+				m3Capstone.holdingCost = candidate.H;
+				m3Capstone.purchaseCost = candidate.C;
+			}
+		}
+
+		function award(points) {
+			state.score += points;
+			state.correct += 1;
+			state.streak += 1;
+			renderHud();
+		}
+
+		function breakStreak() {
+			state.streak = 0;
+			renderHud();
+		}
+
+		function masteryPercent() {
+			const m1 = (state.m1Solved / m1Cases.length) * 35;
+			const m2 = (state.m2Solved / m2Cases.length) * 35;
+			const m3 = (state.m3Solved / M3_PARTS) * 30;
+			return `${Math.round(m1 + m2 + m3)}%`;
+		}
+
+		function setFeedback(id, text, type) {
+			const el = document.getElementById(id);
+			el.textContent = text;
+			el.className = `feedback ${type}`;
+		}
+
+		function renderHud() {
+			document.getElementById("scoreValue").textContent = state.score;
+			document.getElementById("correctValue").textContent = state.correct;
+			document.getElementById("streakValue").textContent = state.streak;
+			document.getElementById("masteryValue").textContent = masteryPercent();
+			document.getElementById("scaleScoreValue").textContent = `${state.m3Solved}/${M3_PARTS}`;
+			document.getElementById("multiplierValue").textContent = `${round2(state.mission3.currentPercent).toFixed(2)}%`;
+		}
+
+		function calcEOQ(D, S, H) {
+			return Math.sqrt((2 * D * S) / H);
+		}
+
+		function calcAnnualEoqCost(D, Q, S, H) {
+			return (D / Q) * S + (Q / 2) * H;
+		}
+
+		function calcEoqCostPercent(D, S, H, C) {
+			const annualEoqCostStar = Math.sqrt(2 * D * S * H);
+			return (annualEoqCostStar / (D * C)) * 100;
+		}
+
+		function getM3ScenarioValues(multiplier) {
+			const D = m3Capstone.currentDemand * multiplier;
+			const eoq = calcEOQ(D, m3Capstone.setupCost, m3Capstone.holdingCost);
+			const annualEoqCost = calcAnnualEoqCost(D, eoq, m3Capstone.setupCost, m3Capstone.holdingCost);
+			const purchaseCost = D * m3Capstone.purchaseCost;
+			const percent = (annualEoqCost / purchaseCost) * 100;
+			return {
+				D: round0(D),
+				multiplier,
+				eoq: round0(eoq),
+				annualEoqCost: round0(annualEoqCost),
+				purchaseCost: round0(purchaseCost),
+				percent: round1(percent)
+			};
+		}
+
+		function buildMission3Table() {
+			const tbody = document.getElementById("m3ScaleTableBody");
+			const scenarioValues = m3Capstone.multipliers.map(getM3ScenarioValues);
+			state.mission3.currentPercent = scenarioValues[1].percent;
+
+			const rowDefs = [
+				{ label: "Demand rate (units per yr.)", key: "D", editable: false },
+				{ label: "Demand multiple", key: "multiplier", editable: false },
+				{ label: "EOQ", key: "eoq", editable: true, step: "1" },
+				{ label: "Annual EOQ cost ($ per yr.)", key: "annualEoqCost", editable: true, step: "1" },
+				{ label: "Purchase cost ($ per yr.)", key: "purchaseCost", editable: true, step: "1" },
+				{ label: "EOQ as % of purchase cost", key: "percent", editable: true, step: "0.1" }
+			];
+
+			tbody.innerHTML = "";
+			rowDefs.forEach(row => {
+				const tr = document.createElement("tr");
+				const labelCell = document.createElement("td");
+				labelCell.textContent = row.label;
+				tr.appendChild(labelCell);
+
+				scenarioValues.forEach((scenario, index) => {
+					const td = document.createElement("td");
+					if (!row.editable || index === 1) {
+						const value = scenario[row.key];
+						td.textContent = row.key === "annualEoqCost" || row.key === "purchaseCost"
+							? `$${value.toLocaleString()}`
+							: row.key === "percent"
+								? `${value.toFixed(1)}%`
+								: String(value);
+					} else {
+						const input = document.createElement("input");
+						input.type = "number";
+						input.step = row.step;
+						input.dataset.metric = row.key;
+						input.dataset.scenario = m3Capstone.labels[index];
+						input.style.minWidth = "88px";
+						td.appendChild(input);
+					}
+					tr.appendChild(td);
+				});
+				tbody.appendChild(tr);
+			});
+
+			state.mission3.answers = scenarioValues;
+		}
+
+		function initMission1() {
+			state.mission1.bank = shuffle(m1Cases);
+			state.mission1.index = 0;
+			state.m1Solved = 0;
+			document.getElementById("m1SubmitBtn").disabled = false;
+			loadMission1Case();
+			renderHud();
+		}
+
+		function loadMission1Case() {
+			const i = state.mission1.index;
+			const c = state.mission1.bank[i];
+
+			if (!c) {
+				document.getElementById("m1Prompt").textContent = "Mission 1 complete. Move to Mission 2 to evaluate candidate quantities.";
+				document.getElementById("m1SubmitBtn").disabled = true;
+				document.getElementById("m1ProgressText").textContent = `Case ${m1Cases.length} of ${m1Cases.length}`;
+				document.getElementById("m1Fill").style.width = "100%";
+				setFeedback("m1Feedback", "Mission 1 completed.", "ok");
+				return;
+			}
+
+			document.getElementById("m1Prompt").innerHTML =
+				`Given annual demand D=${c.D}, setup/ordering cost S=$${c.S}, and annual holding cost H=$${c.H} per unit.<br>` +
+				"Compute EOQ, orders per year, and annual EOQ cost at EOQ.";
+			document.getElementById("m1ProgressText").textContent = `Case ${i + 1} of ${m1Cases.length}`;
+			document.getElementById("m1Fill").style.width = `${((i + 1) / m1Cases.length) * 100}%`;
+
+			document.getElementById("m1EoqInput").value = "";
+			document.getElementById("m1OrdersInput").value = "";
+			document.getElementById("m1AnnualCostInput").value = "";
+			setFeedback("m1Feedback", "", "");
+		}
+
+		function submitMission1() {
+			const c = state.mission1.bank[state.mission1.index];
+			if (!c) return;
+
+			const eoqIn = Number(document.getElementById("m1EoqInput").value);
+			const nIn = Number(document.getElementById("m1OrdersInput").value);
+			const annualCostIn = Number(document.getElementById("m1AnnualCostInput").value);
+
+			if (Number.isNaN(eoqIn) || Number.isNaN(nIn) || Number.isNaN(annualCostIn)) {
+				setFeedback("m1Feedback", "Enter all three values before checking.", "bad");
+				return;
+			}
+
+			const eoq = calcEOQ(c.D, c.S, c.H);
+			const n = c.D / eoq;
+			const annualEoqCost = calcAnnualEoqCost(c.D, eoq, c.S, c.H);
+
+			const eoqOk = Math.abs(eoqIn - eoq) <= Math.max(1, eoq * 0.02);
+			const nOk = Math.abs(nIn - n) <= Math.max(0.08, n * 0.03);
+			const annualCostOk = Math.abs(annualCostIn - annualEoqCost) <= Math.max(40, annualEoqCost * 0.04);
+
+			if (eoqOk && nOk && annualCostOk) {
+				award(12);
+				state.m1Solved += 1;
+				setFeedback("m1Feedback", "Correct calculations. EOQ balance condition is working here.", "ok");
+			} else if (eoqOk || nOk || annualCostOk) {
+				award(4);
+				breakStreak();
+				setFeedback(
+					"m1Feedback",
+					`Partial. Approx targets: EOQ=${round1(eoq)}, N=${round2(n)}, Annual EOQ Cost=$${round0(annualEoqCost)}.`,
+					"bad"
+				);
+			} else {
+				breakStreak();
+				setFeedback(
+					"m1Feedback",
+					`Not yet. Approx targets: EOQ=${round1(eoq)}, N=${round2(n)}, Annual EOQ Cost=$${round0(annualEoqCost)}.`,
+					"bad"
+				);
+			}
+
+			state.mission1.index += 1;
+			renderHud();
+			setTimeout(loadMission1Case, 3400);
+		}
+
+		function buildM2Rows(c) {
+			const eoq = calcEOQ(c.D, c.S, c.H);
+			const candidates = [0.5, 1.0, 1.5, 2.0].map(k => Math.max(1, round0(eoq * k)));
+			const rows = candidates.map(Q => {
+				const ordering = (c.D / Q) * c.S;
+				const holding = (Q / 2) * c.H;
+				const total = ordering + holding;
+				return {
+					Q,
+					ordering: round0(ordering),
+					holding: round0(holding),
+					total: round0(total)
+				};
+			});
+			return rows;
+		}
+
+		function initMission2() {
+			state.mission2.bank = shuffle(m2Cases);
+			state.mission2.index = 0;
+			state.m2Solved = 0;
+			state.mission2.selectedQ = "";
+			state.mission2.selectedWhy = "";
+			document.getElementById("m2SubmitBtn").disabled = false;
+			document.getElementById("skipM2Btn").disabled = false;
+			loadMission2Case();
+			renderHud();
+		}
+
+		function loadMission2Case() {
+			const i = state.mission2.index;
+			const c = state.mission2.bank[i];
+
+			if (!c) {
+				document.getElementById("m2Prompt").textContent = "Mission 2 complete. Proceed to Mission 3 for economies-of-scale logic.";
+				document.getElementById("m2TableBody").innerHTML = "";
+				document.getElementById("m2QtyOptions").innerHTML = "";
+				document.getElementById("m2WhyOptions").innerHTML = "";
+				document.getElementById("m2SubmitBtn").disabled = true;
+				document.getElementById("skipM2Btn").disabled = true;
+				document.getElementById("m2ProgressText").textContent = `Case ${m2Cases.length} of ${m2Cases.length}`;
+				document.getElementById("m2Fill").style.width = "100%";
+				setFeedback("m2Feedback", "Mission 2 completed.", "ok");
+				return;
+			}
+
+			state.mission2.selectedQ = "";
+			state.mission2.selectedWhy = "";
+
+			const rows = buildM2Rows(c);
+			const best = rows.reduce((a, b) => (b.total < a.total ? b : a), rows[0]);
+			c.rows = rows;
+			c.bestQ = best.Q;
+
+			document.getElementById("m2Prompt").textContent = `Given D=${c.D}, S=$${c.S}, H=$${c.H}. Evaluate each candidate Q and identify the best.`;
+			document.getElementById("m2ProgressText").textContent = `Case ${i + 1} of ${m2Cases.length}`;
+			document.getElementById("m2Fill").style.width = `${((i + 1) / m2Cases.length) * 100}%`;
+
+			const tbody = document.getElementById("m2TableBody");
+			tbody.innerHTML = "";
+			rows.forEach(r => {
+				const tr = document.createElement("tr");
+				tr.innerHTML = `<td>${r.Q}</td><td>$${r.ordering}</td><td>$${r.holding}</td><td>$${r.total}</td>`;
+				tbody.appendChild(tr);
+			});
+
+			renderChoiceButtons("m2QtyOptions", rows.map(r => String(r.Q)), value => {
+				state.mission2.selectedQ = value;
+				highlightChoice("m2QtyOptions", value);
+			});
+
+			const whyOptions = [
+				"At this Q, ordering and holding costs are closest, minimizing annual EOQ cost.",
+				"The largest Q always minimizes cost because ordering frequency is lowest.",
+				"The smallest Q always minimizes cost because holding is lowest.",
+				"Any Q near EOQ gives exactly the same annual EOQ cost regardless of distance."
+			];
+
+			renderChoiceButtons("m2WhyOptions", shuffle(whyOptions), value => {
+				state.mission2.selectedWhy = value;
+				highlightChoice("m2WhyOptions", value);
+			});
+
+			setFeedback("m2Feedback", "", "");
+		}
+
+		function submitMission2() {
+			const c = state.mission2.bank[state.mission2.index];
+			if (!c) return;
+
+			if (!state.mission2.selectedQ || !state.mission2.selectedWhy) {
+				setFeedback("m2Feedback", "Choose both a quantity and explanation before submitting.", "bad");
+				return;
+			}
+
+			const qOk = Number(state.mission2.selectedQ) === c.bestQ;
+			const whyOk = state.mission2.selectedWhy === "At this Q, ordering and holding costs are closest, minimizing annual EOQ cost.";
+
+			if (qOk && whyOk) {
+				award(12);
+				state.m2Solved += 1;
+				setFeedback("m2Feedback", `Correct. Best Q is ${c.bestQ} by annual EOQ cost comparison.`, "ok");
+			} else if (qOk || whyOk) {
+				award(4);
+				breakStreak();
+				setFeedback("m2Feedback", `Partial. Best Q is ${c.bestQ} and annual EOQ cost is minimized where ordering and holding are balanced.`, "bad");
+			} else {
+				breakStreak();
+				setFeedback("m2Feedback", `Incorrect. Best Q is ${c.bestQ} with lowest annual EOQ cost.`, "bad");
+			}
+
+			state.mission2.index += 1;
+			renderHud();
+			setTimeout(loadMission2Case, 3500);
+		}
+
+		function skipMission2() {
+			if (state.mission2.index < state.mission2.bank.length - 1) {
+				state.mission2.index += 1;
+				loadMission2Case();
+			}
+		}
+
+		function initMission3() {
+			reseedMission3CurrentCase();
+			state.m3Solved = 0;
+			state.mission3.tableSolved = false;
+			state.mission3.selectedWhy = "";
+			state.mission3.currentPercent = 0;
+			document.getElementById("m3SubmitBtn").disabled = false;
+			document.getElementById("checkM3TableBtn").disabled = false;
+			document.getElementById("m3Final").style.display = "none";
+			document.getElementById("m3Final").innerHTML = "";
+			document.getElementById("m3ProgressText").textContent = "Stage 1 of 2";
+			document.getElementById("m3Fill").style.width = "50%";
+			document.getElementById("m3Prompt").innerHTML =
+				"Use the current scenario to complete Scenarios II and III. The current values are given as your reference column.";
+			document.getElementById("m3Hint").innerHTML =
+				`Current case: D = ${m3Capstone.currentDemand}, S = $${formatMoney(m3Capstone.setupCost)}, H = $${formatMoney(m3Capstone.holdingCost)}, C = $${formatMoney(m3Capstone.purchaseCost)} (C is purchase cost per item).<br>Compute EOQ, then Annual EOQ Cost, and, finally, EOQ Cost as a percent of the total purchase cost (DC).`;
+			document.getElementById("m3OrderCostValue").textContent = `$${formatMoney(m3Capstone.setupCost)}`;
+			document.getElementById("m3HoldingCostValue").textContent = `$${formatMoney(m3Capstone.holdingCost)}`;
+			document.getElementById("m3PurchaseCostValue").textContent = `$${formatMoney(m3Capstone.purchaseCost)}`;
+			buildMission3Table();
+			renderChoiceButtons("m3WhyOptions", shuffle(m3WhyOptions), value => {
+				state.mission3.selectedWhy = value;
+				highlightChoice("m3WhyOptions", value);
+			});
+			setFeedback("m3Feedback", "", "");
+			if (window.MathJax && window.MathJax.typesetPromise) {
+				window.MathJax.typesetPromise([document.getElementById("m3Hint")]);
+			}
+			renderHud();
+		}
+
+		function checkMission3Table() {
+			const nonCurrentIndexes = [0, 2];
+			const metrics = ["eoq", "annualEoqCost", "purchaseCost", "percent"];
+			let allCorrect = true;
+			let correctCount = 0;
+			const totalCount = nonCurrentIndexes.length * metrics.length;
+
+			nonCurrentIndexes.forEach(index => {
+				metrics.forEach(metric => {
+					const input = document.querySelector(`input[data-scenario="${m3Capstone.labels[index]}"][data-metric="${metric}"]`);
+					const expected = state.mission3.answers[index][metric];
+					const value = Number(input.value);
+					let ok = false;
+
+					if (!Number.isNaN(value)) {
+						if (metric === "percent") {
+							ok = Math.abs(value - expected) <= 0.15;
+						} else if (metric === "eoq") {
+							ok = Math.abs(value - expected) <= 1;
+						} else {
+							ok = Math.abs(value - expected) <= 2;
+						}
+					}
+
+					input.style.borderColor = ok ? "#63b77c" : "#d17e75";
+					if (ok) {
+						correctCount += 1;
+					} else {
+						allCorrect = false;
+					}
+				});
+			});
+
+			if (allCorrect) {
+				if (!state.mission3.tableSolved) {
+					state.mission3.tableSolved = true;
+					state.m3Solved = Math.max(state.m3Solved, 1);
+					award(18);
+				}
+				document.getElementById("m3ProgressText").textContent = "Stage 2 of 2";
+				document.getElementById("m3Fill").style.width = "100%";
+				setFeedback("m3Feedback", "Table correct. Now submit the interpretation that explains the economies-of-scale pattern.", "ok");
+			} else {
+				breakStreak();
+				setFeedback("m3Feedback", `${correctCount}/${totalCount} table cells are correct. Check EOQ rounding and the percentage row carefully.`, "bad");
+			}
+
+			renderHud();
+		}
+
+		function submitMission3() {
+			if (!state.mission3.tableSolved) {
+				setFeedback("m3Feedback", "Complete the table correctly before submitting the interpretation.", "bad");
+				return;
+			}
+
+			if (!state.mission3.selectedWhy) {
+				setFeedback("m3Feedback", "Select the interpretation that best explains the table.", "bad");
+				return;
+			}
+
+			if (state.mission3.selectedWhy === m3Capstone.interpretation) {
+				if (state.m3Solved < 2) {
+					state.m3Solved = 2;
+					award(12);
+				}
+				setFeedback("m3Feedback", "Correct. The table shows that EOQ cost percentage falls as demand scale rises.", "ok");
+				finishMission3();
+			} else {
+				breakStreak();
+				setFeedback("m3Feedback", "Not yet. Focus on how annual EOQ cost grows compared with annual purchase cost as demand increases.", "bad");
+			}
+
+			renderHud();
+		}
+
+		function finishMission3() {
+			const final = document.getElementById("m3Final");
+			final.style.display = "block";
+
+			let verdict = "Developing EOQ scale intuition";
+			let insight = "You are building the skill of turning EOQ formulas into policy judgments.";
+
+			if (state.m3Solved === M3_PARTS) {
+				verdict = "EOQ scale mastery achieved";
+				insight = "You completed the full demand-scaling table and correctly interpreted the economies-of-scale pattern.";
+				award(18);
+			} else if (state.m3Solved >= 1) {
+				verdict = "Strong EOQ reasoning";
+				insight = "You solved the quantitative table and are close to fully articulating the scale-economies logic.";
+				award(8);
+			}
+
+			final.innerHTML =
+				`<strong>${verdict}</strong><br>` +
+				`${insight}<br><br>` +
+				`Key principle: with setup, holding, and purchase cost fixed, annual EOQ cost as a percentage of purchase cost falls with the inverse square root of demand. That is the economies-of-scale signal in this mission.`;
+
+			document.getElementById("m3Prompt").textContent = "Mission 3 complete. Reset to rebuild the scale table and interpretation again.";
+			document.getElementById("m3WhyOptions").innerHTML = "";
+			document.getElementById("m3SubmitBtn").disabled = true;
+			document.getElementById("checkM3TableBtn").disabled = true;
+			setFeedback("m3Feedback", "Mission 3 completed.", "ok");
+			renderHud();
+		}
+
+		function renderChoiceButtons(containerId, options, onPick) {
+			const wrap = document.getElementById(containerId);
+			wrap.innerHTML = "";
+			options.forEach(option => {
+				const btn = document.createElement("button");
+				btn.className = "chip";
+				btn.textContent = option;
+				btn.addEventListener("click", () => onPick(option));
+				wrap.appendChild(btn);
+			});
+		}
+
+		function highlightChoice(containerId, value) {
+			const buttons = [...document.querySelectorAll(`#${containerId} .chip`)];
+			buttons.forEach(btn => {
+				if (btn.textContent === value) {
+					btn.classList.add("active");
+				} else {
+					btn.classList.remove("active");
+				}
+			});
+		}
+
+		function bindEvents() {
+			document.getElementById("m1SubmitBtn").addEventListener("click", submitMission1);
+			document.getElementById("resetM1Btn").addEventListener("click", initMission1);
+
+			document.getElementById("m2SubmitBtn").addEventListener("click", submitMission2);
+			document.getElementById("skipM2Btn").addEventListener("click", skipMission2);
+
+			document.getElementById("checkM3TableBtn").addEventListener("click", checkMission3Table);
+			document.getElementById("m3SubmitBtn").addEventListener("click", submitMission3);
+			document.getElementById("resetM3Btn").addEventListener("click", initMission3);
+		}
+
+		function init() {
+			bindEvents();
+			initMission1();
+			initMission2();
+			initMission3();
+			renderHud();
+		}
+
+		init();
+	</script>
+</body>
+</html>
