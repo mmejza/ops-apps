@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forecast Pattern Lab — SCM 352</title>
+<style>
+/* ── TOKENS ───────────────────────────────────────────────── */
+:root {
+  --primary:   #1a3a5c;
+  --pri-light: #e8eef7;
+  --secondary: #2563a8;
+  --accent:    #d46a0f;
+  --success:   #1e6b40;
+  --error:     #b91c1c;
+  --warn:      #92400e;
+  --bg:        #eef1f7;
+  --surface:   #f8f9fc;
+  --card:      #ffffff;
+  --border:    #d1d9e6;
+  --border-md: #b8c4d8;
+  --text:      #1a2535;
+  --text-2:    #475569;
+  --muted:     #64748b;
+  --font:      'Segoe UI', system-ui, -apple-system, sans-serif;
+  --radius:    10px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 8px rgba(0,0,0,.04);
+  --shadow:    0 2px 6px rgba(0,0,0,.07), 0 4px 20px rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+
+/* ── HEADER ──────────────────────────────────────────────── */
+header {
+  background: var(--primary);
+  color: white;
+  padding: 0 24px;
+  display: flex; align-items: stretch; justify-content: space-between;
+  flex-wrap: wrap; gap: 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,.3);
+}
+.hdr-brand { display: flex; flex-direction: column; justify-content: center; padding: 14px 0; }
+.hdr-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -.025em; line-height: 1.2; }
+.hdr-sub   { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; opacity: .6; margin-top: 1px; }
+.score-bar { display: flex; }
+.score-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 10px 20px; border-left: 1px solid rgba(255,255,255,.12);
+  min-width: 74px;
+}
+.score-value { font-size: 1.55rem; font-weight: 900; color: #7dd3fc; line-height: 1; }
+.score-label { font-size: .63rem; text-transform: uppercase; letter-spacing: .09em; opacity: .65; margin-top: 2px; }
+
+/* ── LAYOUT ──────────────────────────────────────────────── */
+main { max-width: 920px; margin: 0 auto; padding: 22px 16px 48px; display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+.card-title {
+  font-size: 1rem; font-weight: 700; color: var(--primary);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 9px;
+}
+.badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--secondary); color: white;
+  font-size: .75rem; font-weight: 800; flex-shrink: 0;
+}
+
+/* ── HELP ────────────────────────────────────────────────── */
+.help-wrap { border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+.help-toggle {
+  width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 13px 18px; cursor: pointer; font-family: var(--font); font-size: .88rem;
+  color: var(--secondary); font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; text-align: left;
+  transition: background .15s; gap: 10px;
+}
+.help-toggle:hover { background: #f0f4ff; }
+.help-toggle:focus { outline: 2px solid var(--secondary); outline-offset: 2px; }
+.help-toggle.open { border-radius: var(--radius) var(--radius) 0 0; }
+.help-body {
+  display: none; padding: 18px 20px;
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--surface);
+}
+.help-body.open { display: block; }
+.help-intro { font-size: .84rem; color: var(--text-2); margin-bottom: 14px; line-height: 1.65; }
+.help-intro strong { color: var(--primary); }
+.help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px,1fr)); gap: 10px; margin-bottom: 16px; }
+.help-pat { padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); }
+.help-pat h4 { font-size: .81rem; font-weight: 700; margin-bottom: 3px; }
+.help-pat p  { font-size: .76rem; color: var(--muted); line-height: 1.5; }
+.help-table-title { font-size: .8rem; font-weight: 700; color: var(--primary); margin-bottom: 7px; }
+.help-tbl { font-size: .79rem; width: 100%; border-collapse: collapse; }
+.help-tbl th { background: var(--primary); color: white; padding: 7px 11px; text-align: left; }
+.help-tbl td { padding: 5px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.help-tbl tr:nth-child(even) td { background: #f3f6fb; }
+
+/* ── SCENARIO CONTEXT ────────────────────────────────────── */
+.scenario-context {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.sc-header {
+  background: linear-gradient(90deg, var(--primary), #2563a8);
+  padding: 8px 18px; display: flex; align-items: center; gap: 8px;
+}
+.sc-eyebrow { font-size: .67rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.75); font-weight: 700; }
+.sc-round-badge {
+  margin-left: auto; background: rgba(255,255,255,.15); color: white;
+  font-size: .7rem; font-weight: 700; padding: 2px 9px; border-radius: 99px;
+}
+.sc-body { padding: 14px 18px; font-size: .91rem; color: var(--text); line-height: 1.65; }
+
+/* ── CHART CARD ──────────────────────────────────────────── */
+#chart-card { padding: 18px 18px 14px; }
+.chart-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
+.chart-card-title { font-size: .9rem; font-weight: 700; color: var(--primary); }
+.chart-legend { display: flex; align-items: center; gap: 12px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: .74rem; color: var(--muted); }
+.legend-dot  { width: 10px; height: 10px; border-radius: 50%; background: #2563a8; }
+.legend-dash { width: 20px; height: 2px; background: repeating-linear-gradient(90deg,#94a3b8 0,#94a3b8 4px,transparent 4px,transparent 8px); }
+
+#chart-container { width: 100%; overflow-x: auto; background: white; border-radius: 7px; border: 1px solid var(--border); }
+#chart-svg { display: block; min-width: 340px; width: 100%; }
+
+/* ── DATA TABLE ──────────────────────────────────────────── */
+.data-table-scroll { overflow-x: auto; margin-top: 12px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: .79rem; }
+.data-table th { background: var(--primary); color: white; padding: 5px 8px; text-align: center; font-weight: 600; white-space: nowrap; }
+.data-table td { padding: 4px 8px; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.data-table tr:nth-child(even) td { background: #f5f7fb; }
+details > summary { cursor: pointer; font-size: .8rem; color: var(--secondary); font-weight: 600; padding: 6px 0 2px; user-select: none; }
+details > summary:hover { color: var(--primary); }
+
+/* ── STAGES ──────────────────────────────────────────────── */
+.stage { transition: opacity .3s; border-left: 3px solid transparent; }
+.stage.locked { opacity: .38; pointer-events: none; user-select: none; }
+#stage1 { border-left-color: var(--secondary); }
+#stage2 { border-left-color: var(--accent); }
+#stage3 { border-left-color: var(--success); }
+#stage2.locked, #stage3.locked { border-left-color: var(--border); }
+
+.stage-header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+}
+.stage-pts { font-size: .72rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 99px; padding: 2px 9px; white-space: nowrap; }
+
+/* progress */
+.progress-row { display: flex; align-items: center; gap: 5px; }
+.prog-step {
+  width: 27px; height: 27px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .73rem; font-weight: 800;
+  background: #dde4ee; color: var(--muted);
+  transition: background .25s, color .25s;
+}
+.prog-step.active { background: var(--secondary); color: white; }
+.prog-step.done   { background: var(--success);   color: white; }
+.prog-step.done::after { content: '\2713'; font-size: .8rem; }
+.prog-step.done span { display: none; }
+.prog-conn { height: 2px; width: 16px; background: #dde4ee; transition: background .25s; }
+.prog-conn.done { background: var(--success); }
+
+/* ── PATTERN CHECKBOXES ──────────────────────────────────── */
+.pattern-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(158px,1fr)); gap: 10px; margin-bottom: 14px; }
+.pattern-opt {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 13px; border: 2px solid var(--border); border-radius: 9px;
+  cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.pattern-opt:hover { border-color: var(--secondary); background: #edf2fb; box-shadow: 0 0 0 3px rgba(37,99,168,.1); }
+.pattern-opt.checked { border-color: var(--secondary); background: #e2ecfa; }
+.pattern-opt input[type="checkbox"] { width: 17px; height: 17px; cursor: pointer; accent-color: var(--secondary); flex-shrink: 0; margin-top: 2px; }
+.pattern-label { font-size: .86rem; font-weight: 600; display: block; }
+.pattern-sub   { font-size: .74rem; color: var(--muted); margin-top: 1px; display: block; line-height: 1.4; }
+
+/* ── METHOD RADIO ────────────────────────────────────────── */
+.method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 10px; margin-bottom: 14px; }
+.method-opt {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 13px; border: 2px solid var(--border); border-radius: 9px;
+  cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.method-opt:hover    { border-color: var(--secondary); background: #edf2fb; box-shadow: 0 0 0 3px rgba(37,99,168,.1); }
+.method-opt.selected { border-color: var(--secondary); background: #e2ecfa; }
+.method-opt input[type="radio"] { width: 17px; height: 17px; cursor: pointer; accent-color: var(--secondary); flex-shrink: 0; margin-top: 3px; }
+.method-name { font-size: .85rem; font-weight: 700; }
+.method-desc { font-size: .74rem; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+
+/* ── JUSTIFICATION ───────────────────────────────────────── */
+.just-label { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 9px; }
+.just-para {
+  font-size: .9rem; line-height: 2.6;
+  padding: 16px 20px; background: var(--surface);
+  border-radius: 8px; border: 1px solid var(--border); margin-bottom: 14px;
+}
+.just-para select {
+  display: inline-block; padding: 4px 8px;
+  border: 2px solid var(--secondary); border-radius: 6px;
+  background: white; font-family: var(--font); font-size: .82rem;
+  color: var(--primary); cursor: pointer; vertical-align: middle;
+  margin: 0 2px; max-width: 280px;
+  transition: border-color .15s;
+}
+.just-para select:focus { outline: 2px solid var(--secondary); outline-offset: 1px; }
+select.sel-correct { border-color: var(--success) !important; background: #e3f3eb; }
+select.sel-wrong   { border-color: var(--error)   !important; background: #feecec; }
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 22px; border-radius: 8px; border: none;
+  font-family: var(--font); font-size: .86rem; font-weight: 700;
+  cursor: pointer; transition: background .15s, transform .1s, box-shadow .15s;
+  letter-spacing: .01em;
+}
+.btn:active { transform: scale(.97); }
+.btn:focus  { outline: 2px solid var(--secondary); outline-offset: 2px; }
+.btn:disabled { opacity: .42; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-primary { background: var(--secondary); color: white; box-shadow: 0 2px 6px rgba(37,99,168,.25); }
+.btn-primary:hover:not(:disabled) { background: #1a4e8c; box-shadow: 0 3px 10px rgba(37,99,168,.3); }
+.btn-accent  { background: #c05c0a; color: white; box-shadow: 0 2px 6px rgba(192,92,10,.25); }
+.btn-accent:hover:not(:disabled)  { background: #a04d08; }
+.btn-ghost   { background: transparent; color: var(--secondary); border: 2px solid var(--border); }
+.btn-ghost:hover:not(:disabled)   { background: #edf2fb; border-color: var(--secondary); }
+.btn-sm { padding: 6px 14px; font-size: .78rem; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+/* ── FEEDBACK ────────────────────────────────────────────── */
+.feedback { display: none; margin-top: 12px; padding: 13px 16px; border-radius: 9px; font-size: .85rem; }
+.feedback.show     { display: block; }
+.feedback.correct  { background: #d4eddf; border: 1px solid #86c9a4; color: #14532d; }
+.feedback.partial  { background: #fef3c7; border: 1px solid #fbbf24; color: var(--warn); }
+.feedback.incorrect{ background: #fee2e2; border: 1px solid #fca5a5; color: #7f1d1d; }
+.fb-title { font-weight: 700; margin-bottom: 5px; font-size: .88rem; }
+.fb-body  { line-height: 1.6; }
+.fb-body ul { margin: 6px 0 0 18px; }
+.fb-body li { margin-bottom: 3px; }
+.fb-why { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,.08); font-size: .82rem; }
+
+/* ── HINT ────────────────────────────────────────────────── */
+.hint-area { margin-top: 11px; }
+.hint-btn {
+  background: none; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--secondary); cursor: pointer; font-size: .78rem; font-weight: 600;
+  padding: 5px 11px; font-family: var(--font); transition: background .12s, border-color .12s;
+}
+.hint-btn:hover { background: #edf2fb; border-color: var(--secondary); }
+.hint-text {
+  display: none; margin-top: 8px; padding: 11px 14px;
+  background: #fffbea; border: 1px solid #fde68a; border-radius: 8px;
+  font-size: .82rem; color: #78350f; line-height: 1.6;
+}
+.hint-text.visible { display: block; }
+
+/* ── ROUND COMPLETE ──────────────────────────────────────── */
+#round-complete { display: none; }
+#round-complete.show { display: block; }
+.rc-inner { padding: 28px 20px; }
+.rc-top { text-align: center; margin-bottom: 24px; }
+.rc-stars   { font-size: 2.4rem; letter-spacing: 3px; margin-bottom: 8px; }
+.rc-heading { font-size: 1.3rem; color: var(--primary); font-weight: 800; margin: 8px 0 4px; }
+.rc-pts     { font-size: 3.2rem; font-weight: 900; color: var(--primary); line-height: 1; margin-bottom: 4px; }
+.rc-max     { font-size: .8rem; color: var(--muted); }
+.rc-msg     { font-size: .86rem; color: var(--text-2); margin-top: 10px; }
+
+.rc-breakdown { display: flex; gap: 10px; justify-content: center; margin: 18px 0 22px; flex-wrap: wrap; }
+.rc-stage-block {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 16px; min-width: 90px;
+}
+.rc-stage-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; text-align: center; line-height: 1.5; }
+.rc-stage-pts   { font-size: 1.4rem; font-weight: 900; color: var(--primary); line-height: 1.2; }
+.rc-stage-max   { font-size: .7rem; color: var(--muted); }
+
+/* ── CONTROLS BAR ────────────────────────────────────────── */
+.controls-bar { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 620px) {
+  header { flex-direction: column; }
+  .score-bar { width: 100%; justify-content: space-around; border-top: 1px solid rgba(255,255,255,.12); }
+  .score-item { border-left: none; border-right: 1px solid rgba(255,255,255,.12); flex: 1; padding: 10px 8px; }
+  .pattern-grid { grid-template-columns: 1fr 1fr; }
+  .method-grid  { grid-template-columns: 1fr; }
+  .just-para select { max-width: 100%; display: block; margin: 4px 0; }
+  .rc-breakdown { gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-brand">
+    <div class="hdr-title">&#128200; Forecast Pattern Lab</div>
+    <div class="hdr-sub">SCM 352 &middot; Operations Management</div>
+  </div>
+  <div class="score-bar" aria-label="Score summary">
+    <div class="score-item">
+      <span class="score-value" id="score-pts">0</span>
+      <span class="score-label">Score</span>
+    </div>
+    <div class="score-item">
+      <span class="score-value" id="score-round">&#8212;</span>
+      <span class="score-label">Round</span>
+    </div>
+    <div class="score-item">
+      <span class="score-value" id="score-pct">&#8212;</span>
+      <span class="score-label">% Correct</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ── HELP ─────────────────────────────────────────────── -->
+<div class="help-wrap">
+  <button class="help-toggle" id="help-toggle" aria-expanded="false" aria-controls="help-body">
+    &#128218; Pattern Reference &amp; How to Use This Lab
+    <span id="help-arrow" aria-hidden="true" style="flex-shrink:0">&#9660;</span>
+  </button>
+  <div class="help-body" id="help-body" role="region" aria-label="Help content">
+    <p class="help-intro">
+      Each round shows a new business time-series. Work through <strong>three stages</strong>: identify the pattern(s), choose the best forecasting method, then justify your answer. You cannot skip a stage. Maximum <strong>7 points</strong> per round (Stage 1: 2 pts &middot; Stage 2: 2 pts &middot; Stage 3: 3 pts).
+    </p>
+    <div class="help-grid">
+      <div class="help-pat" style="border-color:#2563a833;background:#edf2fb;">
+        <h4 style="color:#1a3a5c;">&#128200; Trend</h4>
+        <p>A consistent long-run rise or fall across the entire series. Values systematically move in one direction &mdash; not just up and down randomly.</p>
+      </div>
+      <div class="help-pat" style="border-color:#d4870033;background:#fff7ed;">
+        <h4 style="color:#92400e;">&#128260; Seasonality</h4>
+        <p>A fixed, repeating pattern tied to a calendar period (monthly, quarterly). The same peaks and troughs recur every cycle at predictable intervals.</p>
+      </div>
+      <div class="help-pat" style="border-color:#1e6b4033;background:#ecfdf4;">
+        <h4 style="color:#14532d;">&#8767; Cyclical</h4>
+        <p>Broad, multi-year wave-like swings with no fixed period. Driven by economic expansions and contractions &mdash; longer and less regular than seasonal patterns.</p>
+      </div>
+      <div class="help-pat" style="border-color:#b91c1c33;background:#fff1f1;">
+        <h4 style="color:#7f1d1d;">&#127922; Random</h4>
+        <p>Irregular, unpredictable variation with no discernible structure. No method can reliably forecast pure random variation from past data alone.</p>
+      </div>
+    </div>
+    <p class="help-table-title">Forecasting Method Selection Guide</p>
+    <table class="help-tbl">
+      <thead><tr><th>Method</th><th>Best When&hellip;</th><th>Key Limitation</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Naive</strong></td><td>Data is a random walk; last value is the optimal forecast</td><td>Carries all noise into the forecast; no smoothing</td></tr>
+        <tr><td><strong>Simple Moving Average</strong></td><td>Stable (stationary) data with no trend or seasonality</td><td>Lags true level changes; all periods weighted equally</td></tr>
+        <tr><td><strong>Exponential Smoothing</strong></td><td>Slight drift or gradual level change with heavy noise</td><td>Sensitive to choice of smoothing parameter &alpha;</td></tr>
+        <tr><td><strong>Trend Projection</strong></td><td>Clear, dominant linear trend is present throughout</td><td>Cannot capture seasonal swings or cycle turning points</td></tr>
+        <tr><td><strong>Seasonal Decomposition</strong></td><td>Strong repeating seasonality, with or without trend</td><td>Needs multiple full cycles of historical data</td></tr>
+        <tr><td><strong>Judgmental Forecast</strong></td><td>Cyclical patterns or situations where data is scarce</td><td>Subjective; hard to audit or replicate consistently</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── SCENARIO ─────────────────────────────────────────── -->
+<div class="scenario-context" id="scenario-box">
+  <div class="sc-header">
+    <span class="sc-eyebrow">&#128203; Scenario</span>
+    <span class="sc-round-badge" id="sc-round-badge">Round 1</span>
+  </div>
+  <div class="sc-body" id="scenario-text">Loading&hellip;</div>
+</div>
+
+<!-- ── CHART ─────────────────────────────────────────────── -->
+<div class="card" id="chart-card">
+  <div class="chart-card-header">
+    <span class="chart-card-title">&#128202; Time-Series Chart</span>
+    <div class="chart-legend">
+      <span class="legend-item"><span class="legend-dot"></span>Observed value</span>
+      <span class="legend-item"><span class="legend-dash"></span>Series mean</span>
+    </div>
+  </div>
+  <div id="chart-container">
+    <svg id="chart-svg" viewBox="0 0 800 320" role="img" aria-label="Time-series line chart"></svg>
+  </div>
+  <details style="margin-top:10px">
+    <summary>Show Data Table</summary>
+    <div class="data-table-scroll" id="data-table-wrap"></div>
+  </details>
+</div>
+
+<!-- ── STAGE 1 ───────────────────────────────────────────── -->
+<div class="card stage" id="stage1">
+  <div class="stage-header">
+    <div class="card-title" style="margin-bottom:0">
+      <span class="badge" aria-hidden="true">1</span>
+      Identify the Pattern(s)
+      <span class="stage-pts">+2 pts</span>
+    </div>
+    <div class="progress-row" role="progressbar" aria-label="Stage progress" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
+      <div class="prog-step active" id="ps1"><span>1</span></div>
+      <div class="prog-conn" id="pc1"></div>
+      <div class="prog-step" id="ps2"><span>2</span></div>
+      <div class="prog-conn" id="pc2"></div>
+      <div class="prog-step" id="ps3"><span>3</span></div>
+    </div>
+  </div>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">Select <em>all</em> patterns present in the chart. You must identify every correct pattern and no incorrect ones to earn full credit.</p>
+  <div class="pattern-grid" role="group" aria-label="Pattern selection checkboxes">
+    <label class="pattern-opt" id="lp-trend">
+      <input type="checkbox" id="cb-trend" value="trend" aria-label="Trend">
+      <div><span class="pattern-label">&#128200; Trend</span><span class="pattern-sub">Consistent rise or fall across all periods</span></div>
+    </label>
+    <label class="pattern-opt" id="lp-seasonality">
+      <input type="checkbox" id="cb-seasonality" value="seasonality" aria-label="Seasonality">
+      <div><span class="pattern-label">&#128260; Seasonality</span><span class="pattern-sub">Repeating pattern at fixed calendar intervals</span></div>
+    </label>
+    <label class="pattern-opt" id="lp-cyclical">
+      <input type="checkbox" id="cb-cyclical" value="cyclical" aria-label="Cyclical">
+      <div><span class="pattern-label">&#8767; Cyclical</span><span class="pattern-sub">Broad multi-year waves, no fixed period</span></div>
+    </label>
+    <label class="pattern-opt" id="lp-random">
+      <input type="checkbox" id="cb-random" value="random" aria-label="Random Variation">
+      <div><span class="pattern-label">&#127922; Random Variation</span><span class="pattern-sub">Irregular, unpredictable noise</span></div>
+    </label>
+  </div>
+  <div class="hint-area">
+    <button class="hint-btn" id="hint1-btn" onclick="showHint(1)">&#128161; Show Hint</button>
+    <div class="hint-text" id="hint1-text"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-s1" onclick="submitStage1()">Check Patterns &rarr;</button>
+  </div>
+  <div class="feedback" id="fb1" role="alert"></div>
+</div>
+
+<!-- ── STAGE 2 ───────────────────────────────────────────── -->
+<div class="card stage locked" id="stage2">
+  <div class="stage-header">
+    <div class="card-title" style="margin-bottom:0">
+      <span class="badge" aria-hidden="true">2</span>
+      Choose the Best Forecasting Method
+      <span class="stage-pts">+2 pts</span>
+    </div>
+  </div>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">Select the <em>single</em> most appropriate forecasting method given the pattern(s) you identified.</p>
+  <div class="method-grid" role="radiogroup" aria-label="Forecasting method options">
+    <label class="method-opt" id="lm-naive">
+      <input type="radio" name="method" value="naive" aria-label="Naive Forecast">
+      <div><div class="method-name">Naive Forecast</div><div class="method-desc">F<sub>t+1</sub> = most recent actual value</div></div>
+    </label>
+    <label class="method-opt" id="lm-moving_avg">
+      <input type="radio" name="method" value="moving_avg" aria-label="Simple Moving Average">
+      <div><div class="method-name">Simple Moving Average</div><div class="method-desc">Unweighted average of the last N periods</div></div>
+    </label>
+    <label class="method-opt" id="lm-exp_smooth">
+      <input type="radio" name="method" value="exp_smooth" aria-label="Exponential Smoothing">
+      <div><div class="method-name">Exponential Smoothing</div><div class="method-desc">Recent observations weighted more heavily (&alpha; parameter)</div></div>
+    </label>
+    <label class="method-opt" id="lm-trend_proj">
+      <input type="radio" name="method" value="trend_proj" aria-label="Trend Projection">
+      <div><div class="method-name">Trend Projection</div><div class="method-desc">OLS regression line extrapolated forward</div></div>
+    </label>
+    <label class="method-opt" id="lm-decomp">
+      <input type="radio" name="method" value="decomp" aria-label="Seasonal Decomposition">
+      <div><div class="method-name">Seasonal Decomposition</div><div class="method-desc">Separates trend, seasonal index &amp; irregular components</div></div>
+    </label>
+    <label class="method-opt" id="lm-judgmental">
+      <input type="radio" name="method" value="judgmental" aria-label="Judgmental Forecast">
+      <div><div class="method-name">Judgmental Forecast</div><div class="method-desc">Expert opinion combined with qualitative indicators</div></div>
+    </label>
+  </div>
+  <div class="hint-area">
+    <button class="hint-btn" id="hint2-btn" onclick="showHint(2)">&#128161; Show Hint</button>
+    <div class="hint-text" id="hint2-text"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-s2" onclick="submitStage2()">Check Method &rarr;</button>
+  </div>
+  <div class="feedback" id="fb2" role="alert"></div>
+</div>
+
+<!-- ── STAGE 3 ───────────────────────────────────────────── -->
+<div class="card stage locked" id="stage3">
+  <div class="stage-header">
+    <div class="card-title" style="margin-bottom:0">
+      <span class="badge" aria-hidden="true">3</span>
+      Justify Your Choice
+      <span class="stage-pts">+3 pts</span>
+    </div>
+  </div>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:12px;">Complete the paragraph by selecting the best answer in each blank. Each correct blank earns 1 point.</p>
+  <p class="just-label">Your Justification</p>
+  <div class="just-para" id="just-para"></div>
+  <div class="hint-area">
+    <button class="hint-btn" id="hint3-btn" onclick="showHint(3)">&#128161; Show Hint</button>
+    <div class="hint-text" id="hint3-text"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-s3" onclick="submitStage3()">Submit Justification</button>
+  </div>
+  <div class="feedback" id="fb3" role="alert"></div>
+</div>
+
+<!-- ── ROUND COMPLETE ────────────────────────────────────── -->
+<div class="card" id="round-complete">
+  <div class="rc-inner">
+    <div class="rc-top">
+      <div class="rc-stars" id="rc-stars">&#11088;&#11088;&#11088;</div>
+      <div class="rc-heading">Round Complete</div>
+      <div class="rc-pts" id="rc-pts">7</div>
+      <div class="rc-max">out of 7 points</div>
+      <div class="rc-msg" id="rc-msg"></div>
+    </div>
+    <div class="rc-breakdown">
+      <div class="rc-stage-block">
+        <span class="rc-stage-label">Stage 1<br>Patterns</span>
+        <span class="rc-stage-pts" id="rc-s1">&#8212;</span>
+        <span class="rc-stage-max">/ 2 pts</span>
+      </div>
+      <div class="rc-stage-block">
+        <span class="rc-stage-label">Stage 2<br>Method</span>
+        <span class="rc-stage-pts" id="rc-s2">&#8212;</span>
+        <span class="rc-stage-max">/ 2 pts</span>
+      </div>
+      <div class="rc-stage-block">
+        <span class="rc-stage-label">Stage 3<br>Justify</span>
+        <span class="rc-stage-pts" id="rc-s3">&#8212;</span>
+        <span class="rc-stage-max">/ 3 pts</span>
+      </div>
+    </div>
+    <div style="text-align:center">
+      <button class="btn btn-accent" style="font-size:.95rem;padding:12px 36px" onclick="newScenario()">Next Scenario &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONTROLS ──────────────────────────────────────────── -->
+<div class="controls-bar">
+  <button class="btn btn-ghost btn-sm" onclick="newScenario()" aria-label="Load a new scenario">&#128256; New Scenario</button>
+  <button class="btn btn-ghost btn-sm" onclick="resetScore()"  aria-label="Reset score">&#8634; Reset Score</button>
+</div>
+
+</main>
+
+<script>
+/* ============================================================
+   SCENARIO BANK
+============================================================ */
+var SCENARIOS = [
+
+  {
+    id: 'trend_up',
+    context: 'Monthly online orders (units) for a regional e-commerce retailer over 18 months. The company expanded its product catalog mid-year and launched targeted digital advertising.',
+    periods: 18, periodLabel: 'Month',
+    generate: function() {
+      var base = rnd(240,320), slope = rnd(11,18);
+      return range(18).map(function(i){ return Math.round(base + slope*i + noise(8)); });
+    },
+    correctPatterns: ['trend'],
+    correctMethod: 'trend_proj',
+    hints: [
+      'Ask: do values move consistently higher as time advances, across the full chart? That sustained direction is trend.',
+      'A dominant straight-line rise calls for a method that extrapolates that direction. Think regression.',
+      'Trend projection fits an OLS line y = a + bt and uses the estimated slope to extend the forecast period by period.'
+    ],
+    just: { q1:'upward_trend', q2:'fits_line', q3:'no_seasonality' }
+  },
+
+  {
+    id: 'trend_down',
+    context: 'Quarterly print newspaper circulation (thousands) for a metro daily over 5 years. Readers have been migrating steadily to digital platforms since the series began.',
+    periods: 20, periodLabel: 'Quarter',
+    generate: function() {
+      var base = rnd(500,600), slope = rnd(-19,-12);
+      return range(20).map(function(i){ return Math.max(12, Math.round(base + slope*i + noise(11))); });
+    },
+    correctPatterns: ['trend'],
+    correctMethod: 'trend_proj',
+    hints: [
+      'A consistent downward movement over the full horizon is still a trend. Direction does not matter, only systematic drift.',
+      'Linear regression captures the slope regardless of sign. A negative slope simply produces a declining forecast.',
+      'Trend projection extends the fitted regression line; here it predicts continued decline each period.'
+    ],
+    just: { q1:'downward_trend', q2:'fits_line', q3:'no_seasonality' }
+  },
+
+  {
+    id: 'season_only',
+    context: 'Quarterly retail sales ($000s) at a gift and home-goods chain over 4 years (16 quarters). Strong Q4 holiday demand is expected; no sustained growth or decline has been observed.',
+    periods: 16, periodLabel: 'Quarter',
+    generate: function() {
+      var base = rnd(195,240);
+      var sf = [0.68, 0.86, 1.04, 1.42];
+      return range(16).map(function(i){ return Math.round(base * sf[i%4] + noise(8)); });
+    },
+    correctPatterns: ['seasonality'],
+    correctMethod: 'decomp',
+    hints: [
+      'Count peaks and troughs: do they appear at the exact same quarter number each year? That fixed calendar rhythm is seasonality.',
+      'The mean level stays flat across years, ruling out trend. The repeating pattern is the dominant feature.',
+      'Seasonal decomposition computes a seasonal index (SI) for each sub-period, then multiplies SI by the deseasonalized trend.'
+    ],
+    just: { q1:'seasonality', q2:'seasonal_index', q3:'no_trend_handled' }
+  },
+
+  {
+    id: 'cycle_only',
+    context: 'Annual orders (units) for heavy construction equipment over 20 years. Demand mirrors infrastructure spending, which expands and contracts with the broader economic cycle.',
+    periods: 20, periodLabel: 'Year',
+    generate: function() {
+      var base = rnd(320,410), amp = rnd(90,130), per = rnd(5,7);
+      return range(20).map(function(i){ return Math.round(base + amp*Math.sin(2*Math.PI*i/per) + noise(14)); });
+    },
+    correctPatterns: ['cyclical'],
+    correctMethod: 'judgmental',
+    hints: [
+      'Look for broad multi-year waves. Count years between peaks: if irregular and spanning many years, that is cyclical, not seasonal.',
+      'Quantitative models cannot reliably predict when a business cycle turns. This calls for qualitative intelligence.',
+      'Judgmental forecasting draws on leading economic indicators and expert opinion to anticipate cyclical turning points.'
+    ],
+    just: { q1:'cyclical', q2:'expert_opinion', q3:'subjective' }
+  },
+
+  {
+    id: 'random_only',
+    context: 'Weekly inbound customer-support tickets at a software firm over 24 weeks. Volume fluctuates week to week with no apparent trend, seasonal swing, or multi-year cycle.',
+    periods: 24, periodLabel: 'Week',
+    generate: function() {
+      var base = rnd(100,145);
+      return range(24).map(function(){ return Math.round(base + noise(28)); });
+    },
+    correctPatterns: ['random'],
+    correctMethod: 'moving_avg',
+    hints: [
+      'If the series hovers around a stable mean with no direction and no fixed repeating pattern, it is stationary random variation.',
+      'For stationary data, averaging recent periods cancels random noise better than any single observation.',
+      'A k-period moving average reduces noise variance by a factor of k versus the naive method.'
+    ],
+    just: { q1:'random', q2:'smoothing', q3:'lag_response' }
+  },
+
+  {
+    id: 'trend_noise',
+    context: 'Monthly active users (thousands) on a B2B analytics platform over 18 months. User growth is driven by sales expansion, but campaign timing and churn add month-to-month noise.',
+    periods: 18, periodLabel: 'Month',
+    generate: function() {
+      var base = rnd(60,90), slope = rnd(9,16);
+      return range(18).map(function(i){ return Math.round(base + slope*i + noise(18)); });
+    },
+    correctPatterns: ['trend','random'],
+    correctMethod: 'trend_proj',
+    hints: [
+      'The long-run direction (slope) clearly dominates the period-to-period wobble. Both trend and noise coexist.',
+      'When the trend signal is strong relative to the noise, trend projection captures the dominant movement.',
+      'OLS regression minimises squared residuals, so the fitted line passes through noisy data to expose the underlying trajectory.'
+    ],
+    just: { q1:'trend_noise', q2:'fits_line', q3:'ignores_noise_struct' }
+  },
+
+  {
+    id: 'season_noise',
+    context: 'Monthly revenue ($000s) for a regional ice-cream franchise over 2 years. Summer peaks and winter troughs are expected; unpredictable weather creates added irregularity.',
+    periods: 24, periodLabel: 'Month',
+    generate: function() {
+      var base = rnd(45,68);
+      return range(24).map(function(i){
+        var s = 28*Math.sin(2*Math.PI*(i-4.5)/12);
+        return Math.max(5, Math.round(base + s + noise(9)));
+      });
+    },
+    correctPatterns: ['seasonality','random'],
+    correctMethod: 'decomp',
+    hints: [
+      'Do the same months consistently spike while winter months dip, even if exact values vary? That is seasonality.',
+      'The seasonal pattern remains the dominant structure even when random noise blurs the exact peak values.',
+      'Seasonal decomposition isolates the seasonal index from the irregular component, enabling a clean seasonal adjustment.'
+    ],
+    just: { q1:'season_noise', q2:'seasonal_index', q3:'no_trend_handled' }
+  },
+
+  {
+    id: 'cycle_noise',
+    context: 'Annual steel-output index for a regional mill over 18 years. Production broadly tracks infrastructure spending cycles driven by interest-rate policy, with added year-to-year operational variation.',
+    periods: 18, periodLabel: 'Year',
+    generate: function() {
+      var base = rnd(215,270), amp = rnd(60,90), per = rnd(5,7);
+      return range(18).map(function(i){ return Math.round(base + amp*Math.sin(2*Math.PI*i/per) + noise(20)); });
+    },
+    correctPatterns: ['cyclical','random'],
+    correctMethod: 'judgmental',
+    hints: [
+      'Broad, irregular multi-year swings point to cyclical variation. The year-to-year scatter is random noise layered on top.',
+      'Even with noisy data, no quantitative model reliably predicts business-cycle turning points.',
+      'Combining macroeconomic leading indicators with expert judgment is the standard practice for cyclical forecasting.'
+    ],
+    just: { q1:'cycle_noise', q2:'expert_opinion', q3:'subjective' }
+  },
+
+  {
+    id: 'trend_season',
+    context: 'Monthly passenger counts (thousands) at a regional airport over 2 years. Post-pandemic recovery produces an upward trend; summer leisure travel creates a predictable annual peak.',
+    periods: 24, periodLabel: 'Month',
+    generate: function() {
+      var base = rnd(65,85), slope = rnd(1.8,3.5);
+      return range(24).map(function(i){
+        var s = 22*Math.sin(2*Math.PI*(i-5.5)/12);
+        return Math.round(base + slope*i + s + noise(5));
+      });
+    },
+    correctPatterns: ['trend','seasonality'],
+    correctMethod: 'decomp',
+    hints: [
+      'If the overall level rises year-over-year AND the same months peak each year, both patterns coexist.',
+      'A trend line misses the seasonal swings; a seasonal model without trend drifts from the rising baseline.',
+      'Holt-Winters (additive) simultaneously estimates a level, a trend slope, and a set of seasonal indices.'
+    ],
+    just: { q1:'trend_season', q2:'both_components', q3:'complexity' }
+  },
+
+  {
+    id: 'trend_season_q',
+    context: 'Quarterly unit sales of outdoor furniture at a home-improvement chain over 4 years. Market-share gains drive steady annual growth; Q2 and Q3 always peak due to warm-weather demand.',
+    periods: 16, periodLabel: 'Quarter',
+    generate: function() {
+      var base = rnd(130,175), slope = rnd(5,10);
+      var sf = [0.70, 1.32, 1.22, 0.76];
+      return range(16).map(function(i){ return Math.round((base + slope*i)*sf[i%4] + noise(9)); });
+    },
+    correctPatterns: ['trend','seasonality'],
+    correctMethod: 'decomp',
+    hints: [
+      'Do Q2 and Q3 always outperform Q1 and Q4, with peak magnitudes growing each year? That is both seasonality and trend.',
+      'The multiplicative form of seasonal decomposition works well when seasonal amplitude grows with the trend.',
+      'Holt-Winters (multiplicative) separates the trend increment from the seasonal ratio for accurate multi-period projections.'
+    ],
+    just: { q1:'trend_season', q2:'both_components', q3:'complexity' }
+  },
+
+  {
+    id: 'exp_smooth_case',
+    context: 'Weekly grocery sales ($) at a convenience store over 20 weeks. Sales show only the faintest upward drift; unpredictable promotions and weather cause wide week-to-week swings.',
+    periods: 20, periodLabel: 'Week',
+    generate: function() {
+      var base = rnd(3200,4200), slope = rnd(3,8);
+      return range(20).map(function(i){ return Math.max(100, Math.round(base + slope*i + noise(240))); });
+    },
+    correctPatterns: ['trend','random'],
+    correctMethod: 'exp_smooth',
+    hints: [
+      'Compare total trend movement (last value minus first) to the typical period-to-period swing. If noise dominates, a full regression line will overfit.',
+      'Exponential smoothing adapts to gradual drift without committing to a rigid slope estimated from noisy early data.',
+      'Choosing alpha close to 0 produces a stable smoothed forecast that tracks the faint drift; alpha near 1 would just replicate the naive method.'
+    ],
+    just: { q1:'mild_trend', q2:'weights_recent', q3:'alpha_sensitivity' }
+  },
+
+  {
+    id: 'naive_case',
+    context: "Daily spot price ($/unit) for an agricultural commodity over 20 trading days. Prices in competitive commodity markets follow a near-random walk; each day's change is essentially independent.",
+    periods: 20, periodLabel: 'Day',
+    generate: function() {
+      var out = [rnd(55,78)];
+      for(var i=1;i<20;i++) out.push(Math.max(8, out[i-1] + noise(4)));
+      return out.map(function(v){ return +v.toFixed(1); });
+    },
+    correctPatterns: ['random'],
+    correctMethod: 'naive',
+    hints: [
+      'When price changes appear truly unpredictable with no direction or repeating pattern, the series is a random walk.',
+      'For a random walk, E[Y_t+1 | Y_t] = Y_t. The naive forecast equals the theoretical optimum.',
+      'Averaging multiple past prices (moving average) introduces unnecessary lag and actually increases expected forecast error for a random walk.'
+    ],
+    just: { q1:'random_walk', q2:'last_value_best', q3:'no_smoothing' }
+  }
+
+];
+
+/* ============================================================
+   JUSTIFICATION POOLS
+============================================================ */
+var J = {
+  q1: {
+    upward_trend:   'a clear upward linear trend across all periods',
+    downward_trend: 'a consistent downward linear trend across all periods',
+    seasonality:    'a strong repeating seasonal pattern at fixed calendar intervals',
+    cyclical:       'broad cyclical waves spanning multiple years with no fixed period',
+    random:         'no discernible structure — essentially stationary random (i.i.d.) variation',
+    trend_noise:    'a dominant upward trend with considerable random variation overlaid',
+    season_noise:   'a repeating seasonal pattern with random variation overlaid',
+    cycle_noise:    'broad cyclical swings with random variation overlaid',
+    trend_season:   'an upward trend combined with a repeating seasonal pattern',
+    mild_trend:     'a very slight upward drift dominated by large random period-to-period variation',
+    random_walk:    'a random walk — successive changes are independent and unpredictable'
+  },
+  q2: {
+    fits_line:       'fitting an OLS regression line through all data points and extrapolating its slope',
+    seasonal_index:  'computing seasonal indices (SI) that adjust each period\'s forecast by its typical calendar factor',
+    expert_opinion:  'incorporating macroeconomic leading indicators and qualitative expert judgment about cycle turning points',
+    smoothing:       'averaging several recent periods to cancel random noise around a stable mean level',
+    both_components: 'simultaneously estimating a trend component and a set of seasonal indices (Holt-Winters)',
+    weights_recent:  'assigning exponentially declining weights to past data so recent observations influence the forecast more',
+    last_value_best: 'using only the most recent actual observation as the next-period forecast (F_t+1 = A_t)'
+  },
+  q3: {
+    no_seasonality:       'it cannot capture seasonal or cyclical swings that may overlay the trend in future periods',
+    no_trend_handled:     'if a trend emerges later, the seasonal model will systematically under- or over-forecast',
+    subjective:           'it is subjective and difficult to replicate, audit, or communicate to stakeholders consistently',
+    lag_response:         'it responds slowly to genuine level shifts because every period in the window carries equal weight',
+    ignores_noise_struct: 'the single regression line does not model the irregular component, so prediction intervals can be wide',
+    complexity:           'it requires several complete seasonal cycles of historical data and is harder to explain to non-technical audiences',
+    alpha_sensitivity:    'forecast accuracy depends heavily on the tuned smoothing parameter alpha, which requires careful cross-validation',
+    no_smoothing:         'it passes all random noise directly into the forecast, so forecast errors can be as large as the noise itself'
+  }
+};
+
+/* ============================================================
+   "WHY NOT" EXPLANATIONS — shown when student picks wrong method
+============================================================ */
+var WHY_NOT = {
+  naive:      'The naive method works only for random walks. It ignores any systematic pattern and would produce poor forecasts here.',
+  moving_avg: 'Moving averages smooth stationary noise well but cannot track a trend or seasonal cycle; they systematically lag behind.',
+  exp_smooth: 'Exponential smoothing handles gentle drift, but when a strong trend or clear seasonality dominates, it cannot capture the full structure.',
+  trend_proj: 'Trend projection extrapolates a straight line. It works for dominant trends but cannot model seasonal swings or cyclical turning points.',
+  decomp:     'Seasonal decomposition requires a predictable, repeating calendar cycle. Without clear seasonality in the data, it over-fits noise.',
+  judgmental: 'Judgment is reserved for scenarios where quantitative patterns cannot be modelled — here the data has a clear quantifiable structure.'
+};
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+function rnd(a,b)    { return a + Math.random()*(b-a); }
+function noise(s)    { return (Math.random()-0.5)*2*s; }
+function range(n)    { var a=[]; for(var i=0;i<n;i++) a.push(i); return a; }
+function shuffle(a) {
+  var r=a.slice();
+  for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}
+  return r;
+}
+function arraysMatch(a,b){
+  if(a.length!==b.length) return false;
+  return a.slice().sort().join('|')===b.slice().sort().join('|');
+}
+function capFirst(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+/* ============================================================
+   STATE
+============================================================ */
+var ST = {
+  scenario:null, data:[],
+  totalScore:0, totalPossible:0,
+  rounds:0, roundPts:0,
+  roundS1:0, roundS2:0, roundS3:0,
+  pool:[],
+  s1done:false, s2done:false, s3done:false
+};
+
+/* ============================================================
+   BOOT
+============================================================ */
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.pattern-opt input[type="checkbox"]').forEach(function(cb){
+    cb.addEventListener('change', function(){ cb.closest('.pattern-opt').classList.toggle('checked', cb.checked); });
+  });
+  document.querySelectorAll('.method-opt input[type="radio"]').forEach(function(rb){
+    rb.addEventListener('change', function(){
+      document.querySelectorAll('.method-opt').forEach(function(e){ e.classList.remove('selected'); });
+      rb.closest('.method-opt').classList.add('selected');
+    });
+  });
+  document.getElementById('help-toggle').addEventListener('click', function(){
+    var body = document.getElementById('help-body');
+    var open = body.classList.toggle('open');
+    this.classList.toggle('open', open);
+    this.setAttribute('aria-expanded', open);
+    document.getElementById('help-arrow').textContent = open ? '\u25b2' : '\u25bc';
+  });
+  ST.pool = shuffle(SCENARIOS.slice());
+  newScenario();
+});
+
+/* ============================================================
+   NEW SCENARIO
+============================================================ */
+function newScenario(){
+  if(ST.pool.length === 0) ST.pool = shuffle(SCENARIOS.slice());
+  ST.scenario = ST.pool.pop();
+  ST.data = ST.scenario.generate();
+  ST.s1done = ST.s2done = ST.s3done = false;
+  ST.roundPts = ST.roundS1 = ST.roundS2 = ST.roundS3 = 0;
+  ST.rounds++;
+
+  document.getElementById('scenario-text').textContent = ST.scenario.context;
+  document.getElementById('sc-round-badge').textContent = 'Round ' + ST.rounds;
+
+  document.querySelectorAll('.pattern-opt input[type="checkbox"]').forEach(function(cb){
+    cb.checked = false; cb.disabled = false;
+    cb.closest('.pattern-opt').classList.remove('checked');
+  });
+  document.querySelectorAll('.method-opt input[type="radio"]').forEach(function(rb){
+    rb.checked = false; rb.disabled = false;
+    rb.closest('.method-opt').classList.remove('selected');
+  });
+
+  ['fb1','fb2','fb3'].forEach(function(id){
+    var e = document.getElementById(id); e.className = 'feedback'; e.innerHTML = '';
+  });
+  [1,2,3].forEach(function(i){
+    document.getElementById('hint'+i+'-btn').textContent = '\u{1F4A1} Show Hint';
+    document.getElementById('hint'+i+'-text').classList.remove('visible');
+  });
+  ['btn-s1','btn-s2','btn-s3'].forEach(function(id){ document.getElementById(id).disabled = false; });
+
+  document.getElementById('stage1').classList.remove('locked');
+  document.getElementById('stage2').classList.add('locked');
+  document.getElementById('stage3').classList.add('locked');
+  document.getElementById('round-complete').classList.remove('show');
+
+  [1,2,3].forEach(function(n){ document.getElementById('ps'+n).className='prog-step'; document.getElementById('ps'+n).innerHTML='<span>'+n+'</span>'; });
+  [1,2].forEach(function(n){ document.getElementById('pc'+n).className='prog-conn'; });
+  document.getElementById('ps1').classList.add('active');
+
+  document.getElementById('hint1-text').textContent = ST.scenario.hints[0]||'';
+  document.getElementById('hint2-text').textContent = ST.scenario.hints[1]||'';
+  document.getElementById('hint3-text').textContent = ST.scenario.hints[2]||'';
+
+  buildJustification();
+  renderChart();
+  renderTable();
+  updateHUD();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============================================================
+   SVG CHART
+============================================================ */
+function renderChart(){
+  var svg = document.getElementById('chart-svg');
+  var data = ST.data, n = data.length;
+  var W=800, H=320, PL=68, PR=28, PT=32, PB=52;
+  var cW = W-PL-PR, cH = H-PT-PB;
+
+  var minV = Math.min.apply(null,data), maxV = Math.max.apply(null,data);
+  var span = maxV - minV || 1;
+  var yLo = minV - span*0.12, yHi = maxV + span*0.15;
+  var mean = data.reduce(function(a,b){return a+b;},0)/n;
+
+  function xS(i){ return PL + (i/(n-1))*cW; }
+  function yS(v){ return PT + cH - ((v-yLo)/(yHi-yLo))*cH; }
+
+  var GRIDS=5, grid='', ylbls='';
+  for(var g=0;g<=GRIDS;g++){
+    var gv = yLo+(yHi-yLo)*(g/GRIDS), gy = yS(gv);
+    grid  += '<line x1="'+PL+'" y1="'+gy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+gy.toFixed(1)+'" stroke="#e8ecf5" stroke-width="1"/>';
+    ylbls += '<text x="'+(PL-7)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" font-size="12" fill="#7a8aa0" font-family="Segoe UI,system-ui,sans-serif">'+Math.round(gv)+'</text>';
+  }
+
+  var step = Math.max(1,Math.ceil(n/9)), xticks='', lxSet={};
+  for(var xi=0;xi<n;xi+=step){
+    var xx = xS(xi); lxSet[xi]=1;
+    xticks += '<line x1="'+xx.toFixed(1)+'" y1="'+(PT+cH)+'" x2="'+xx.toFixed(1)+'" y2="'+(PT+cH+5)+'" stroke="#b0bdd0" stroke-width="1"/>';
+    xticks += '<text x="'+xx.toFixed(1)+'" y="'+(PT+cH+18)+'" text-anchor="middle" font-size="11.5" fill="#7a8aa0" font-family="Segoe UI,system-ui,sans-serif">'+ST.scenario.periodLabel+' '+(xi+1)+'</text>';
+  }
+  if(!lxSet[n-1]){
+    var xlast=xS(n-1);
+    xticks += '<text x="'+xlast.toFixed(1)+'" y="'+(PT+cH+18)+'" text-anchor="middle" font-size="11.5" fill="#7a8aa0" font-family="Segoe UI,system-ui,sans-serif">'+ST.scenario.periodLabel+' '+n+'</text>';
+  }
+
+  var axisX = '<text x="'+(PL+cW/2).toFixed(0)+'" y="'+(H-5)+'" text-anchor="middle" font-size="12.5" fill="#64748b" font-family="Segoe UI,system-ui,sans-serif" font-weight="600">'+ST.scenario.periodLabel+'</text>';
+  var axisY = '<text x="14" y="'+(PT+cH/2).toFixed(0)+'" text-anchor="middle" font-size="12.5" fill="#64748b" font-family="Segoe UI,system-ui,sans-serif" font-weight="600" transform="rotate(-90,14,'+(PT+cH/2).toFixed(0)+')">Value</text>';
+
+  var ym = yS(mean);
+  var meanLine  = '<line x1="'+PL+'" y1="'+ym.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+ym.toFixed(1)+'" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.7"/>';
+
+  var pts = data.map(function(v,i){ return xS(i).toFixed(1)+','+yS(v).toFixed(1); });
+  var linePath = 'M'+pts.join(' L');
+  var areaPath = linePath+' L'+xS(n-1).toFixed(1)+','+(PT+cH).toFixed(1)+' L'+xS(0).toFixed(1)+','+(PT+cH).toFixed(1)+' Z';
+
+  var dots = data.map(function(v,i){
+    return '<circle cx="'+xS(i).toFixed(1)+'" cy="'+yS(v).toFixed(1)+'" r="5" fill="#2563a8" stroke="white" stroke-width="2"><title>'+ST.scenario.periodLabel+' '+(i+1)+': '+v+'</title></circle>';
+  }).join('');
+
+  svg.innerHTML =
+    '<defs>'+
+    '<linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="#2563a8" stop-opacity="0.14"/>'+
+    '<stop offset="100%" stop-color="#2563a8" stop-opacity="0.01"/>'+
+    '</linearGradient>'+
+    '</defs>'+
+    '<rect x="'+PL+'" y="'+PT+'" width="'+cW+'" height="'+cH+'" fill="white"/>'+
+    grid+
+    meanLine+
+    '<line x1="'+PL+'" y1="'+PT+'" x2="'+PL+'" y2="'+(PT+cH)+'" stroke="#b8c4d8" stroke-width="1.5"/>'+
+    '<line x1="'+PL+'" y1="'+(PT+cH)+'" x2="'+(W-PR)+'" y2="'+(PT+cH)+'" stroke="#b8c4d8" stroke-width="1.5"/>'+
+    ylbls+xticks+axisX+axisY+
+    '<path d="'+areaPath+'" fill="url(#ag)"/>'+
+    '<path d="'+linePath+'" fill="none" stroke="#2563a8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>'+
+    dots;
+}
+
+/* ============================================================
+   DATA TABLE
+============================================================ */
+function renderTable(){
+  var data = ST.data, n = data.length, lbl = ST.scenario.periodLabel;
+  function tbl(vals, start){
+    var h='<table class="data-table"><thead><tr><th>'+lbl+'</th>';
+    vals.forEach(function(_,i){ h+='<th>'+(start+i+1)+'</th>'; });
+    h+='</tr></thead><tbody><tr><td>Value</td>';
+    vals.forEach(function(v){ h+='<td>'+v+'</td>'; });
+    h+='</tr></tbody></table>';
+    return h;
+  }
+  var half = Math.ceil(n/2);
+  var html = n<=12 ? tbl(data,0) :
+    tbl(data.slice(0,half),0)+'<div style="margin-top:6px">'+tbl(data.slice(half),half)+'</div>';
+  document.getElementById('data-table-wrap').innerHTML = html;
+}
+
+/* ============================================================
+   JUSTIFICATION DROPDOWNS
+============================================================ */
+function buildJustification(){
+  var sc = ST.scenario.just;
+  function sel(id, pool, key){
+    var all = Object.keys(pool).map(function(k){ return [k, pool[k]]; });
+    var correct = all.filter(function(p){ return p[0]===key; })[0];
+    var others  = shuffle(all.filter(function(p){ return p[0]!==key; })).slice(0,5);
+    var opts    = shuffle([correct].concat(others));
+    var h = '<select id="'+id+'" aria-label="Blank '+id+'"><option value="">— select —</option>';
+    opts.forEach(function(p){ h+='<option value="'+p[0]+'">'+p[1]+'</option>'; });
+    h+='</select>';
+    return h;
+  }
+  document.getElementById('just-para').innerHTML =
+    'The data displays '+sel('jq1',J.q1,sc.q1)+'. '+
+    'The most appropriate forecasting method handles this by '+sel('jq2',J.q2,sc.q2)+'. '+
+    'One important limitation of this approach is that '+sel('jq3',J.q3,sc.q3)+'.';
+}
+
+/* ============================================================
+   STAGE 1
+============================================================ */
+function submitStage1(){
+  var selected = [];
+  document.querySelectorAll('.pattern-opt input[type="checkbox"]:checked').forEach(function(c){ selected.push(c.value); });
+  if(selected.length===0){ setFeedback('fb1','partial','No selection','Please tick at least one pattern before submitting.'); return; }
+
+  var correct = ST.scenario.correctPatterns;
+  var ok = arraysMatch(selected, correct);
+  var pts = ok ? 2 : 0;
+  ST.totalPossible += 2; ST.totalScore += pts; ST.roundPts += pts; ST.roundS1 = pts;
+
+  var correctStr = correct.map(capFirst).join(', ');
+  var missed = correct.filter(function(p){ return selected.indexOf(p)===-1; }).map(capFirst);
+  var extra  = selected.filter(function(p){ return correct.indexOf(p)===-1; }).map(capFirst);
+
+  var body = '<div class="fb-body">';
+  if(ok){
+    body += 'You correctly identified: <strong>'+correctStr+'</strong>. '+patternNote(correct);
+  } else {
+    body += 'The correct pattern(s): <strong>'+correctStr+'</strong>.<ul>';
+    if(missed.length) body += '<li><strong>Missed:</strong> '+missed.join(', ')+'</li>';
+    if(extra.length)  body += '<li><strong>Should not include:</strong> '+extra.join(', ')+'</li>';
+    body += '</ul>'+patternNote(correct);
+  }
+  body += '</div>';
+
+  setFeedback('fb1', ok?'correct':'incorrect', ok?'\u2713 Correct! (+2 pts)':'\u2717 Not quite (+0 pts)', body);
+  document.querySelectorAll('.pattern-opt input[type="checkbox"]').forEach(function(cb){ cb.disabled=true; });
+  document.getElementById('btn-s1').disabled = true;
+  markProg(1,'done');
+  ST.s1done = true;
+  unlockStage(2);
+  updateHUD();
+}
+
+/* ============================================================
+   STAGE 2
+============================================================ */
+function submitStage2(){
+  var rb = document.querySelector('.method-opt input[type="radio"]:checked');
+  if(!rb){ setFeedback('fb2','partial','No selection','Please choose a forecasting method before submitting.'); return; }
+
+  var chosen = rb.value, correct = ST.scenario.correctMethod, ok = chosen===correct;
+  var pts = ok ? 2 : 0;
+  ST.totalPossible += 2; ST.totalScore += pts; ST.roundPts += pts; ST.roundS2 = pts;
+
+  var chosenName  = document.querySelector('#lm-'+chosen+' .method-name').textContent;
+  var correctName = document.querySelector('#lm-'+correct+' .method-name').textContent;
+
+  var body = '<div class="fb-body">';
+  if(ok){
+    body += '<strong>'+chosenName+'</strong> is the right choice. '+methodNote(correct);
+  } else {
+    body += 'You chose <strong>'+chosenName+'</strong>. The best method is <strong>'+correctName+'</strong>. '+methodNote(correct);
+    body += '<div class="fb-why"><strong>Why not '+chosenName+'?</strong> '+WHY_NOT[chosen]+'</div>';
+  }
+  body += '</div>';
+
+  setFeedback('fb2', ok?'correct':'incorrect', ok?'\u2713 Correct! (+2 pts)':'\u2717 Not quite (+0 pts)', body);
+  document.querySelectorAll('.method-opt input[type="radio"]').forEach(function(r){ r.disabled=true; });
+  document.getElementById('btn-s2').disabled = true;
+  markProg(2,'done');
+  ST.s2done = true;
+  unlockStage(3);
+  updateHUD();
+}
+
+/* ============================================================
+   STAGE 3
+============================================================ */
+function submitStage3(){
+  var s1=document.getElementById('jq1'), s2=document.getElementById('jq2'), s3=document.getElementById('jq3');
+  if(!s1.value||!s2.value||!s3.value){ setFeedback('fb3','partial','Incomplete','Please complete all three blanks before submitting.'); return; }
+
+  var just = ST.scenario.just;
+  var checks = [{el:s1,correct:just.q1},{el:s2,correct:just.q2},{el:s3,correct:just.q3}];
+  var pts = 0;
+  checks.forEach(function(c){
+    var ok = c.el.value===c.correct;
+    if(ok) pts++;
+    c.el.classList.add(ok?'sel-correct':'sel-wrong');
+    c.el.disabled = true;
+  });
+  ST.totalPossible += 3; ST.totalScore += pts; ST.roundPts += pts; ST.roundS3 = pts;
+
+  var fbType  = pts===3?'correct':pts>0?'partial':'incorrect';
+  var fbTitle = pts===3?'\u2713 All correct! (+3 pts)':pts>0?'Partial credit (+'+pts+'/3 pts)':'\u2717 Incorrect (+0 pts)';
+  var body = '<div class="fb-body">';
+  if(pts===3){ body += 'Excellent — your full justification is accurate.'; }
+  else { body += buildJFeedback(checks, just); }
+  body += '</div>';
+
+  setFeedback('fb3', fbType, fbTitle, body);
+  document.getElementById('btn-s3').disabled = true;
+  markProg(3,'done');
+  ST.s3done = true;
+  updateHUD();
+  setTimeout(showRoundComplete, 750);
+}
+
+function buildJFeedback(checks, just){
+  var labels = [J.q1[just.q1], J.q2[just.q2], J.q3[just.q3]];
+  var names  = ['data description','method mechanism','key limitation'];
+  var errs   = [];
+  checks.forEach(function(c,i){
+    if(c.el.value!==c.correct) errs.push('<li><em>'+names[i]+'</em> &rarr; <strong>'+labels[i]+'</strong></li>');
+  });
+  return 'Review the correct answers:<ul>'+errs.join('')+'</ul>';
+}
+
+/* ============================================================
+   ROUND COMPLETE
+============================================================ */
+function showRoundComplete(){
+  var p = ST.roundPts;
+  var stars = p>=7?'\u2B50\u2B50\u2B50':p>=5?'\u2B50\u2B50':p>=3?'\u2B50':'';
+  document.getElementById('rc-stars').textContent = stars;
+  document.getElementById('rc-pts').textContent   = p;
+  document.getElementById('rc-s1').textContent    = ST.roundS1;
+  document.getElementById('rc-s2').textContent    = ST.roundS2;
+  document.getElementById('rc-s3').textContent    = ST.roundS3;
+  document.getElementById('rc-msg').textContent   =
+    p===7?'Outstanding — full marks! Ready for the next challenge?' :
+    p>=5?'Good work. Review the stage feedback above to close any gaps.' :
+         'Keep at it — revisit the Pattern Reference at the top for guidance.';
+  var rc = document.getElementById('round-complete');
+  rc.classList.add('show');
+  rc.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function unlockStage(n){
+  var el = document.getElementById('stage'+n);
+  el.classList.remove('locked');
+  markProg(n,'active');
+  setTimeout(function(){ el.scrollIntoView({behavior:'smooth',block:'nearest'}); },60);
+}
+
+function markProg(n, state){
+  var ps = document.getElementById('ps'+n);
+  ps.className = 'prog-step '+state;
+  ps.innerHTML = state==='done' ? '' : '<span>'+n+'</span>';
+  if(state==='done' && n<3) document.getElementById('pc'+n).classList.add('done');
+}
+
+function setFeedback(id, type, title, body){
+  var el = document.getElementById(id);
+  el.className = 'feedback show '+type;
+  el.innerHTML = '<div class="fb-title">'+title+'</div>'+body;
+}
+
+function showHint(stage){
+  var t = document.getElementById('hint'+stage+'-text');
+  var b = document.getElementById('hint'+stage+'-btn');
+  var v = t.classList.toggle('visible');
+  b.textContent = v ? 'Hide Hint' : '\u{1F4A1} Show Hint';
+}
+
+function updateHUD(){
+  document.getElementById('score-pts').textContent   = ST.totalScore;
+  document.getElementById('score-round').textContent = ST.rounds;
+  document.getElementById('score-pct').textContent   =
+    ST.totalPossible>0 ? Math.round(ST.totalScore/ST.totalPossible*100)+'%' : '\u2014';
+}
+
+function resetScore(){
+  if(!confirm('Reset score and round counter to zero?')) return;
+  ST.totalScore = 0; ST.totalPossible = 0; ST.rounds = 0;
+  ST.pool = shuffle(SCENARIOS.slice());
+  updateHUD();
+  newScenario();
+}
+
+function patternNote(patterns){
+  var n = {
+    trend:       'A trend means a sustained directional movement across the entire horizon.',
+    seasonality: 'Seasonality means the same calendar sub-period (month/quarter) repeatedly peaks and troughs.',
+    cyclical:    'A cyclical pattern means broad multi-year economic waves with no fixed calendar period.',
+    random:      'Random variation means irregular noise with no predictable structure.'
+  };
+  return patterns.map(function(p){ return n[p]||''; }).join(' ');
+}
+
+function methodNote(m){
+  var n = {
+    naive:      'For a random walk, E[Y_t+1 | Y_t] = Y_t — no other forecast can beat the last observed value in expectation.',
+    moving_avg: 'Averaging k recent stationary observations reduces noise variance by a factor of k versus the naive method.',
+    exp_smooth: 'Exponential smoothing adapts the forecast level using the formula S_t = alpha*A_t + (1-alpha)*S_t-1, giving more weight to recent data without over-committing to a rigid slope.',
+    trend_proj: 'OLS regression isolates the slope b and intercept a, then projects the forecast as y = a + bt for each future period t.',
+    decomp:     'Seasonal decomposition separates Y_t into Trend, Seasonal Index, and Irregular components, allowing each to be modelled and forecast independently.',
+    judgmental: 'Expert judgment integrates qualitative leading indicators and macro intelligence that no historical-data model can capture.'
+  };
+  return n[m]||'';
+}
+</script>
+</body>
+</html>
