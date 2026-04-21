@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forecast Error Lab &mdash; SCM 352</title>
+<style>
+/* ── DESIGN TOKENS ─────────────────────────────────────── */
+:root {
+  --primary:   #1a3a5c;
+  --secondary: #2563a8;
+  --accent:    #d46a0f;
+  --success:   #1e6b40;
+  --error:     #b91c1c;
+  --warn:      #92400e;
+  --bg:        #eef1f7;
+  --surface:   #f8f9fc;
+  --card:      #ffffff;
+  --border:    #d1d9e6;
+  --text:      #1a2535;
+  --text-2:    #475569;
+  --muted:     #64748b;
+  --font:      'Segoe UI', system-ui, -apple-system, sans-serif;
+  --radius:    10px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 8px rgba(0,0,0,.04);
+  --shadow:    0 2px 6px rgba(0,0,0,.07), 0 4px 20px rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+
+/* ── HEADER ─────────────────────────────────────────────── */
+header {
+  background: var(--primary); color: white;
+  padding: 0 24px;
+  display: flex; align-items: stretch; justify-content: space-between;
+  flex-wrap: wrap; box-shadow: 0 2px 10px rgba(0,0,0,.3);
+}
+.hdr-brand { display: flex; flex-direction: column; justify-content: center; padding: 14px 0; }
+.hdr-title { font-size: 1.2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.hdr-sub   { font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; opacity: .6; margin-top: 1px; }
+.score-bar { display: flex; }
+.score-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 10px 18px; border-left: 1px solid rgba(255,255,255,.12); min-width: 68px;
+}
+.score-value { font-size: 1.5rem; font-weight: 900; color: #7dd3fc; line-height: 1; }
+.score-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .09em; opacity: .65; margin-top: 2px; }
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+main { max-width: 940px; margin: 0 auto; padding: 22px 16px 56px; display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-sm);
+}
+.card-title {
+  font-size: 1rem; font-weight: 700; color: var(--primary);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 9px;
+}
+.badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--secondary); color: white;
+  font-size: .75rem; font-weight: 800; flex-shrink: 0;
+}
+.stage-pts {
+  font-size: .72rem; color: var(--muted); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 99px; padding: 2px 9px;
+}
+
+/* ── SCENARIO BOX ───────────────────────────────────────── */
+.scenario-context { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+.sc-header { background: linear-gradient(90deg, var(--primary), #2563a8); padding: 8px 18px; display: flex; align-items: center; gap: 8px; }
+.sc-eyebrow { font-size: .67rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.75); font-weight: 700; }
+.sc-round-badge { margin-left: auto; background: rgba(255,255,255,.15); color: white; font-size: .7rem; font-weight: 700; padding: 2px 9px; border-radius: 99px; }
+.sc-body { padding: 14px 18px; font-size: .91rem; line-height: 1.65; }
+
+/* ── CHART ──────────────────────────────────────────────── */
+#chart-card { padding: 16px 16px 12px; }
+.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+.chart-title  { font-size: .88rem; font-weight: 700; color: var(--primary); }
+.chart-legend { display: flex; gap: 14px; }
+.leg { display: flex; align-items: center; gap: 5px; font-size: .73rem; color: var(--muted); }
+.leg-line { width: 18px; height: 3px; border-radius: 2px; }
+#chart-wrap { overflow-x: auto; background: white; border-radius: 7px; border: 1px solid var(--border); }
+#chart-svg  { display: block; min-width: 320px; width: 100%; }
+
+/* ── STAGE ──────────────────────────────────────────────── */
+.stage { border-left: 3px solid transparent; transition: opacity .3s; }
+.stage.locked { opacity: .35; pointer-events: none; user-select: none; }
+#stage1 { border-left-color: var(--secondary); }
+#stage2 { border-left-color: var(--accent); }
+#stage3 { border-left-color: var(--success); }
+#stage2.locked, #stage3.locked { border-left-color: var(--border); }
+
+.stage-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
+/* ── ERROR TABLE ────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; margin-bottom: 14px; }
+table.err-tbl { width: 100%; border-collapse: collapse; font-size: .87rem; }
+.err-tbl th {
+  background: var(--primary); color: white; padding: 7px 12px;
+  text-align: center; font-weight: 600; white-space: nowrap;
+}
+.err-tbl th .th-formula { font-size: .7rem; opacity: .7; font-weight: 400; display: block; margin-top: 1px; }
+.err-tbl td { padding: 6px 10px; text-align: center; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.err-tbl tr:nth-child(even) td { background: #f5f7fb; }
+.err-tbl td.label { font-weight: 600; color: var(--muted); font-size: .8rem; }
+
+/* editable cells */
+.err-tbl input.cell-in {
+  width: 82px; padding: 5px 7px; text-align: center;
+  border: 2px solid var(--border); border-radius: 6px;
+  font-family: var(--font); font-size: .85rem; color: var(--primary);
+  background: white; transition: border-color .15s;
+}
+.err-tbl input.cell-in:focus { outline: 2px solid var(--secondary); outline-offset: 1px; border-color: var(--secondary); }
+.err-tbl input.cell-in.correct { border-color: var(--success) !important; background: #e3f3eb; }
+.err-tbl input.cell-in.wrong   { border-color: var(--error)   !important; background: #feecec; }
+.err-tbl td.ans-cell { min-width: 110px; }
+
+/* row feedback */
+.row-fb { font-size: .76rem; color: var(--muted); }
+.row-fb.over  { color: #7f1d1d; }
+.row-fb.under { color: #1e3a5c; }
+.row-fb.exact { color: var(--success); }
+
+/* ── METRIC INPUTS ──────────────────────────────────────── */
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 14px; margin-bottom: 14px; }
+.metric-card {
+  padding: 14px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.metric-name { font-size: .78rem; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+.metric-sub  { font-size: .71rem; color: var(--muted); margin-bottom: 8px; }
+.metric-formula-toggle {
+  background: none; border: none; font-family: var(--font); font-size: .7rem; color: var(--secondary);
+  cursor: pointer; padding: 0; text-decoration: underline; margin-bottom: 6px; display: block;
+}
+.metric-formula { display: none; font-size: .74rem; background: #eef2fb; border: 1px solid #c7d6f0; border-radius: 6px; padding: 7px 10px; color: var(--primary); margin-bottom: 8px; line-height: 1.6; font-family: monospace; }
+.metric-formula.open { display: block; }
+.metric-input-row { display: flex; align-items: center; gap: 8px; }
+.metric-input {
+  flex: 1; padding: 7px 10px; border: 2px solid var(--border); border-radius: 7px;
+  font-family: var(--font); font-size: .88rem; color: var(--primary);
+  background: white; transition: border-color .15s;
+}
+.metric-input:focus { outline: 2px solid var(--secondary); outline-offset: 1px; border-color: var(--secondary); }
+.metric-input.correct { border-color: var(--success) !important; background: #e3f3eb; }
+.metric-input.wrong   { border-color: var(--error)   !important; background: #feecec; }
+.metric-unit { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.metric-fb   { font-size: .75rem; margin-top: 5px; min-height: 16px; line-height: 1.4; }
+.metric-fb.ok  { color: var(--success); }
+.metric-fb.bad { color: var(--error); }
+
+/* scratchpad */
+.scratchpad-label { font-size: .75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 5px; }
+.scratchpad {
+  width: 100%; min-height: 70px; padding: 10px; resize: vertical;
+  border: 1px solid var(--border); border-radius: 7px; font-family: monospace; font-size: .82rem;
+  background: #fafbfd; color: var(--text); transition: border-color .15s;
+}
+.scratchpad:focus { outline: 2px solid var(--secondary); outline-offset: 1px; border-color: var(--secondary); }
+
+/* ── DIAGNOSIS ──────────────────────────────────────────── */
+.diag-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; margin-bottom: 16px; }
+.diag-q { padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; }
+.diag-q-label { font-size: .82rem; font-weight: 700; color: var(--primary); margin-bottom: 9px; }
+.radio-row { display: flex; flex-direction: column; gap: 6px; }
+.radio-opt {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border: 2px solid var(--border); border-radius: 7px;
+  cursor: pointer; font-size: .84rem; transition: border-color .15s, background .15s;
+}
+.radio-opt:hover { border-color: var(--secondary); background: #edf2fb; }
+.radio-opt.selected { border-color: var(--secondary); background: #e2ecfa; }
+.radio-opt input[type="radio"] { accent-color: var(--secondary); width: 15px; height: 15px; cursor: pointer; }
+
+/* justification builder */
+.just-label { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 9px; }
+.just-para {
+  font-size: .9rem; line-height: 2.8; padding: 16px 20px;
+  background: var(--surface); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 14px;
+}
+.just-para select {
+  display: inline-block; padding: 4px 8px;
+  border: 2px solid var(--secondary); border-radius: 6px;
+  background: white; font-family: var(--font); font-size: .82rem;
+  color: var(--primary); cursor: pointer; vertical-align: middle; margin: 0 2px; max-width: 300px;
+  transition: border-color .15s;
+}
+.just-para select:focus { outline: 2px solid var(--secondary); outline-offset: 1px; }
+select.sel-correct { border-color: var(--success) !important; background: #e3f3eb; }
+select.sel-wrong   { border-color: var(--error)   !important; background: #feecec; }
+
+/* ── CONFIDENCE ─────────────────────────────────────────── */
+.conf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.conf-label { font-size: .8rem; color: var(--muted); font-weight: 600; }
+.conf-btn {
+  padding: 5px 13px; border: 2px solid var(--border); border-radius: 99px;
+  background: white; font-family: var(--font); font-size: .78rem; cursor: pointer; font-weight: 600;
+  transition: border-color .15s, background .15s; color: var(--text-2);
+}
+.conf-btn:hover { border-color: var(--secondary); background: #edf2fb; }
+.conf-btn.sel { border-color: var(--secondary); background: var(--secondary); color: white; }
+
+/* ── BUTTONS ────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 22px; border-radius: 8px; border: none;
+  font-family: var(--font); font-size: .86rem; font-weight: 700;
+  cursor: pointer; transition: background .15s, transform .1s, box-shadow .15s;
+  letter-spacing: .01em;
+}
+.btn:active { transform: scale(.97); }
+.btn:focus  { outline: 2px solid var(--secondary); outline-offset: 2px; }
+.btn:disabled { opacity: .42; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-primary { background: var(--secondary); color: white; box-shadow: 0 2px 6px rgba(37,99,168,.25); }
+.btn-primary:hover:not(:disabled) { background: #1a4e8c; }
+.btn-accent  { background: #c05c0a; color: white; }
+.btn-accent:hover:not(:disabled)  { background: #a04d08; }
+.btn-ghost   { background: transparent; color: var(--secondary); border: 2px solid var(--border); }
+.btn-ghost:hover:not(:disabled)   { background: #edf2fb; border-color: var(--secondary); }
+.btn-sm { padding: 6px 14px; font-size: .78rem; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+/* ── FEEDBACK PANELS ────────────────────────────────────── */
+.feedback { display: none; margin-top: 12px; padding: 13px 16px; border-radius: 9px; font-size: .85rem; }
+.feedback.show { display: block; }
+.feedback.correct  { background: #d4eddf; border: 1px solid #86c9a4; color: #14532d; }
+.feedback.partial  { background: #fef3c7; border: 1px solid #fbbf24; color: var(--warn); }
+.feedback.incorrect{ background: #fee2e2; border: 1px solid #fca5a5; color: #7f1d1d; }
+.fb-title { font-weight: 700; margin-bottom: 5px; font-size: .88rem; }
+.fb-body  { line-height: 1.65; }
+.fb-body ul { margin: 6px 0 0 18px; }
+.fb-body li { margin-bottom: 3px; }
+
+/* ── HINT ───────────────────────────────────────────────── */
+.hint-area { margin-top: 10px; }
+.hint-btn {
+  background: none; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--secondary); cursor: pointer; font-size: .77rem; font-weight: 600;
+  padding: 5px 11px; font-family: var(--font); transition: background .12s;
+}
+.hint-btn:hover { background: #edf2fb; border-color: var(--secondary); }
+.hint-text {
+  display: none; margin-top: 8px; padding: 11px 14px;
+  background: #fffbea; border: 1px solid #fde68a; border-radius: 8px;
+  font-size: .82rem; color: #78350f; line-height: 1.6;
+}
+.hint-text.visible { display: block; }
+
+/* ── PROGRESS STEPS ─────────────────────────────────────── */
+.progress-row { display: flex; align-items: center; gap: 5px; }
+.prog-step {
+  width: 27px; height: 27px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .73rem; font-weight: 800;
+  background: #dde4ee; color: var(--muted); transition: background .25s;
+}
+.prog-step.active { background: var(--secondary); color: white; }
+.prog-step.done   { background: var(--success); color: white; }
+.prog-step.done span { display: none; }
+.prog-step.done::after { content: '\2713'; font-size: .8rem; }
+.prog-conn { height: 2px; width: 16px; background: #dde4ee; }
+.prog-conn.done { background: var(--success); }
+
+/* ── ROUND COMPLETE ─────────────────────────────────────── */
+#round-complete { display: none; }
+#round-complete.show { display: block; }
+.rc-inner { padding: 26px 20px; }
+.rc-top { text-align: center; margin-bottom: 22px; }
+.rc-stars   { font-size: 2.4rem; letter-spacing: 4px; margin-bottom: 8px; }
+.rc-heading { font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+.rc-pts     { font-size: 3rem; font-weight: 900; color: var(--primary); line-height: 1; }
+.rc-max     { font-size: .8rem; color: var(--muted); margin-bottom: 8px; }
+.rc-msg     { font-size: .86rem; color: var(--text-2); }
+.rc-breakdown { display: flex; gap: 10px; justify-content: center; margin: 18px 0 20px; flex-wrap: wrap; }
+.rc-block {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 16px; min-width: 90px;
+}
+.rc-block-label { font-size: .67rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; text-align: center; line-height: 1.5; }
+.rc-block-pts   { font-size: 1.4rem; font-weight: 900; color: var(--primary); line-height: 1.2; }
+.rc-block-max   { font-size: .7rem; color: var(--muted); }
+
+/* summary table */
+.summary-tbl { width: 100%; border-collapse: collapse; font-size: .84rem; margin-top: 12px; }
+.summary-tbl th { background: var(--primary); color: white; padding: 7px 12px; text-align: left; }
+.summary-tbl td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+.summary-tbl tr:nth-child(even) td { background: #f5f7fb; }
+.summary-tbl td.val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.quality-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: .78rem; font-weight: 700;
+}
+.q-good    { background: #d4eddf; color: #14532d; }
+.q-caution { background: #fef3c7; color: var(--warn); }
+.q-poor    { background: #fee2e2; color: #7f1d1d; }
+
+/* streak banner */
+.streak-banner {
+  padding: 6px 16px; border-radius: 99px; font-size: .8rem; font-weight: 700;
+  background: #fef3c7; color: var(--warn); border: 1px solid #fbbf24;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+
+/* ── CONTROLS BAR ───────────────────────────────────────── */
+.controls-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+/* ── RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 620px) {
+  header { flex-direction: column; }
+  .score-bar { width: 100%; justify-content: space-around; border-top: 1px solid rgba(255,255,255,.12); }
+  .score-item { border-left: none; flex: 1; padding: 8px 6px; }
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+  .diag-grid   { grid-template-columns: 1fr; }
+  .just-para select { max-width: 100%; display: block; margin: 4px 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ═══════════════════════════════════════════════ -->
+<header>
+  <div class="hdr-brand">
+    <div class="hdr-title">&#128202; Forecast Error Lab</div>
+    <div class="hdr-sub">SCM 352 &middot; Operations Management</div>
+  </div>
+  <div class="score-bar" aria-label="Score summary">
+    <div class="score-item">
+      <span class="score-value" id="hud-score">0</span>
+      <span class="score-label">Score</span>
+    </div>
+    <div class="score-item">
+      <span class="score-value" id="hud-round">&#8212;</span>
+      <span class="score-label">Round</span>
+    </div>
+    <div class="score-item">
+      <span class="score-value" id="hud-pct">&#8212;</span>
+      <span class="score-label">% Correct</span>
+    </div>
+    <div class="score-item">
+      <span class="score-value" id="hud-streak">0</span>
+      <span class="score-label">Streak</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ── SCENARIO ─────────────────────────────────────────── -->
+<div class="scenario-context">
+  <div class="sc-header">
+    <span class="sc-eyebrow">&#128203; Scenario</span>
+    <span class="sc-round-badge" id="sc-round-badge">Round 1</span>
+  </div>
+  <div class="sc-body" id="sc-body">Loading&hellip;</div>
+</div>
+
+<!-- ── CHART ─────────────────────────────────────────────── -->
+<div class="card" id="chart-card">
+  <div class="chart-header">
+    <span class="chart-title">&#128202; Actual vs. Forecast</span>
+    <div class="chart-legend">
+      <span class="leg"><span class="leg-line" style="background:#2563a8"></span>Actual</span>
+      <span class="leg"><span class="leg-line" style="background:#d46a0f;border-top:2px dashed #d46a0f;height:0;border-radius:0"></span>Forecast</span>
+    </div>
+  </div>
+  <div id="chart-wrap">
+    <svg id="chart-svg" viewBox="0 0 800 260" role="img" aria-label="Actual vs Forecast line chart"></svg>
+  </div>
+</div>
+
+<!-- ══ STAGE 1: ERROR CALCULATION ═══════════════════════════ -->
+<div class="card stage" id="stage1">
+  <div class="stage-header">
+    <div class="card-title" style="margin-bottom:0">
+      <span class="badge" aria-hidden="true">1</span>
+      Calculate Forecast Errors
+      <span class="stage-pts">+1 pt each row</span>
+    </div>
+    <div class="progress-row" role="progressbar" aria-label="Stage progress" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
+      <div class="prog-step active" id="ps1"><span>1</span></div>
+      <div class="prog-conn" id="pc1"></div>
+      <div class="prog-step" id="ps2"><span>2</span></div>
+      <div class="prog-conn" id="pc2"></div>
+      <div class="prog-step" id="ps3"><span>3</span></div>
+    </div>
+  </div>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">
+    For each period, compute <strong>Forecast Error = Actual &minus; Forecast</strong>. Enter your answer in the highlighted cell. Positive error &rarr; under-forecast; negative error &rarr; over-forecast.
+  </p>
+
+  <!-- confidence before submit -->
+  <div class="conf-row" id="conf1-row">
+    <span class="conf-label">Confidence before checking:</span>
+    <button class="conf-btn" data-stage="1" data-val="low"  onclick="setConf(1,'low')">&#129300; Not sure</button>
+    <button class="conf-btn" data-stage="1" data-val="med"  onclick="setConf(1,'med')">&#128528; Somewhat</button>
+    <button class="conf-btn" data-stage="1" data-val="high" onclick="setConf(1,'high')">&#128513; Confident</button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="err-tbl" id="err-table" aria-label="Forecast error calculation table">
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Actual<br><span class="th-formula">A<sub>t</sub></span></th>
+          <th>Forecast<br><span class="th-formula">F<sub>t</sub></span></th>
+          <th>Error<br><span class="th-formula">e<sub>t</sub> = A<sub>t</sub> &minus; F<sub>t</sub></span></th>
+          <th>Interpretation</th>
+        </tr>
+      </thead>
+      <tbody id="err-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="hint-area">
+    <button class="hint-btn" id="hint1-btn" onclick="showHint(1)">&#128161; Show Hint</button>
+    <div class="hint-text" id="hint1-text">Forecast error = Actual &minus; Forecast. If actual demand was 120 and you forecast 100, error = +20 (you under-forecast by 20 units). If actual was 80 and forecast 100, error = &minus;20 (you over-forecast by 20 units).</div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-s1" onclick="submitStage1()">Check Errors &rarr;</button>
+  </div>
+  <div class="feedback" id="fb1" role="alert"></div>
+</div>
+
+<!-- ══ STAGE 2: METRIC COMPUTATION ══════════════════════════ -->
+<div class="card stage locked" id="stage2">
+  <div class="stage-header">
+    <div class="card-title" style="margin-bottom:0">
+      <span class="badge" aria-hidden="true">2</span>
+      Compute Accuracy Metrics
+      <span class="stage-pts">+2 pts each metric</span>
+    </div>
+  </div>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">
+    Using the errors from Stage 1, compute each metric. Round your answer to <strong>2 decimal places</strong>.
+  </p>
+
+  <div class="conf-row" id="conf2-row">
+    <span class="conf-label">Confidence before checking:</span>
+    <button class="conf-btn" data-stage="2" data-val="low"  onclick="setConf(2,'low')">&#129300; Not sure</button>
+    <button class="conf-btn" data-stage="2" data-val="med"  onclick="setConf(2,'med')">&#128528; Somewhat</button>
+    <button class="conf-btn" data-stage="2" data-val="high" onclick="setConf(2,'high')">&#128513; Confident</button>
+  </div>
+
+  <div class="metric-grid" id="metric-grid">
+    <!-- injected by JS -->
+  </div>
+
+  <details style="margin-bottom:14px">
+    <summary style="cursor:pointer;font-size:.8rem;color:var(--secondary);font-weight:600;padding:4px 0;user-select:none;">
+      &#9998; Scratchpad (optional)
+    </summary>
+    <div style="margin-top:8px">
+      <div class="scratchpad-label">Work area &mdash; not graded</div>
+      <textarea class="scratchpad" id="scratchpad" aria-label="Scratchpad for calculations" placeholder="Show your work here&#x0A;e.g.  Sum of errors = ...&#x0A;       MAE = sum(|errors|)/n = ..."></textarea>
+    </div>
+  </details>
+
+  <div class="hint-area">
+    <button class="hint-btn" id="hint2-btn" onclick="showHint(2)">&#128161; Show Hint</button>
+    <div class="hint-text" id="hint2-text">
+      BIAS (MFE) = sum of all errors / n &nbsp;&bull;&nbsp;
+      MAE = sum of |errors| / n &nbsp;&bull;&nbsp;
+      MAPE = (1/n) &times; sum(|error| / actual) &times; 100 &nbsp;&bull;&nbsp;
+      MSE = sum of errors&sup2; / n
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-s2" onclick="submitStage2()">Check Metrics &rarr;</button>
+  </div>
+  <div class="feedback" id="fb2" role="alert"></div>
+</div>
+
+<!-- ══ STAGE 3: DIAGNOSIS ════════════════════════════════════ -->
+<div class="card stage locked" id="stage3">
+  <div class="stage-header">
+    <div class="card-title" style="margin-bottom:0">
+      <span class="badge" aria-hidden="true">3</span>
+      Diagnose Forecast Quality
+      <span class="stage-pts">+3 pts</span>
+    </div>
+  </div>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">
+    Use the metrics you computed to answer the diagnostic questions and complete the justification.
+  </p>
+
+  <div class="conf-row" id="conf3-row">
+    <span class="conf-label">Confidence before checking:</span>
+    <button class="conf-btn" data-stage="3" data-val="low"  onclick="setConf(3,'low')">&#129300; Not sure</button>
+    <button class="conf-btn" data-stage="3" data-val="med"  onclick="setConf(3,'med')">&#128528; Somewhat</button>
+    <button class="conf-btn" data-stage="3" data-val="high" onclick="setConf(3,'high')">&#128513; Confident</button>
+  </div>
+
+  <div class="diag-grid" id="diag-grid">
+    <!-- injected by JS -->
+  </div>
+
+  <p class="just-label" style="margin-top:4px">Justification Builder</p>
+  <div class="just-para" id="just-para"></div>
+
+  <div class="hint-area">
+    <button class="hint-btn" id="hint3-btn" onclick="showHint(3)">&#128161; Show Hint</button>
+    <div class="hint-text" id="hint3-text">
+      BIAS &gt; 0 &rarr; consistent under-forecasting (actuals exceed forecasts on average). &nbsp;
+      BIAS &lt; 0 &rarr; consistent over-forecasting. &nbsp;
+      BIAS &asymp; 0 &rarr; unbiased. &nbsp;
+      A large MAE or MAPE indicates poor accuracy even if the forecast is unbiased.
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-s3" onclick="submitStage3()">Submit Diagnosis</button>
+  </div>
+  <div class="feedback" id="fb3" role="alert"></div>
+</div>
+
+<!-- ══ ROUND COMPLETE ════════════════════════════════════════ -->
+<div class="card" id="round-complete">
+  <div class="rc-inner">
+    <div class="rc-top">
+      <div class="rc-stars" id="rc-stars">&#11088;&#11088;&#11088;</div>
+      <div class="rc-heading">Round Complete</div>
+      <div class="rc-pts" id="rc-pts">10</div>
+      <div class="rc-max">out of <span id="rc-max-pts">10</span> points</div>
+      <div class="rc-msg" id="rc-msg"></div>
+    </div>
+    <div class="rc-breakdown" id="rc-breakdown"></div>
+    <!-- metric summary -->
+    <div style="margin-bottom:18px">
+      <div style="font-size:.78rem;font-weight:700;color:var(--primary);margin-bottom:8px;">&#128203; Metric Summary</div>
+      <table class="summary-tbl" id="summary-tbl">
+        <thead><tr><th>Metric</th><th>Your Answer</th><th>Correct</th><th>Quality Signal</th></tr></thead>
+        <tbody id="summary-body"></tbody>
+      </table>
+    </div>
+    <div style="text-align:center">
+      <button class="btn btn-accent" style="font-size:.95rem;padding:12px 36px" onclick="newScenario()">Next Scenario &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONTROLS BAR ──────────────────────────────────────── -->
+<div class="controls-bar">
+  <div id="streak-wrap"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="newScenario()" aria-label="New scenario">&#128256; New Scenario</button>
+    <button class="btn btn-ghost btn-sm" onclick="resetScore()"  aria-label="Reset score">&#8634; Reset Score</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+/* ============================================================
+   SCENARIO BANK  (20+ datasets)
+   Each scenario:
+     context, unit, periods[], actuals[], forecasts[]
+     bias_type: 'unbiased' | 'over' | 'under' | 'high_var'
+   Correct answers are computed programmatically.
+============================================================ */
+
+/* --- helpers used at definition time --- */
+function rnd(a,b){ return +(a + Math.random()*(b-a)).toFixed(1); }
+function ri(a,b) { return Math.floor(a + Math.random()*(b-a+1)); }
+
+/* Build scenario list — re-evaluated each page load for fresh numbers */
+function buildScenarios(){
+  var S = [];
+
+  /* ── 1. UNBIASED — retail demand ──────────────────────── */
+  (function(){
+    var n=6, base=ri(200,320);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-40,40); act.push(a);
+      fc.push(a + ri(-15,15));  // errors nearly cancel
+    }
+    S.push({
+      id:'ub1',
+      context:'Weekly retail units sold at a mid-size grocery chain. The store\'s forecasting team uses a simple moving average.',
+      unit:'units', periodLabel:'Week',
+      actuals:act, forecasts:fc, bias_type:'unbiased'
+    });
+  })();
+
+  /* ── 2. OVER-FORECAST — slow fashion season ───────────── */
+  (function(){
+    var n=7, base=ri(150,250);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-20,20); act.push(a);
+      fc.push(a + ri(18,35));  // forecast consistently above actual
+    }
+    S.push({
+      id:'ov1',
+      context:'Monthly denim jacket sales at a fashion retailer. Buyers over-ordered based on optimistic trend projections from the prior year.',
+      unit:'units', periodLabel:'Month',
+      actuals:act, forecasts:fc, bias_type:'over'
+    });
+  })();
+
+  /* ── 3. UNDER-FORECAST — flu clinic demand ────────────── */
+  (function(){
+    var n=6, base=ri(80,130);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-10,20); act.push(a);
+      fc.push(Math.max(5, a - ri(15,30)));  // actuals consistently exceed forecast
+    }
+    S.push({
+      id:'un1',
+      context:'Daily flu vaccine clinic appointments during peak season. The health department underestimated community demand each day.',
+      unit:'patients', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'under'
+    });
+  })();
+
+  /* ── 4. HIGH VARIANCE — e-commerce flash sales ─────────── */
+  (function(){
+    var n=6, base=ri(500,800);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-200,200); act.push(Math.max(50,a));
+      fc.push(Math.max(50, base + ri(-50,50)));
+    }
+    S.push({
+      id:'hv1',
+      context:'Daily orders during a flash promotion on an e-commerce platform. Demand was highly unpredictable; the forecast model was designed for stable SKUs.',
+      unit:'orders', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'high_var'
+    });
+  })();
+
+  /* ── 5. UNBIASED — call-center volume ─────────────────── */
+  (function(){
+    var n=7, base=ri(300,500);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-50,50); act.push(a);
+      fc.push(a + (i%2===0?ri(-10,0):ri(0,10)));
+    }
+    S.push({
+      id:'ub2',
+      context:'Hourly inbound calls to a customer support center on Mondays. Staffing is based on the prior week\'s call volume.',
+      unit:'calls', periodLabel:'Hour',
+      actuals:act, forecasts:fc, bias_type:'unbiased'
+    });
+  })();
+
+  /* ── 6. OVER-FORECAST — restaurant covers ─────────────── */
+  (function(){
+    var n=6, base=ri(90,140);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-10,10); act.push(a);
+      fc.push(a + ri(12,25));
+    }
+    S.push({
+      id:'ov2',
+      context:'Daily dinner covers at an upscale restaurant. The manager routinely over-staffs by forecasting higher occupancy than typically materializes.',
+      unit:'covers', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'over'
+    });
+  })();
+
+  /* ── 7. UNDER-FORECAST — electric vehicle charging ───── */
+  (function(){
+    var n=7, base=ri(50,90);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(0,30); act.push(a);
+      fc.push(Math.max(1, a - ri(10,25)));
+    }
+    S.push({
+      id:'un2',
+      context:'Daily EV charging sessions at a new highway rest-stop station. Adoption is growing faster than the utility company anticipated.',
+      unit:'sessions', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'under'
+    });
+  })();
+
+  /* ── 8. HIGH VARIANCE — spare parts demand ─────────────── */
+  (function(){
+    var n=8, base=ri(20,50);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=Math.max(0, base+ri(-30,60)); act.push(a);
+      fc.push(Math.max(1, base+ri(-5,5)));
+    }
+    S.push({
+      id:'hv2',
+      context:'Monthly orders for a specialty aircraft spare part. Demand is intermittent and lumpy, driven by unpredictable maintenance events.',
+      unit:'parts', periodLabel:'Month',
+      actuals:act, forecasts:fc, bias_type:'high_var'
+    });
+  })();
+
+  /* ── 9. UNDER-FORECAST — concert ticket sales ─────────── */
+  (function(){
+    var n=6, base=ri(800,1400);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-100,150); act.push(a);
+      fc.push(Math.max(50, a - ri(100,300)));
+    }
+    S.push({
+      id:'un3',
+      context:'Daily ticket sales during a viral artist\'s tour announcement week. Social media amplified demand well beyond the promoter\'s forecast.',
+      unit:'tickets', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'under'
+    });
+  })();
+
+  /* ── 10. OVER-FORECAST — ski resort lift tickets ──────── */
+  (function(){
+    var n=6, base=ri(300,600);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-60,60); act.push(a);
+      fc.push(a + ri(40,90));
+    }
+    S.push({
+      id:'ov3',
+      context:'Daily lift ticket sales at a Colorado ski resort during a low-snow season. The resort\'s model assumed average snowpack conditions.',
+      unit:'tickets', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'over'
+    });
+  })();
+
+  /* ── 11. UNBIASED — hospital ED arrivals ──────────────── */
+  (function(){
+    var n=7, base=ri(80,130);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-20,20); act.push(a);
+      fc.push(a + ri(-8,8));
+    }
+    S.push({
+      id:'ub3',
+      context:'Nightly emergency department patient arrivals at a regional hospital. The ED uses a seasonal exponential smoothing model.',
+      unit:'patients', periodLabel:'Night',
+      actuals:act, forecasts:fc, bias_type:'unbiased'
+    });
+  })();
+
+  /* ── 12. HIGH VARIANCE — startup weekly revenue ────────── */
+  (function(){
+    var n=8, base=ri(8000,15000);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=Math.max(500, base+ri(-6000,8000)); act.push(a);
+      fc.push(Math.max(500, base+ri(-2000,2000)));
+    }
+    S.push({
+      id:'hv3',
+      context:'Weekly revenue ($) for an early-stage SaaS startup. Revenue is driven by a handful of large deals that close unpredictably.',
+      unit:'$', periodLabel:'Week',
+      actuals:act, forecasts:fc, bias_type:'high_var'
+    });
+  })();
+
+  /* ── 13. OVER-FORECAST — solar panel production ─────────── */
+  (function(){
+    var n=6, base=ri(400,700);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-40,40); act.push(a);
+      fc.push(a + ri(25,60));
+    }
+    S.push({
+      id:'ov4',
+      context:'Daily kilowatt-hour output from a utility-scale solar farm during a cloudy spring month. The forecast assumed clear-sky irradiance.',
+      unit:'kWh', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'over'
+    });
+  })();
+
+  /* ── 14. UNDER-FORECAST — food bank donations ──────────── */
+  (function(){
+    var n=7, base=ri(500,900);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-80,120); act.push(a);
+      fc.push(Math.max(50, a - ri(80,180)));
+    }
+    S.push({
+      id:'un4',
+      context:'Weekly food donations (lbs) to a regional food bank during a holiday charity drive. Public generosity consistently exceeded projections.',
+      unit:'lbs', periodLabel:'Week',
+      actuals:act, forecasts:fc, bias_type:'under'
+    });
+  })();
+
+  /* ── 15. UNBIASED — warehouse throughput ──────────────── */
+  (function(){
+    var n=8, base=ri(1000,1800);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-150,150); act.push(a);
+      fc.push(a + ri(-50,50));
+    }
+    S.push({
+      id:'ub4',
+      context:'Daily pallet throughput at a regional distribution center. The WMS uses a rolling 4-week average to set labor staffing targets.',
+      unit:'pallets', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'unbiased'
+    });
+  })();
+
+  /* ── 16. OVER-FORECAST — newspaper print runs ─────────── */
+  (function(){
+    var n=6, base=ri(5000,9000);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-500,500); act.push(a);
+      fc.push(a + ri(600,1200));
+    }
+    S.push({
+      id:'ov5',
+      context:'Daily newspaper print runs (copies) at a regional publisher. Circulation has been declining steadily but the print manager keeps using last year\'s targets.',
+      unit:'copies', periodLabel:'Day',
+      actuals:act, forecasts:fc, bias_type:'over'
+    });
+  })();
+
+  /* ── 17. UNDER-FORECAST — ride-share surge hours ───────── */
+  (function(){
+    var n=7, base=ri(200,350);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(0,80); act.push(a);
+      fc.push(Math.max(10, a - ri(30,70)));
+    }
+    S.push({
+      id:'un5',
+      context:'Ride requests per hour at a major airport arrivals area. Demand spikes when multiple wide-body flights land simultaneously, catching the forecasting model off guard.',
+      unit:'rides', periodLabel:'Hour',
+      actuals:act, forecasts:fc, bias_type:'under'
+    });
+  })();
+
+  /* ── 18. HIGH VARIANCE — pharmaceutical batch yields ───── */
+  (function(){
+    var n=8, base=ri(85,97);  // % yield
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=Math.min(100, Math.max(50, base+ri(-25,10))); act.push(+a.toFixed(1));
+      fc.push(Math.min(100, Math.max(50, +(base+ri(-3,3)).toFixed(1))));
+    }
+    S.push({
+      id:'hv4',
+      context:'Batch yield (%) in a pharmaceutical manufacturing line. Process variability from raw material lot-to-lot creates wide, hard-to-predict fluctuations.',
+      unit:'%', periodLabel:'Batch',
+      actuals:act, forecasts:fc, bias_type:'high_var'
+    });
+  })();
+
+  /* ── 19. UNBIASED — hotel room bookings ───────────────── */
+  (function(){
+    var n=6, base=ri(60,90);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-15,15); act.push(a);
+      fc.push(a + (i%3===0?ri(-8,0):ri(0,8)));
+    }
+    S.push({
+      id:'ub5',
+      context:'Nightly occupied rooms at a downtown business hotel on weeknights. Revenue management uses a demand-based forecast calibrated weekly.',
+      unit:'rooms', periodLabel:'Night',
+      actuals:act, forecasts:fc, bias_type:'unbiased'
+    });
+  })();
+
+  /* ── 20. OVER-FORECAST — electric grid load ─────────────── */
+  (function(){
+    var n=7, base=ri(3000,5000);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(-300,300); act.push(a);
+      fc.push(a + ri(200,500));
+    }
+    S.push({
+      id:'ov6',
+      context:'Hourly electricity demand (MWh) on a mild spring day. The utility\'s model was built on peak-summer load patterns and systematically over-estimates demand in mild weather.',
+      unit:'MWh', periodLabel:'Hour',
+      actuals:act, forecasts:fc, bias_type:'over'
+    });
+  })();
+
+  /* ── 21. UNDER-FORECAST — produce shrink ──────────────── */
+  (function(){
+    var n=6, base=ri(20,40);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=base+ri(0,20); act.push(a);
+      fc.push(Math.max(1, a - ri(5,15)));
+    }
+    S.push({
+      id:'un6',
+      context:'Weekly fresh produce shrink (lbs lost to spoilage) at a large supermarket. Shrink accelerated due to supply chain delays that the model did not anticipate.',
+      unit:'lbs', periodLabel:'Week',
+      actuals:act, forecasts:fc, bias_type:'under'
+    });
+  })();
+
+  /* ── 22. HIGH VARIANCE — VC portfolio quarterly returns ── */
+  (function(){
+    var n=8, base=ri(5,15);
+    var act=[], fc=[];
+    for(var i=0;i<n;i++){
+      var a=+(base+ri(-30,40)).toFixed(1); act.push(a);
+      fc.push(+(base+ri(-5,5)).toFixed(1));
+    }
+    S.push({
+      id:'hv5',
+      context:'Quarterly return (%) of individual portfolio companies at a venture capital firm. Returns are driven by binary events (funding rounds, exits) that defy quantitative forecasting.',
+      unit:'%', periodLabel:'Quarter',
+      actuals:act, forecasts:fc, bias_type:'high_var'
+    });
+  })();
+
+  return S;
+}
+
+/* ============================================================
+   JUSTIFICATION POOLS
+============================================================ */
+var JP = {
+  avg_err: {
+    pos_small:  'slightly positive (near zero)',
+    pos_large:  'noticeably positive',
+    neg_small:  'slightly negative (near zero)',
+    neg_large:  'noticeably negative',
+    near_zero:  'close to zero'
+  },
+  indicates: {
+    unbiased:   'the forecast is essentially unbiased — errors cancel over time',
+    over_fc:    'the forecast is systematically over-forecasting (forecast > actual)',
+    under_fc:   'the forecast is systematically under-forecasting (actual > forecast)'
+  },
+  quality: {
+    accurate:   'accurate',
+    inaccurate: 'inaccurate'
+  },
+  reason: {
+    bias_zero_low_mae:   'BIAS is near zero and MAE is small relative to the mean actual value',
+    bias_neg_over:       'BIAS is negative, confirming the forecast consistently exceeds actual demand',
+    bias_pos_under:      'BIAS is positive, confirming actual demand consistently exceeds the forecast',
+    high_mape:           'MAPE is high, indicating large percentage errors regardless of bias direction',
+    low_mape_no_bias:    'MAPE is low and BIAS is near zero, confirming the forecast is tracking demand well'
+  }
+};
+
+/* ============================================================
+   COMPUTE CORRECT ANSWERS from actuals/forecasts
+============================================================ */
+function computeAnswers(actuals, forecasts){
+  var n = actuals.length;
+  var errors = actuals.map(function(a,i){ return +(a - forecasts[i]).toFixed(4); });
+  var bias = +(errors.reduce(function(s,e){ return s+e; },0)/n).toFixed(2);
+  var mae  = +(errors.reduce(function(s,e){ return s+Math.abs(e); },0)/n).toFixed(2);
+  var mape = +(errors.reduce(function(s,e,i){ return s+(Math.abs(e)/actuals[i])*100; },0)/n).toFixed(2);
+  var mse  = +(errors.reduce(function(s,e){ return s+e*e; },0)/n).toFixed(2);
+  return { errors:errors, bias:bias, mae:mae, mape:mape, mse:mse };
+}
+
+/* determine justification keys from answers */
+function getJustKeys(sc, ans){
+  var bias = ans.bias;
+  var mape  = ans.mape;
+  var avgActual = sc.actuals.reduce(function(s,a){return s+a;},0)/sc.actuals.length;
+  var mapeThresh = 12; // % — threshold for "accurate"
+
+  var avg_err_key, indicates_key, quality_key, reason_key;
+
+  if(Math.abs(bias) < avgActual*0.05){
+    avg_err_key = 'near_zero';
+    indicates_key = 'unbiased';
+  } else if(bias > 0){
+    avg_err_key = bias < avgActual*0.10 ? 'pos_small' : 'pos_large';
+    indicates_key = 'under_fc';
+  } else {
+    avg_err_key = Math.abs(bias) < avgActual*0.10 ? 'neg_small' : 'neg_large';
+    indicates_key = 'over_fc';
+  }
+
+  var accurate = mape < mapeThresh;
+  quality_key = accurate ? 'accurate' : 'inaccurate';
+
+  if(indicates_key === 'unbiased' && accurate)   reason_key = 'bias_zero_low_mae';
+  else if(indicates_key === 'unbiased' && !accurate) reason_key = 'high_mape';
+  else if(indicates_key === 'over_fc')            reason_key = 'bias_neg_over';
+  else if(indicates_key === 'under_fc' && accurate)  reason_key = 'bias_pos_under';
+  else                                            reason_key = 'bias_pos_under';
+
+  return { avg_err: avg_err_key, indicates: indicates_key, quality: quality_key, reason: reason_key };
+}
+
+/* ============================================================
+   GLOBAL STATE
+============================================================ */
+var ST = {
+  all:[], pool:[],
+  sc:null, ans:null, justKeys:null,
+  rounds:0, totalScore:0, totalPossible:0,
+  streak:0,
+  roundPts:0, roundS1:0, roundS2:0, roundS3:0,
+  conf:{1:null,2:null,3:null},
+  metricUserAnswers:{},
+  metricHintUsed:false,
+  s1done:false, s2done:false, s3done:false
+};
+
+/* ============================================================
+   BOOT
+============================================================ */
+document.addEventListener('DOMContentLoaded', function(){
+  ST.all  = buildScenarios();
+  ST.pool = shuffle(ST.all.slice());
+  newScenario();
+});
+
+/* ============================================================
+   NEW SCENARIO
+============================================================ */
+function newScenario(){
+  if(ST.pool.length === 0) ST.pool = shuffle(ST.all.slice());
+  ST.sc  = ST.pool.pop();
+  ST.ans = computeAnswers(ST.sc.actuals, ST.sc.forecasts);
+  ST.justKeys = getJustKeys(ST.sc, ST.ans);
+  ST.s1done = ST.s2done = ST.s3done = false;
+  ST.roundPts = ST.roundS1 = ST.roundS2 = ST.roundS3 = 0;
+  ST.conf = {1:null,2:null,3:null};
+  ST.metricUserAnswers = {};
+  ST.metricHintUsed = false;
+  ST.rounds++;
+
+  document.getElementById('sc-body').textContent = ST.sc.context;
+  document.getElementById('sc-round-badge').textContent = 'Round ' + ST.rounds;
+
+  /* reset feedbacks */
+  ['fb1','fb2','fb3'].forEach(function(id){
+    var e = document.getElementById(id); e.className='feedback'; e.innerHTML='';
+  });
+  /* reset hints */
+  [1,2,3].forEach(function(i){
+    document.getElementById('hint'+i+'-btn').textContent = '\u{1F4A1} Show Hint';
+    document.getElementById('hint'+i+'-text').classList.remove('visible');
+  });
+  /* reset confidence */
+  document.querySelectorAll('.conf-btn').forEach(function(b){ b.classList.remove('sel'); });
+  /* reset buttons */
+  ['btn-s1','btn-s2','btn-s3'].forEach(function(id){ document.getElementById(id).disabled = false; });
+  /* reset stages */
+  document.getElementById('stage1').classList.remove('locked');
+  document.getElementById('stage2').classList.add('locked');
+  document.getElementById('stage3').classList.add('locked');
+  document.getElementById('round-complete').classList.remove('show');
+  /* reset progress */
+  [1,2,3].forEach(function(n){
+    var ps=document.getElementById('ps'+n);
+    ps.className='prog-step'; ps.innerHTML='<span>'+n+'</span>';
+  });
+  [1,2].forEach(function(n){ document.getElementById('pc'+n).className='prog-conn'; });
+  document.getElementById('ps1').classList.add('active');
+  /* scratchpad */
+  var sp=document.getElementById('scratchpad'); if(sp) sp.value='';
+
+  buildErrorTable();
+  buildMetricGrid();
+  buildDiagGrid();
+  buildJustification();
+  renderChart();
+  updateHUD();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============================================================
+   CHART  (SVG 800×260, actual=blue solid, forecast=orange dashed)
+============================================================ */
+function renderChart(){
+  var svg = document.getElementById('chart-svg');
+  var act = ST.sc.actuals, fc = ST.sc.forecasts, n = act.length;
+  var lbl = ST.sc.periodLabel;
+  var W=800,H=260,PL=62,PR=28,PT=28,PB=48;
+  var cW=W-PL-PR, cH=H-PT-PB;
+
+  var allVals = act.concat(fc);
+  var minV=Math.min.apply(null,allVals), maxV=Math.max.apply(null,allVals);
+  var span=maxV-minV||1;
+  var yLo=minV-span*0.12, yHi=maxV+span*0.18;
+
+  function xS(i){ return PL+(i/(n-1))*cW; }
+  function yS(v){ return PT+cH-((v-yLo)/(yHi-yLo))*cH; }
+
+  /* grid */
+  var GRIDS=4, grid='', ylbls='';
+  for(var g=0;g<=GRIDS;g++){
+    var gv=yLo+(yHi-yLo)*(g/GRIDS), gy=yS(gv);
+    grid  +='<line x1="'+PL+'" y1="'+gy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+gy.toFixed(1)+'" stroke="#e8ecf5" stroke-width="1"/>';
+    ylbls +='<text x="'+(PL-6)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" font-size="11.5" fill="#7a8aa0" font-family="Segoe UI,system-ui,sans-serif">'+Math.round(gv)+'</text>';
+  }
+
+  /* x ticks */
+  var step=Math.max(1,Math.ceil(n/8)), xticks='';
+  for(var xi=0;xi<n;xi+=step){
+    var xx=xS(xi);
+    xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+(PT+cH)+'" x2="'+xx.toFixed(1)+'" y2="'+(PT+cH+5)+'" stroke="#b0bdd0" stroke-width="1"/>';
+    xticks+='<text x="'+xx.toFixed(1)+'" y="'+(PT+cH+17)+'" text-anchor="middle" font-size="11" fill="#7a8aa0" font-family="Segoe UI,system-ui,sans-serif">'+lbl+' '+(xi+1)+'</text>';
+  }
+  if(n>1 && (n-1)%step!==0){
+    var xl=xS(n-1);
+    xticks+='<text x="'+xl.toFixed(1)+'" y="'+(PT+cH+17)+'" text-anchor="middle" font-size="11" fill="#7a8aa0" font-family="Segoe UI,system-ui,sans-serif">'+lbl+' '+n+'</text>';
+  }
+
+  /* axis labels */
+  var axX='<text x="'+(PL+cW/2).toFixed(0)+'" y="'+(H-4)+'" text-anchor="middle" font-size="12" fill="#64748b" font-family="Segoe UI,system-ui,sans-serif" font-weight="600">'+lbl+'</text>';
+  var axY='<text x="13" y="'+(PT+cH/2).toFixed(0)+'" text-anchor="middle" font-size="12" fill="#64748b" font-family="Segoe UI,system-ui,sans-serif" font-weight="600" transform="rotate(-90,13,'+(PT+cH/2).toFixed(0)+')">'+ST.sc.unit+'</text>';
+
+  /* paths */
+  var aPts=act.map(function(v,i){ return xS(i).toFixed(1)+','+yS(v).toFixed(1); });
+  var fPts=fc.map(function(v,i){ return xS(i).toFixed(1)+','+yS(v).toFixed(1); });
+  var aPath='M'+aPts.join(' L');
+  var fPath='M'+fPts.join(' L');
+
+  /* dots */
+  var aDots=act.map(function(v,i){
+    return '<circle cx="'+xS(i).toFixed(1)+'" cy="'+yS(v).toFixed(1)+'" r="5" fill="#2563a8" stroke="white" stroke-width="2"><title>'+lbl+' '+(i+1)+': Actual='+v+'</title></circle>';
+  }).join('');
+  var fDots=fc.map(function(v,i){
+    return '<circle cx="'+xS(i).toFixed(1)+'" cy="'+yS(v).toFixed(1)+'" r="4" fill="#d46a0f" stroke="white" stroke-width="2"><title>'+lbl+' '+(i+1)+': Forecast='+v+'</title></circle>';
+  }).join('');
+
+  svg.innerHTML =
+    '<rect x="'+PL+'" y="'+PT+'" width="'+cW+'" height="'+cH+'" fill="white"/>'+
+    grid+
+    '<line x1="'+PL+'" y1="'+PT+'" x2="'+PL+'" y2="'+(PT+cH)+'" stroke="#b8c4d8" stroke-width="1.5"/>'+
+    '<line x1="'+PL+'" y1="'+(PT+cH)+'" x2="'+(W-PR)+'" y2="'+(PT+cH)+'" stroke="#b8c4d8" stroke-width="1.5"/>'+
+    ylbls+xticks+axX+axY+
+    '<path d="'+aPath+'" fill="none" stroke="#2563a8" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<path d="'+fPath+'" fill="none" stroke="#d46a0f" stroke-width="2" stroke-dasharray="7 4" stroke-linejoin="round" stroke-linecap="round"/>'+
+    aDots+fDots;
+}
+
+/* ============================================================
+   STAGE 1 — build error table
+============================================================ */
+function buildErrorTable(){
+  var sc=ST.sc, n=sc.actuals.length, tbody=document.getElementById('err-tbody');
+  tbody.innerHTML='';
+  for(var i=0;i<n;i++){
+    var tr=document.createElement('tr');
+    tr.innerHTML =
+      '<td class="label">'+sc.periodLabel+' '+(i+1)+'</td>'+
+      '<td>'+sc.actuals[i]+'</td>'+
+      '<td>'+sc.forecasts[i]+'</td>'+
+      '<td class="ans-cell"><input type="number" step="any" class="cell-in" id="err-'+i+'" aria-label="Forecast error period '+(i+1)+'"></td>'+
+      '<td class="row-fb" id="rfb-'+i+'"></td>';
+    tbody.appendChild(tr);
+  }
+}
+
+/* ── SUBMIT STAGE 1 ─────────────────────────────────────── */
+function submitStage1(){
+  var sc=ST.sc, ans=ST.ans, n=sc.actuals.length;
+  var correct=0, total=n;
+  var messages=[];
+
+  for(var i=0;i<n;i++){
+    var inp=document.getElementById('err-'+i);
+    var rfb=document.getElementById('rfb-'+i);
+    var val=parseFloat(inp.value);
+    var expected=ans.errors[i];
+    inp.disabled=true;
+
+    if(isNaN(val)){
+      inp.classList.add('wrong');
+      rfb.textContent='Missing';
+      rfb.className='row-fb over';
+      messages.push('Period '+(i+1)+': blank. Answer: '+expected);
+      continue;
+    }
+
+    // tolerance: allow ±0.5 rounding error
+    if(Math.abs(val - expected) <= 0.5){
+      inp.classList.add('correct'); correct++;
+      var rfbTxt='';
+      if(expected>0.5){      rfb.textContent='Under-forecast (+'+expected+')'; rfb.className='row-fb under'; }
+      else if(expected<-0.5){rfb.textContent='Over-forecast ('+expected+')';  rfb.className='row-fb over'; }
+      else{                  rfb.textContent='On target ('+expected+')';        rfb.className='row-fb exact'; }
+    } else {
+      inp.classList.add('wrong');
+      rfb.textContent='Expected: '+expected;
+      rfb.className='row-fb over';
+      if(Math.abs(val) === Math.abs(expected)){
+        messages.push('Period '+(i+1)+': sign error. Error = Actual \u2212 Forecast, not Forecast \u2212 Actual.');
+      } else {
+        messages.push('Period '+(i+1)+': got '+val+', expected '+expected+'.');
+      }
+    }
+  }
+
+  var pts = correct; // 1 pt per row
+  ST.totalPossible += total; ST.totalScore += pts;
+  ST.roundPts += pts; ST.roundS1 = pts;
+
+  var fbType  = correct===total?'correct':correct>0?'partial':'incorrect';
+  var fbTitle = correct===total?'\u2713 All errors correct! (+'+pts+' pts)':
+                correct>0?'Partial \u2014 '+correct+'/'+total+' correct (+'+pts+' pts)':
+                '\u2717 No correct answers (+0 pts)';
+  var body='<div class="fb-body">';
+  if(correct===total){ body+='All forecast errors are correct. Positive error = under-forecast; negative = over-forecast.'; }
+  else { body+='<ul>'+messages.map(function(m){ return '<li>'+m+'</li>'; }).join('')+'</ul>'; }
+  body+='</div>';
+
+  setFeedback('fb1', fbType, fbTitle, body);
+  document.getElementById('btn-s1').disabled=true;
+  markProg(1,'done'); ST.s1done=true;
+  unlockStage(2);
+  updateHUD();
+}
+
+/* ============================================================
+   STAGE 2 — build metric grid
+============================================================ */
+function buildMetricGrid(){
+  var metrics=[
+    { id:'bias', name:'BIAS (Mean Forecast Error)', sub:'Average of all errors — reveals systematic direction',
+      formula:'BIAS = (1/n) \u00D7 \u2211 e\u209C', unitSuffix:'' },
+    { id:'mae',  name:'MAE (Mean Absolute Error)',  sub:'Average magnitude of errors, ignoring sign',
+      formula:'MAE = (1/n) \u00D7 \u2211 |e\u209C|', unitSuffix:'' },
+    { id:'mape', name:'MAPE (%)',                   sub:'Errors as % of actual values — scale-free',
+      formula:'MAPE = (1/n) \u00D7 \u2211 (|e\u209C| / A\u209C) \u00D7 100', unitSuffix:'%' },
+    { id:'mse',  name:'MSE (Mean Squared Error)',   sub:'Penalises large errors more heavily',
+      formula:'MSE = (1/n) \u00D7 \u2211 e\u209C\u00B2', unitSuffix:'' }
+  ];
+
+  var grid=document.getElementById('metric-grid'); grid.innerHTML='';
+  metrics.forEach(function(m){
+    var div=document.createElement('div'); div.className='metric-card';
+    div.innerHTML=
+      '<div class="metric-name">'+m.name+'</div>'+
+      '<div class="metric-sub">'+m.sub+'</div>'+
+      '<button class="metric-formula-toggle" onclick="toggleFormula(\'mf-'+m.id+'\')" aria-expanded="false" aria-controls="mf-'+m.id+'">Show formula</button>'+
+      '<div class="metric-formula" id="mf-'+m.id+'">'+m.formula+'</div>'+
+      '<div class="metric-input-row">'+
+      '<input type="number" step="any" class="metric-input" id="mi-'+m.id+'" aria-label="'+m.name+' answer" placeholder="0.00">'+
+      (m.unitSuffix?'<span class="metric-unit">'+m.unitSuffix+'</span>':'')+
+      '</div>'+
+      '<div class="metric-fb" id="mfb-'+m.id+'"></div>';
+    grid.appendChild(div);
+  });
+}
+
+function toggleFormula(id){
+  var el=document.getElementById(id);
+  var open=el.classList.toggle('open');
+  el.previousElementSibling.textContent=open?'Hide formula':'Show formula';
+  el.previousElementSibling.setAttribute('aria-expanded',open);
+}
+
+/* ── SUBMIT STAGE 2 ─────────────────────────────────────── */
+function submitStage2(){
+  var ans=ST.ans;
+  var checks=[
+    {id:'bias', correct:ans.bias,  hint:'Sum all errors (including sign), then divide by n.'},
+    {id:'mae',  correct:ans.mae,   hint:'Take absolute value of each error before averaging. Forgetting |·| gives BIAS instead.'},
+    {id:'mape', correct:ans.mape,  hint:'Divide each |error| by its corresponding actual value, then average and multiply by 100 for percent.'},
+    {id:'mse',  correct:ans.mse,   hint:'Square each error before averaging. Large errors become disproportionately large after squaring.'}
+  ];
+
+  var correct=0, feedback=[];
+  checks.forEach(function(c){
+    var inp=document.getElementById('mi-'+c.id);
+    var fb=document.getElementById('mfb-'+c.id);
+    var val=parseFloat(inp.value);
+    inp.disabled=true;
+    ST.metricUserAnswers[c.id]=isNaN(val)?null:val;
+
+    if(isNaN(val)){
+      inp.classList.add('wrong');
+      fb.textContent='Missing — correct: '+c.correct; fb.className='metric-fb bad';
+      feedback.push(c.id.toUpperCase()+': blank. Correct answer: '+c.correct);
+      return;
+    }
+    // allow ±2% relative tolerance or ±0.15 absolute
+    var tol = Math.max(0.15, Math.abs(c.correct)*0.02);
+    if(Math.abs(val - c.correct) <= tol){
+      inp.classList.add('correct');
+      fb.textContent='\u2713 Correct ('+c.correct+')'; fb.className='metric-fb ok';
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      fb.textContent='Got '+val.toFixed(2)+' \u2192 correct: '+c.correct; fb.className='metric-fb bad';
+      feedback.push(c.id.toUpperCase()+': '+c.hint);
+    }
+  });
+
+  var pts = correct*2; // 2 pts each
+  ST.totalPossible += 8; ST.totalScore += pts;
+  ST.roundPts += pts; ST.roundS2 = pts;
+
+  var fbType  = correct===4?'correct':correct>0?'partial':'incorrect';
+  var fbTitle = correct===4?'\u2713 All metrics correct! (+'+pts+' pts)':
+                correct>0?'Partial \u2014 '+correct+'/4 correct (+'+pts+'/8 pts)':
+                '\u2717 Incorrect (+0 pts)';
+  var body='<div class="fb-body">';
+  if(correct===4){ body+='Excellent. All four accuracy metrics are correct.'; }
+  else { body+='<ul>'+feedback.map(function(m){ return '<li>'+m+'</li>'; }).join('')+'</ul>'; }
+  body+='</div>';
+
+  setFeedback('fb2', fbType, fbTitle, body);
+  document.getElementById('btn-s2').disabled=true;
+  markProg(2,'done'); ST.s2done=true;
+  unlockStage(3);
+  updateHUD();
+}
+
+/* ============================================================
+   STAGE 3 — diagnosis
+============================================================ */
+function buildDiagGrid(){
+  var grid=document.getElementById('diag-grid'); grid.innerHTML='';
+
+  /* Q1: Is forecast biased? */
+  var q1=document.createElement('div'); q1.className='diag-q';
+  q1.innerHTML=
+    '<div class="diag-q-label">Q1. Is the forecast <em>biased</em>?</div>'+
+    '<div class="radio-row" role="radiogroup" aria-label="Is forecast biased?">'+
+    '<label class="radio-opt" id="dq1-yes"><input type="radio" name="d_bias" value="yes" aria-label="Yes"> Yes &mdash; errors do not cancel</label>'+
+    '<label class="radio-opt" id="dq1-no"><input type="radio" name="d_bias" value="no"  aria-label="No"> No &mdash; errors cancel out</label>'+
+    '</div>';
+  grid.appendChild(q1);
+
+  /* Q2: direction */
+  var q2=document.createElement('div'); q2.className='diag-q';
+  q2.innerHTML=
+    '<div class="diag-q-label">Q2. If biased, what is the direction?</div>'+
+    '<div class="radio-row" role="radiogroup" aria-label="Bias direction">'+
+    '<label class="radio-opt" id="dq2-over"><input type="radio" name="d_dir" value="over"     aria-label="Over-forecasting"> Over-forecasting (Forecast &gt; Actual)</label>'+
+    '<label class="radio-opt" id="dq2-under"><input type="radio" name="d_dir" value="under"   aria-label="Under-forecasting"> Under-forecasting (Actual &gt; Forecast)</label>'+
+    '<label class="radio-opt" id="dq2-na"><input type="radio" name="d_dir" value="na"         aria-label="Not applicable"> Not applicable (unbiased)</label>'+
+    '</div>';
+  grid.appendChild(q2);
+
+  /* Q3: best accuracy metric */
+  var q3=document.createElement('div'); q3.className='diag-q';
+  q3.innerHTML=
+    '<div class="diag-q-label">Q3. Which metric best reveals the <em>accuracy</em> (magnitude of error)?</div>'+
+    '<div class="radio-row" role="radiogroup" aria-label="Best accuracy metric">'+
+    '<label class="radio-opt" id="dq3-bias"><input type="radio" name="d_met" value="bias" aria-label="BIAS"> BIAS / MFE</label>'+
+    '<label class="radio-opt" id="dq3-mae"><input type="radio" name="d_met" value="mae"   aria-label="MAE"> MAE</label>'+
+    '<label class="radio-opt" id="dq3-mape"><input type="radio" name="d_met" value="mape" aria-label="MAPE"> MAPE</label>'+
+    '<label class="radio-opt" id="dq3-mse"><input type="radio" name="d_met" value="mse"   aria-label="MSE"> MSE</label>'+
+    '</div>';
+  grid.appendChild(q3);
+
+  /* radio click handlers */
+  document.querySelectorAll('#diag-grid input[type="radio"]').forEach(function(rb){
+    rb.addEventListener('change', function(){
+      var name=rb.getAttribute('name');
+      document.querySelectorAll('input[name="'+name+'"]').forEach(function(r){
+        r.closest('.radio-opt').classList.remove('selected');
+      });
+      rb.closest('.radio-opt').classList.add('selected');
+    });
+  });
+}
+
+function buildJustification(){
+  var jk=ST.justKeys;
+
+  function sel(id, pool, key){
+    var all=Object.keys(pool).map(function(k){ return [k,pool[k]]; });
+    var correct=all.filter(function(p){ return p[0]===key; })[0];
+    var others=shuffle(all.filter(function(p){ return p[0]!==key; })).slice(0,4);
+    var opts=shuffle([correct].concat(others));
+    var h='<select id="'+id+'" aria-label="Blank '+id+'"><option value="">— select —</option>';
+    opts.forEach(function(p){ h+='<option value="'+p[0]+'">'+p[1]+'</option>'; });
+    h+='</select>';
+    return h;
+  }
+
+  document.getElementById('just-para').innerHTML=
+    'The average forecast error (BIAS) is '+sel('jq1',JP.avg_err,jk.avg_err)+'. '+
+    'This indicates that '+sel('jq2',JP.indicates,jk.indicates)+'. '+
+    'Overall, the forecast is '+sel('jq3',JP.quality,jk.quality)+
+    ' because '+sel('jq4',JP.reason,jk.reason)+'.';
+}
+
+/* ── SUBMIT STAGE 3 ─────────────────────────────────────── */
+function submitStage3(){
+  var jk=ST.justKeys, ans=ST.ans, sc=ST.sc;
+  var avgActual=sc.actuals.reduce(function(s,a){return s+a;},0)/sc.actuals.length;
+  var biased = Math.abs(ans.bias) >= avgActual*0.05;
+
+  /* Q1 */
+  var q1val=(document.querySelector('input[name="d_bias"]:checked')||{}).value;
+  var q1correct = biased ? q1val==='yes' : q1val==='no';
+
+  /* Q2 */
+  var q2val=(document.querySelector('input[name="d_dir"]:checked')||{}).value;
+  var q2correct;
+  if(!biased)        q2correct = q2val==='na';
+  else if(ans.bias>0)q2correct = q2val==='under';
+  else               q2correct = q2val==='over';
+
+  /* Q3 — MAE or MAPE are both acceptable accuracy metrics */
+  var q3val=(document.querySelector('input[name="d_met"]:checked')||{}).value;
+  var q3correct = q3val==='mae' || q3val==='mape';
+
+  /* justification */
+  var just=[
+    {el:document.getElementById('jq1'),key:jk.avg_err},
+    {el:document.getElementById('jq2'),key:jk.indicates},
+    {el:document.getElementById('jq3'),key:jk.quality},
+    {el:document.getElementById('jq4'),key:jk.reason}
+  ];
+  var jPts=0;
+  just.forEach(function(j){
+    var ok=j.el&&j.el.value===j.key;
+    if(ok) jPts++;
+    if(j.el){ j.el.classList.add(ok?'sel-correct':'sel-wrong'); j.el.disabled=true; }
+  });
+
+  var diagPts=(q1correct?1:0)+(q2correct?1:0)+(q3correct?1:0);
+  var totalPts = diagPts + jPts; // up to 3+4=7... cap to 3 for simplicity
+  // Scoring: Q1(1)+Q2(1)+Q3(1) = 3 pts for diagnosis
+  ST.totalPossible += 3; ST.totalScore += diagPts;
+  ST.roundPts += diagPts; ST.roundS3 = diagPts;
+
+  /* build feedback */
+  var issues=[];
+  if(!q1val) issues.push('Q1: no answer selected.');
+  else if(!q1correct) issues.push('Q1: '+( biased ? 'BIAS ≠ 0, so the forecast is biased.' : 'BIAS \u2248 0, so the forecast is unbiased.' ));
+
+  if(!q2val) issues.push('Q2: no answer selected.');
+  else if(!q2correct){
+    if(!biased) issues.push('Q2: with near-zero BIAS the correct answer is "Not applicable".');
+    else if(ans.bias>0) issues.push('Q2: BIAS > 0 means actuals exceed forecasts \u2192 under-forecasting.');
+    else issues.push('Q2: BIAS < 0 means forecasts exceed actuals \u2192 over-forecasting.');
+  }
+
+  if(!q3val) issues.push('Q3: no answer selected.');
+  else if(!q3correct) issues.push('Q3: BIAS measures direction/bias, not accuracy. MAE and MAPE measure error magnitude. MSE penalises outliers but is hard to interpret directly.');
+
+  var fbType  = diagPts===3?'correct':diagPts>0?'partial':'incorrect';
+  var fbTitle = diagPts===3?'\u2713 Diagnosis correct! (+'+diagPts+' pts)':
+                diagPts>0?'Partial \u2014 '+diagPts+'/3 correct (+'+diagPts+' pts)':
+                '\u2717 Incorrect (+0 pts)';
+  var body='<div class="fb-body">';
+  if(diagPts===3){ body+='Excellent diagnosis. Your answers correctly characterise the forecast error pattern.'; }
+  else if(issues.length){ body+='<ul>'+issues.map(function(m){ return '<li>'+m+'</li>'; }).join('')+'</ul>'; }
+  body+='</div>';
+
+  setFeedback('fb3', fbType, fbTitle, body);
+  document.querySelectorAll('#diag-grid input[type="radio"]').forEach(function(r){ r.disabled=true; });
+  document.getElementById('btn-s3').disabled=true;
+  markProg(3,'done'); ST.s3done=true;
+
+  /* streak */
+  var roundTotal=ST.roundS1+ST.roundS2+diagPts;
+  var maxRound = ST.sc.actuals.length + 8 + 3;
+  if(roundTotal === maxRound) ST.streak++; else ST.streak=0;
+
+  updateHUD();
+  updateStreakBanner();
+  setTimeout(showRoundComplete, 700);
+}
+
+/* ============================================================
+   ROUND COMPLETE
+============================================================ */
+function showRoundComplete(){
+  var sc=ST.sc, ans=ST.ans;
+  var n=sc.actuals.length;
+  var maxPts=n+8+3;
+  var total=ST.roundS1+ST.roundS2+ST.roundS3;
+
+  var stars=total===maxPts?'\u2B50\u2B50\u2B50':total>=maxPts*0.7?'\u2B50\u2B50':total>=maxPts*0.4?'\u2B50':'';
+  document.getElementById('rc-stars').textContent=stars;
+  document.getElementById('rc-pts').textContent=total;
+  document.getElementById('rc-max-pts').textContent=maxPts;
+  document.getElementById('rc-msg').textContent=
+    total===maxPts?'Perfect score! Outstanding work.':
+    total>=maxPts*0.7?'Good work — review the feedback above for any missed details.':
+    'Keep practicing — revisit the metric formulas in Stage 2 for guidance.';
+
+  /* breakdown */
+  var bd=document.getElementById('rc-breakdown');
+  bd.innerHTML=
+    '<div class="rc-block"><span class="rc-block-label">Stage 1<br>Errors</span><span class="rc-block-pts">'+ST.roundS1+'</span><span class="rc-block-max">/ '+n+' pts</span></div>'+
+    '<div class="rc-block"><span class="rc-block-label">Stage 2<br>Metrics</span><span class="rc-block-pts">'+ST.roundS2+'</span><span class="rc-block-max">/ 8 pts</span></div>'+
+    '<div class="rc-block"><span class="rc-block-label">Stage 3<br>Diagnosis</span><span class="rc-block-pts">'+ST.roundS3+'</span><span class="rc-block-max">/ 3 pts</span></div>';
+
+  /* metric summary */
+  function qualBadge(mape, bias, avgA){
+    var b=Math.abs(bias)>=avgA*0.05;
+    if(mape<8 && !b)  return '<span class="quality-badge q-good">&#10003; Good</span>';
+    if(mape<15)       return '<span class="quality-badge q-caution">&#9888; Caution</span>';
+    return '<span class="quality-badge q-poor">&#10007; Poor</span>';
+  }
+  var avgA=sc.actuals.reduce(function(s,a){return s+a;},0)/n;
+  var qb=qualBadge(ans.mape, ans.bias, avgA);
+  var sb=document.getElementById('summary-body');
+  sb.innerHTML=
+    '<tr><td>BIAS (MFE)</td><td class="val">'+(ST.metricUserAnswers.bias!=null?ST.metricUserAnswers.bias.toFixed(2):'&mdash;')+'</td><td class="val">'+ans.bias+'</td><td>'+( Math.abs(ans.bias)<avgA*0.05?'<span class="quality-badge q-good">Unbiased</span>':ans.bias>0?'<span class="quality-badge q-caution">Under-forecast</span>':'<span class="quality-badge q-caution">Over-forecast</span>' )+'</td></tr>'+
+    '<tr><td>MAE</td><td class="val">'+(ST.metricUserAnswers.mae!=null?ST.metricUserAnswers.mae.toFixed(2):'&mdash;')+'</td><td class="val">'+ans.mae+'</td><td></td></tr>'+
+    '<tr><td>MAPE</td><td class="val">'+(ST.metricUserAnswers.mape!=null?ST.metricUserAnswers.mape.toFixed(2):'&mdash;')+'%</td><td class="val">'+ans.mape+'%</td><td>'+qb+'</td></tr>'+
+    '<tr><td>MSE</td><td class="val">'+(ST.metricUserAnswers.mse!=null?ST.metricUserAnswers.mse.toFixed(2):'&mdash;')+'</td><td class="val">'+ans.mse+'</td><td></td></tr>';
+
+  document.getElementById('round-complete').classList.add('show');
+  document.getElementById('round-complete').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+function unlockStage(n){
+  var el=document.getElementById('stage'+n);
+  el.classList.remove('locked');
+  markProg(n,'active');
+  setTimeout(function(){ el.scrollIntoView({behavior:'smooth',block:'nearest'}); },60);
+}
+
+function markProg(n,state){
+  var ps=document.getElementById('ps'+n);
+  ps.className='prog-step '+state;
+  ps.innerHTML=state==='done'?'':'<span>'+n+'</span>';
+  if(state==='done'&&n<3) document.getElementById('pc'+n).classList.add('done');
+}
+
+function setFeedback(id, type, title, body){
+  var el=document.getElementById(id);
+  el.className='feedback show '+type;
+  el.innerHTML='<div class="fb-title">'+title+'</div>'+body;
+}
+
+function showHint(stage){
+  var t=document.getElementById('hint'+stage+'-text');
+  var b=document.getElementById('hint'+stage+'-btn');
+  var v=t.classList.toggle('visible');
+  b.textContent=v?'Hide Hint':'\u{1F4A1} Show Hint';
+  if(stage===2) ST.metricHintUsed=true;
+}
+
+function setConf(stage, val){
+  document.querySelectorAll('.conf-btn[data-stage="'+stage+'"]').forEach(function(b){
+    b.classList.toggle('sel', b.getAttribute('data-val')===val);
+  });
+  ST.conf[stage]=val;
+}
+
+function updateHUD(){
+  document.getElementById('hud-score').textContent  = ST.totalScore;
+  document.getElementById('hud-round').textContent  = ST.rounds;
+  document.getElementById('hud-pct').textContent    = ST.totalPossible>0?Math.round(ST.totalScore/ST.totalPossible*100)+'%':'\u2014';
+  document.getElementById('hud-streak').textContent = ST.streak;
+}
+
+function updateStreakBanner(){
+  var sw=document.getElementById('streak-wrap');
+  if(ST.streak>=2){
+    sw.innerHTML='<span class="streak-banner">&#128293; '+ST.streak+'-round streak!</span>';
+  } else { sw.innerHTML=''; }
+}
+
+function resetScore(){
+  if(!confirm('Reset score and round counter?')) return;
+  ST.totalScore=0; ST.totalPossible=0; ST.rounds=0; ST.streak=0;
+  ST.pool=shuffle(ST.all.slice());
+  updateHUD(); updateStreakBanner();
+  newScenario();
+}
+
+function shuffle(a){
+  var r=a.slice();
+  for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}
+  return r;
+}
+</script>
+</body>
+</html>
