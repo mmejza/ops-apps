@@ -1,0 +1,1675 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Appointment System Simulator</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --ink: #1d2533;
+      --muted: #5f6b82;
+      --line: #d9e1ef;
+      --accent: #115e59;
+      --accent-2: #f08a4b;
+      --good: #1d7d46;
+      --bad: #b42318;
+      --warn: #9a5a00;
+      --shadow: 0 10px 28px rgba(16, 28, 52, 0.08);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", Tahoma, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1000px 500px at 95% -5%, #d2f4e6 0%, transparent 56%),
+        radial-gradient(900px 450px at -10% 105%, #ffe9d6 0%, transparent 58%),
+        var(--bg);
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 24px auto;
+      padding: 0 14px 24px;
+    }
+
+    .hero {
+      background: linear-gradient(130deg, #16324f 0%, #1b6a67 55%, #2a9d8f 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.3rem, 2.4vw, 2rem);
+      letter-spacing: 0.2px;
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      line-height: 1.45;
+      font-size: 0.96rem;
+      opacity: 0.96;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    @media (min-width: 980px) {
+      .grid.two {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1.08rem;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      margin-top: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2a3650;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    select,
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid #b9c5dc;
+      border-radius: 8px;
+      padding: 8px 9px;
+      font-size: 0.92rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 7px 8px;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    th {
+      background: #f4f7ff;
+      font-size: 0.86rem;
+      letter-spacing: 0.1px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn:hover {
+      filter: brightness(1.04);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #224870;
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: #eaf0fd;
+      color: #1a3556;
+    }
+
+    .status {
+      margin-top: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border-left: 4px solid var(--accent-2);
+      background: #fff8ef;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .feedback {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .feedback li {
+      margin-bottom: 5px;
+    }
+
+    .good {
+      color: var(--good);
+    }
+
+    .bad {
+      color: var(--bad);
+    }
+
+    .warn {
+      color: var(--warn);
+    }
+
+    .metric-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 9px;
+      background: #f8fbff;
+    }
+
+    .metric .k {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .metric .v {
+      display: block;
+      font-weight: 700;
+      margin-top: 3px;
+      font-size: 1rem;
+    }
+
+    .dev {
+      margin-top: 8px;
+      border: 1px dashed #7294cf;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f1f6ff;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .task-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      margin-top: 6px;
+    }
+
+    .muted-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Appointment System Simulator</h1>
+      <p>
+        Explore tradeoffs among appointment spacing, no-shows, and overbooking in a
+        six-customer single-server system.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>1) Configure the Appointment System</h2>
+      <p class="small">Choose settings, predict idle/waiting behavior, then run a simulation.</p>
+
+      <div class="controls">
+        <div>
+          <label for="spacing">Appointment spacing (minutes)</label>
+          <select id="spacing">
+            <option value="30">30</option>
+            <option value="45" selected>45</option>
+            <option value="60">60</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="setting">Service setting</label>
+          <select id="setting">
+            <option value="tutoring center">Tutoring center</option>
+            <option value="advising office">Advising office</option>
+            <option value="clinic">Clinic</option>
+            <option value="repair shop">Repair shop</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="noShow">No-show probability</label>
+          <select id="noShow">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="overbook">Optional overbooking</label>
+          <select id="overbook">
+            <option value="no" selected>No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="task-grid">
+        <div>
+          <label for="prediction">Predict system outcome</label>
+          <select id="prediction">
+            <option value="">Select...</option>
+            <option value="idle">Idle time only</option>
+            <option value="wait">Waiting only</option>
+            <option value="both">Both idle time and waiting</option>
+            <option value="neither">Neither</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="runBtn" class="btn btn-primary" type="button">Run Simulation</button>
+        <button id="newBtn" class="btn btn-secondary" type="button">New Simulation</button>
+        <button id="resetBtn" class="btn btn-ghost" type="button">Reset Student Inputs</button>
+      </div>
+
+      <div id="status" class="status">Run a simulation to generate customer outcomes and performance metrics.</div>
+    </section>
+
+    <div class="grid two">
+      <section class="panel">
+        <h2>2) Simulation Timeline (6 Customers)</h2>
+        <table aria-label="Simulation table">
+          <thead>
+            <tr>
+              <th>Cust</th>
+              <th>Appt</th>
+              <th>Show?</th>
+              <th>Service</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Wait</th>
+              <th>Idle Before</th>
+            </tr>
+          </thead>
+          <tbody id="simBody"></tbody>
+        </table>
+        <p class="muted-note">Times are in minutes from opening time.</p>
+      </section>
+
+      <section class="panel">
+        <h2>3) Student Calculations</h2>
+        <p class="small">After running the simulation, calculate these values before checking.</p>
+
+        <div class="task-grid">
+          <div>
+            <label for="ansMakespan">Makespan</label>
+            <input id="ansMakespan" type="number" step="0.01">
+          </div>
+          <div>
+            <label for="ansCapacity">Capacity (customers/min)</label>
+            <input id="ansCapacity" type="number" step="0.0001">
+          </div>
+          <div>
+            <label for="ansFlowRate">Flow rate (customers/min)</label>
+            <input id="ansFlowRate" type="number" step="0.0001">
+          </div>
+          <div>
+            <label for="ansUtil">Utilization (0 to 1)</label>
+            <input id="ansUtil" type="number" step="0.0001" min="0" max="1">
+          </div>
+        </div>
+
+        <div class="task-grid">
+          <div>
+            <label for="spacingEval">Spacing appears...</label>
+            <select id="spacingEval">
+              <option value="">Select...</option>
+              <option value="tight">Too tight</option>
+              <option value="loose">Too loose</option>
+              <option value="reasonable">Reasonable</option>
+            </select>
+          </div>
+          <div>
+            <label for="overbookEval">Overbooking impact</label>
+            <select id="overbookEval">
+              <option value="">Select...</option>
+              <option value="improved">Improved system performance</option>
+              <option value="worsened">Worsened system performance</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="checkBtn" class="btn btn-primary" type="button">Check Answers</button>
+        </div>
+
+        <ul id="feedback" class="feedback" aria-live="polite"></ul>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>4) Correct Summary Metrics (After You Check)</h2>
+      <div id="metricCards" class="metric-cards"></div>
+      <p class="muted-note">
+        Definitions: makespan = completion of last completed customer - first appointment time;
+        capacity = 1 / average service time; flow rate = completed / makespan;
+        utilization = busy time / makespan.
+      </p>
+
+      <div id="devPanel" class="dev" hidden>
+        <strong>Debug / Instructor mode (?dev=1)</strong>
+        <div id="devContent"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var CUSTOMER_COUNT = 6;
+      var PROB_MAP = {
+        low: 0.12,
+        medium: 0.25,
+        high: 0.4
+      };
+
+      var TOL = 0.02;
+      var simResult = null;
+      var devMode = new URLSearchParams(window.location.search).get("dev") === "1";
+
+      var simBody = document.getElementById("simBody");
+      var statusEl = document.getElementById("status");
+      var metricCards = document.getElementById("metricCards");
+      var feedbackEl = document.getElementById("feedback");
+      var devPanel = document.getElementById("devPanel");
+      var devContent = document.getElementById("devContent");
+
+      function rand(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      function round2(n) {
+        return Math.round(n * 100) / 100;
+      }
+
+      function safeFixed(n, digits) {
+        if (!Number.isFinite(n)) {
+          return "0";
+        }
+        return n.toFixed(digits);
+      }
+
+      function selected(id) {
+        return document.getElementById(id).value;
+      }
+
+      function numericValue(id) {
+        var raw = document.getElementById(id).value.trim();
+        if (raw === "") {
+          return null;
+        }
+        var n = Number(raw);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function resetStudentInputs() {
+        [
+          "ansMakespan",
+          "ansCapacity",
+          "ansFlowRate",
+          "ansUtil"
+        ].forEach(function (id) {
+          document.getElementById(id).value = "";
+        });
+
+        ["prediction", "spacingEval", "overbookEval"].forEach(function (id) {
+          document.getElementById(id).value = "";
+        });
+
+        feedbackEl.innerHTML = "";
+      }
+
+      function makeAppointments(spacing, overbook) {
+        var appointments = [];
+        if (overbook === "yes") {
+          appointments = [0, 0, spacing, spacing * 2, spacing * 3, spacing * 4];
+        } else {
+          for (var i = 0; i < CUSTOMER_COUNT; i += 1) {
+            appointments.push(i * spacing);
+          }
+        }
+        return appointments;
+      }
+
+      function generateCustomerProfiles(spacing, noShowProb) {
+        var profiles = [];
+        var serviceLow = Math.max(10, spacing * 0.65);
+        var serviceHigh = spacing * 1.35;
+
+        for (var i = 0; i < CUSTOMER_COUNT; i += 1) {
+          profiles.push({
+            id: i + 1,
+            serviceTime: round2(rand(serviceLow, serviceHigh)),
+            showsUp: Math.random() >= noShowProb
+          });
+        }
+        return profiles;
+      }
+
+      function runSingleSimulation(appointments, profiles) {
+        var rows = [];
+        var currentTime = 0;
+        var busyTime = 0;
+        var totalWait = 0;
+        var maxWait = 0;
+        var waitedCount = 0;
+        var idleTime = 0;
+        var totalService = 0;
+        var completed = 0;
+
+        for (var i = 0; i < CUSTOMER_COUNT; i += 1) {
+          var appt = appointments[i];
+          var p = profiles[i];
+
+          if (!p.showsUp) {
+            rows.push({
+              customer: p.id,
+              appointment: appt,
+              show: "No",
+              service: 0,
+              start: "-",
+              end: "-",
+              wait: 0,
+              idleBefore: 0
+            });
+            continue;
+          }
+
+          var idleBefore = 0;
+          if (appt > currentTime) {
+            idleBefore = appt - currentTime;
+            idleTime += idleBefore;
+          }
+
+          var start = Math.max(appt, currentTime);
+          var wait = Math.max(0, start - appt);
+          var end = start + p.serviceTime;
+
+          busyTime += p.serviceTime;
+          totalService += p.serviceTime;
+          totalWait += wait;
+          completed += 1;
+
+          if (wait > 0) {
+            waitedCount += 1;
+          }
+          if (wait > maxWait) {
+            maxWait = wait;
+          }
+
+          currentTime = end;
+
+          rows.push({
+            customer: p.id,
+            appointment: appt,
+            show: "Yes",
+            service: p.serviceTime,
+            start: round2(start),
+            end: round2(end),
+            wait: round2(wait),
+            idleBefore: round2(idleBefore)
+          });
+        }
+
+        var firstStart = appointments[0];
+        var makespan = completed > 0 ? Math.max(0, currentTime - firstStart) : 0;
+        var avgService = completed > 0 ? totalService / completed : 0;
+        var capacity = avgService > 0 ? 1 / avgService : 0;
+        var flowRate = makespan > 0 ? completed / makespan : 0;
+        var utilization = makespan > 0 ? busyTime / makespan : 0;
+        var avgWait = completed > 0 ? totalWait / completed : 0;
+
+        return {
+          rows: rows,
+          metrics: {
+            makespan: round2(makespan),
+            averageServiceTime: round2(avgService),
+            capacity: capacity,
+            flowRate: flowRate,
+            utilization: utilization,
+            averageWaitTime: round2(avgWait),
+            maximumWaitTime: round2(maxWait),
+            waitedCount: waitedCount,
+            completedCustomers: completed,
+            busyTime: round2(busyTime),
+            idleTime: round2(idleTime)
+          }
+        };
+      }
+
+      function classifyPrediction(metrics) {
+        var hasIdle = metrics.idleTime > 0;
+        var hasWait = metrics.waitedCount > 0;
+
+        if (hasIdle && hasWait) {
+          return "both";
+        }
+        if (hasIdle) {
+          return "idle";
+        }
+        if (hasWait) {
+          return "wait";
+        }
+        return "neither";
+      }
+
+      function spacingAssessment(metrics, spacing) {
+        if (metrics.averageWaitTime > spacing * 0.25) {
+          return "tight";
+        }
+        if (metrics.idleTime > metrics.makespan * 0.25) {
+          return "loose";
+        }
+        return "reasonable";
+      }
+
+      function overbookingAssessment(chosenMetrics, altMetrics) {
+        var chosenScore = chosenMetrics.idleTime + (1.5 * chosenMetrics.averageWaitTime);
+        var altScore = altMetrics.idleTime + (1.5 * altMetrics.averageWaitTime);
+        return chosenScore <= altScore ? "improved" : "worsened";
+      }
+
+      function renderTable(rows) {
+        var html = rows.map(function (r) {
+          return "<tr>" +
+            "<td>C" + r.customer + "</td>" +
+            "<td>" + r.appointment + "</td>" +
+            "<td>" + r.show + "</td>" +
+            "<td>" + (r.show === "Yes" ? r.service : "-") + "</td>" +
+            "<td>" + r.start + "</td>" +
+            "<td>" + r.end + "</td>" +
+            "<td>" + r.wait + "</td>" +
+            "<td>" + r.idleBefore + "</td>" +
+            "</tr>";
+        }).join("");
+
+        simBody.innerHTML = html;
+      }
+
+      function renderMetrics(metrics) {
+        var cards = [
+          ["Makespan", safeFixed(metrics.makespan, 2) + " min"],
+          ["Average service time", safeFixed(metrics.averageServiceTime, 2) + " min"],
+          ["Capacity", safeFixed(metrics.capacity, 4) + " cust/min"],
+          ["Flow rate", safeFixed(metrics.flowRate, 4) + " cust/min"],
+          ["Utilization", safeFixed(metrics.utilization, 4)],
+          ["Average wait", safeFixed(metrics.averageWaitTime, 2) + " min"],
+          ["Maximum wait", safeFixed(metrics.maximumWaitTime, 2) + " min"],
+          ["Customers waited", String(metrics.waitedCount)]
+        ];
+
+        metricCards.innerHTML = cards.map(function (c) {
+          return "<div class='metric'><span class='k'>" + c[0] + "</span><span class='v'>" + c[1] + "</span></div>";
+        }).join("");
+      }
+
+      function renderDev(result) {
+        if (!devMode) {
+          devPanel.hidden = true;
+          return;
+        }
+
+        devPanel.hidden = false;
+        var m = result.metrics;
+        var lines = [
+          "Correct makespan: " + safeFixed(m.makespan, 2),
+          "Correct capacity (cust/min): " + safeFixed(m.capacity, 4),
+          "Correct flow rate (cust/min): " + safeFixed(m.flowRate, 4),
+          "Correct utilization: " + safeFixed(m.utilization, 4),
+          "Correct prediction label: " + result.correctPrediction,
+          "Correct spacing assessment: " + result.correctSpacing,
+          "Correct overbooking assessment: " + result.correctOverbook
+        ];
+
+        devContent.innerHTML = lines.join("<br>");
+      }
+
+      function runSimulation() {
+        var spacing = Number(selected("spacing"));
+        var overbook = selected("overbook");
+        var setting = selected("setting");
+        var noShowLevel = selected("noShow");
+        var noShowProb = PROB_MAP[noShowLevel];
+
+        var profiles = generateCustomerProfiles(spacing, noShowProb);
+        var chosenAppointments = makeAppointments(spacing, overbook);
+        var altAppointments = makeAppointments(spacing, overbook === "yes" ? "no" : "yes");
+
+        var chosen = runSingleSimulation(chosenAppointments, profiles);
+        var alt = runSingleSimulation(altAppointments, profiles);
+
+        var predictionClass = classifyPrediction(chosen.metrics);
+        var spacingClass = spacingAssessment(chosen.metrics, spacing);
+        var overbookClass = overbookingAssessment(chosen.metrics, alt.metrics);
+
+        simResult = {
+          input: {
+            spacing: spacing,
+            setting: setting,
+            noShowLevel: noShowLevel,
+            overbook: overbook
+          },
+          rows: chosen.rows,
+          metrics: chosen.metrics,
+          altMetrics: alt.metrics,
+          correctPrediction: predictionClass,
+          correctSpacing: spacingClass,
+          correctOverbook: overbookClass
+        };
+
+        renderTable(simResult.rows);
+        renderMetrics(simResult.metrics);
+        renderDev(simResult);
+
+        statusEl.textContent = "Simulation complete for " + setting + ". Completed customers: " +
+          simResult.metrics.completedCustomers + "/" + CUSTOMER_COUNT +
+          ". Now check your calculations and decisions.";
+
+        feedbackEl.innerHTML = "";
+      }
+
+      function checkNumeric(student, truth, label, digits, feedback) {
+        if (student === null) {
+          feedback.push({ type: "bad", msg: label + " is blank." });
+          return;
+        }
+
+        var diff = Math.abs(student - truth);
+        if (diff <= TOL) {
+          feedback.push({ type: "good", msg: label + " is correct." });
+        } else {
+          feedback.push({ type: "bad", msg: label + " should be " + truth.toFixed(digits) + "." });
+        }
+      }
+
+      function checkAnswers() {
+        var feedback = [];
+
+        if (!simResult) {
+          feedbackEl.innerHTML = "<li class='bad'>Run the simulation before checking answers.</li>";
+          return;
+        }
+
+        var m = simResult.metrics;
+
+        checkNumeric(numericValue("ansMakespan"), m.makespan, "Makespan", 2, feedback);
+        checkNumeric(numericValue("ansCapacity"), m.capacity, "Capacity", 4, feedback);
+        checkNumeric(numericValue("ansFlowRate"), m.flowRate, "Flow rate", 4, feedback);
+        checkNumeric(numericValue("ansUtil"), m.utilization, "Utilization", 4, feedback);
+
+        var pred = selected("prediction");
+        if (!pred) {
+          feedback.push({ type: "bad", msg: "Prediction (idle/wait/both/neither) is blank." });
+        } else if (pred === simResult.correctPrediction) {
+          feedback.push({ type: "good", msg: "Prediction about idle/wait is correct." });
+        } else {
+          feedback.push({ type: "bad", msg: "Prediction should be: " + simResult.correctPrediction + "." });
+        }
+
+        var spacingEval = selected("spacingEval");
+        if (!spacingEval) {
+          feedback.push({ type: "bad", msg: "Spacing evaluation is blank." });
+        } else if (spacingEval === simResult.correctSpacing) {
+          feedback.push({ type: "good", msg: "Spacing assessment is correct." });
+        } else {
+          feedback.push({ type: "bad", msg: "Spacing assessment should be: " + simResult.correctSpacing + "." });
+        }
+
+        var overbookEval = selected("overbookEval");
+        if (!overbookEval) {
+          feedback.push({ type: "bad", msg: "Overbooking assessment is blank." });
+        } else if (overbookEval === simResult.correctOverbook) {
+          feedback.push({ type: "good", msg: "Overbooking assessment is correct." });
+        } else {
+          feedback.push({ type: "bad", msg: "Overbooking assessment should be: " + simResult.correctOverbook + "." });
+        }
+
+        feedbackEl.innerHTML = feedback.map(function (f) {
+          return "<li class='" + f.type + "'>" + f.msg + "</li>";
+        }).join("");
+      }
+
+      function newSimulation() {
+        resetStudentInputs();
+        simBody.innerHTML = "";
+        metricCards.innerHTML = "";
+        simResult = null;
+        statusEl.textContent = "Run a simulation to generate customer outcomes and performance metrics.";
+        renderDev({ metrics: {}, correctPrediction: "-", correctSpacing: "-", correctOverbook: "-" });
+      }
+
+      document.getElementById("runBtn").addEventListener("click", runSimulation);
+      document.getElementById("checkBtn").addEventListener("click", checkAnswers);
+      document.getElementById("newBtn").addEventListener("click", newSimulation);
+      document.getElementById("resetBtn").addEventListener("click", resetStudentInputs);
+
+      newSimulation();
+    })();
+  </script>
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Appointment System Simulator</title>
+  <style>
+    :root {
+      --bg: #f7f8fc;
+      --card: #ffffff;
+      --ink: #1e2433;
+      --muted: #56607a;
+      --line: #d8dfef;
+      --brand: #155d8a;
+      --brand-soft: #eaf4fb;
+      --accent: #e07a2e;
+      --good: #1a7f4b;
+      --bad: #b42318;
+      --radius: 14px;
+      --shadow: 0 12px 32px rgba(18, 31, 53, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(1000px 420px at 95% -10%, #d8f1ff 0%, transparent 58%),
+        radial-gradient(900px 360px at -10% 110%, #ffe9d5 0%, transparent 56%),
+        var(--bg);
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 24px auto;
+      padding: 0 14px 28px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f3f57 0%, #155d8a 52%, #1d84a3 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 2.4vw, 2rem);
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      opacity: 0.96;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    @media (min-width: 960px) {
+      .grid.two {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.91rem;
+      line-height: 1.42;
+    }
+
+    .inputs {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    select,
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid #b7c5de;
+      border-radius: 9px;
+      padding: 8px;
+      font-size: 0.92rem;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 9px;
+      text-align: left;
+      font-size: 0.9rem;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--brand-soft);
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 13px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.12s ease, transform 0.12s ease;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #223a5e;
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: #edf2ff;
+      color: #173157;
+    }
+
+    .status {
+      border-left: 4px solid var(--accent);
+      background: #fff7ef;
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .feedback {
+      padding-left: 18px;
+      margin: 10px 0 0;
+      font-size: 0.9rem;
+      line-height: 1.43;
+    }
+
+    .feedback li {
+      margin-bottom: 4px;
+    }
+
+    .good {
+      color: var(--good);
+    }
+
+    .bad {
+      color: var(--bad);
+    }
+
+    .metrics {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      margin-top: 8px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f9fbff;
+      padding: 8px 9px;
+    }
+
+    .metric .k {
+      display: block;
+      font-size: 0.79rem;
+      color: var(--muted);
+    }
+
+    .metric .v {
+      display: block;
+      margin-top: 3px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .dev {
+      margin-top: 10px;
+      border: 1px dashed #6f8cb8;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f2f7ff;
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .row-wait {
+      background: #fff5ea;
+    }
+
+    .row-noshow {
+      background: #f6f7fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <h1>Appointment System Simulator</h1>
+      <p>
+        Explore how appointment spacing, no-shows, and overbooking affect waiting, idle time,
+        and operational performance in a six-customer service system.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>1) Scenario Inputs</h2>
+      <div class="inputs">
+        <div>
+          <label for="spacingSelect">Appointment spacing</label>
+          <select id="spacingSelect">
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">60 minutes</option>
+          </select>
+        </div>
+        <div>
+          <label for="serviceSelect">Service setting</label>
+          <select id="serviceSelect">
+            <option value="tutoring center">Tutoring center</option>
+            <option value="advising office">Advising office</option>
+            <option value="clinic">Clinic</option>
+            <option value="repair shop">Repair shop</option>
+          </select>
+        </div>
+        <div>
+          <label for="showSelect">No-show probability</label>
+          <select id="showSelect">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <div>
+          <label for="overbookSelect">Optional overbooking</label>
+          <select id="overbookSelect">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+      </div>
+      <div class="btns">
+        <button id="runBtn" class="btn btn-primary" type="button">Run Simulation</button>
+        <button id="newBtn" class="btn btn-secondary" type="button">New Simulation</button>
+        <button id="resetBtn" class="btn btn-ghost" type="button">Reset Student Inputs</button>
+      </div>
+      <p class="small" id="scenarioText"></p>
+    </section>
+
+    <div class="grid two">
+      <section class="panel">
+        <h2>2) Prediction Before Running</h2>
+        <p class="small">Predict what this schedule will create.</p>
+        <label for="predictionSelect">Expected pattern:</label>
+        <select id="predictionSelect">
+          <option value="">Select...</option>
+          <option value="idle">Idle time only</option>
+          <option value="wait">Waiting only</option>
+          <option value="both">Both idle time and waiting</option>
+          <option value="neither">Neither idle nor waiting</option>
+        </select>
+        <div id="predictionStatus" class="status" style="margin-top:10px;">Run the simulation, then check your prediction.</div>
+      </section>
+
+      <section class="panel">
+        <h2>3) Student Calculations</h2>
+        <p class="small">After running, enter your calculations for core performance measures.</p>
+        <div class="inputs">
+          <div>
+            <label for="inMakespan">Makespan (minutes)</label>
+            <input id="inMakespan" type="number" step="0.01">
+          </div>
+          <div>
+            <label for="inCapacity">Capacity (customers/min)</label>
+            <input id="inCapacity" type="number" step="0.0001">
+          </div>
+          <div>
+            <label for="inFlowRate">Flow rate (customers/min)</label>
+            <input id="inFlowRate" type="number" step="0.0001">
+          </div>
+          <div>
+            <label for="inUtil">Utilization (%)</label>
+            <input id="inUtil" type="number" step="0.01">
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>4) Simulation Table (6 Customers)</h2>
+      <p class="small">A no-show has no start/end/service. Waiting and idle are shown in minutes.</p>
+      <table id="simTable" aria-label="Simulation event table">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Appointment</th>
+            <th>Show?</th>
+            <th>Service Time</th>
+            <th>Service Start</th>
+            <th>Service End</th>
+            <th>Wait</th>
+            <th>Idle Before</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>5) Decision Questions</h2>
+      <div class="grid two">
+        <div>
+          <label for="tightnessSelect">Appointment spacing was:</label>
+          <select id="tightnessSelect">
+            <option value="">Select...</option>
+            <option value="tight">Too tight</option>
+            <option value="loose">Too loose</option>
+            <option value="reasonable">Reasonable</option>
+          </select>
+        </div>
+        <div>
+          <label for="overbookEffectSelect">Overbooking (for this scenario) was:</label>
+          <select id="overbookEffectSelect">
+            <option value="">Select...</option>
+            <option value="improved">Improved the system</option>
+            <option value="worsened">Worsened the system</option>
+          </select>
+        </div>
+      </div>
+      <div class="btns">
+        <button id="checkBtn" class="btn btn-primary" type="button">Check Answers</button>
+      </div>
+      <ul id="feedback" class="feedback" aria-live="polite"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>6) Computed Summary Metrics</h2>
+      <div id="metrics" class="metrics"></div>
+      <p class="small">
+        Definitions used: makespan = completion time of last completed customer - start time of first appointment;
+        capacity = 1 / average service time.
+      </p>
+      <div id="devBox" class="dev" hidden></div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var CUSTOMER_COUNT = 6;
+      var noShowMap = {
+        low: 0.12,
+        medium: 0.28,
+        high: 0.45
+      };
+
+      var devMode = new URLSearchParams(window.location.search).get("dev") === "1";
+
+      var state = {
+        run: null,
+        baselineComparison: null
+      };
+
+      var simTbody = document.querySelector("#simTable tbody");
+      var metricsEl = document.getElementById("metrics");
+      var feedbackEl = document.getElementById("feedback");
+      var predictionStatusEl = document.getElementById("predictionStatus");
+      var scenarioTextEl = document.getElementById("scenarioText");
+      var devBoxEl = document.getElementById("devBox");
+
+      function rand() {
+        return Math.random();
+      }
+
+      function randInt(min, max) {
+        return Math.floor(rand() * (max - min + 1)) + min;
+      }
+
+      function toMinText(mins) {
+        if (mins === null || mins === undefined) {
+          return "-";
+        }
+        return mins.toFixed(1);
+      }
+
+      function percent(x) {
+        return (x * 100).toFixed(1) + "%";
+      }
+
+      function makeCustomerProfiles(spacing, noShowLevel) {
+        var profiles = [];
+        var pNoShow = noShowMap[noShowLevel];
+        for (var i = 1; i <= CUSTOMER_COUNT; i += 1) {
+          var service = randInt(Math.max(10, Math.round(spacing * 0.65)), Math.round(spacing * 1.35));
+          var show = rand() > pNoShow;
+          profiles.push({
+            id: i,
+            serviceTime: service,
+            show: show
+          });
+        }
+        return profiles;
+      }
+
+      function appointmentTimes(spacing, overbook) {
+        var times = [];
+        for (var i = 0; i < CUSTOMER_COUNT; i += 1) {
+          if (overbook === "yes") {
+            if (i < 2) {
+              times.push(0);
+            } else {
+              times.push((i - 1) * spacing);
+            }
+          } else {
+            times.push(i * spacing);
+          }
+        }
+        return times;
+      }
+
+      function runSimulationFromProfiles(spacing, overbook, profiles) {
+        var appts = appointmentTimes(spacing, overbook);
+        var rows = [];
+
+        var currentTime = appts[0];
+        var totalBusy = 0;
+        var totalIdle = 0;
+        var totalWait = 0;
+        var maxWait = 0;
+        var waitedCount = 0;
+        var completed = 0;
+        var serviceSum = 0;
+        var lastCompletion = null;
+
+        for (var i = 0; i < CUSTOMER_COUNT; i += 1) {
+          var p = profiles[i];
+          var appt = appts[i];
+
+          if (!p.show) {
+            rows.push({
+              customer: p.id,
+              appt: appt,
+              show: "No",
+              service: null,
+              start: null,
+              end: null,
+              wait: 0,
+              idleBefore: 0
+            });
+            continue;
+          }
+
+          var idleBefore = 0;
+          if (appt > currentTime) {
+            idleBefore = appt - currentTime;
+            totalIdle += idleBefore;
+          }
+
+          var start = Math.max(appt, currentTime);
+          var wait = Math.max(0, start - appt);
+          var end = start + p.serviceTime;
+
+          if (wait > 0) {
+            waitedCount += 1;
+            if (wait > maxWait) {
+              maxWait = wait;
+            }
+          }
+
+          totalWait += wait;
+          totalBusy += p.serviceTime;
+          serviceSum += p.serviceTime;
+          completed += 1;
+          currentTime = end;
+          lastCompletion = end;
+
+          rows.push({
+            customer: p.id,
+            appt: appt,
+            show: "Yes",
+            service: p.serviceTime,
+            start: start,
+            end: end,
+            wait: wait,
+            idleBefore: idleBefore
+          });
+        }
+
+        var makespan = lastCompletion === null ? 0 : (lastCompletion - appts[0]);
+        var avgServiceTime = completed > 0 ? serviceSum / completed : 0;
+        var capacity = avgServiceTime > 0 ? 1 / avgServiceTime : 0;
+        var flowRate = makespan > 0 ? completed / makespan : 0;
+        var utilization = makespan > 0 ? totalBusy / makespan : 0;
+        var avgWait = completed > 0 ? totalWait / completed : 0;
+
+        return {
+          rows: rows,
+          metrics: {
+            makespan: makespan,
+            avgServiceTime: avgServiceTime,
+            capacity: capacity,
+            flowRate: flowRate,
+            utilization: utilization,
+            avgWait: avgWait,
+            maxWait: maxWait,
+            waitedCount: waitedCount,
+            totalIdle: totalIdle,
+            totalBusy: totalBusy,
+            completed: completed
+          }
+        };
+      }
+
+      function getInputs() {
+        return {
+          spacing: Number(document.getElementById("spacingSelect").value),
+          service: document.getElementById("serviceSelect").value,
+          noShowLevel: document.getElementById("showSelect").value,
+          overbook: document.getElementById("overbookSelect").value
+        };
+      }
+
+      function renderTable(run) {
+        simTbody.innerHTML = run.rows.map(function (r) {
+          var rowClass = r.show === "No" ? "row-noshow" : (r.wait > 0 ? "row-wait" : "");
+          return "<tr class='" + rowClass + "'>" +
+            "<td>C" + r.customer + "</td>" +
+            "<td>" + toMinText(r.appt) + "</td>" +
+            "<td>" + r.show + "</td>" +
+            "<td>" + toMinText(r.service) + "</td>" +
+            "<td>" + toMinText(r.start) + "</td>" +
+            "<td>" + toMinText(r.end) + "</td>" +
+            "<td>" + toMinText(r.wait) + "</td>" +
+            "<td>" + toMinText(r.idleBefore) + "</td>" +
+            "</tr>";
+        }).join("");
+      }
+
+      function renderMetrics(m) {
+        var pairs = [
+          ["Makespan (min)", m.makespan.toFixed(2)],
+          ["Average Service Time (min)", m.avgServiceTime.toFixed(2)],
+          ["Capacity (cust/min)", m.capacity.toFixed(4)],
+          ["Flow Rate (cust/min)", m.flowRate.toFixed(4)],
+          ["Utilization", percent(m.utilization)],
+          ["Average Wait (min)", m.avgWait.toFixed(2)],
+          ["Maximum Wait (min)", m.maxWait.toFixed(2)],
+          ["# Customers Who Waited", String(m.waitedCount)]
+        ];
+
+        metricsEl.innerHTML = pairs.map(function (p) {
+          return "<div class='metric'><span class='k'>" + p[0] + "</span><span class='v'>" + p[1] + "</span></div>";
+        }).join("");
+      }
+
+      function classifyPrediction(m) {
+        var idle = m.totalIdle > 0.0001;
+        var waiting = m.waitedCount > 0;
+        if (idle && waiting) {
+          return "both";
+        }
+        if (idle) {
+          return "idle";
+        }
+        if (waiting) {
+          return "wait";
+        }
+        return "neither";
+      }
+
+      function classifyTightness(m, spacing) {
+        if (m.avgWait > spacing * 0.22 || m.waitedCount >= 4) {
+          return "tight";
+        }
+        if (m.totalIdle > m.totalBusy * 0.35) {
+          return "loose";
+        }
+        return "reasonable";
+      }
+
+      function overbookVerdict(selectedOverbook, selectedRun, altRun) {
+        var selectedScore = selectedRun.metrics.totalIdle + (1.6 * selectedRun.metrics.avgWait * selectedRun.metrics.completed);
+        var altScore = altRun.metrics.totalIdle + (1.6 * altRun.metrics.avgWait * altRun.metrics.completed);
+
+        var selectedBetter = selectedScore <= altScore;
+        if (selectedOverbook === "yes") {
+          return selectedBetter ? "improved" : "worsened";
+        }
+        return selectedBetter ? "worsened" : "improved";
+      }
+
+      function clearFeedback() {
+        feedbackEl.innerHTML = "";
+        predictionStatusEl.textContent = "Run the simulation, then check your prediction.";
+      }
+
+      function runScenario() {
+        clearFeedback();
+        var inp = getInputs();
+
+        var profiles = makeCustomerProfiles(inp.spacing, inp.noShowLevel);
+        var selectedRun = runSimulationFromProfiles(inp.spacing, inp.overbook, profiles);
+        var altOverbook = inp.overbook === "yes" ? "no" : "yes";
+        var altRun = runSimulationFromProfiles(inp.spacing, altOverbook, profiles);
+
+        state.run = {
+          inputs: inp,
+          profiles: profiles,
+          selected: selectedRun,
+          alternative: altRun
+        };
+
+        renderTable(selectedRun);
+        renderMetrics(selectedRun.metrics);
+
+        scenarioTextEl.textContent = "Setting: " + inp.service + " | Spacing: " + inp.spacing +
+          " min | No-show: " + inp.noShowLevel + " | Overbooking: " + inp.overbook +
+          " | Completed: " + selectedRun.metrics.completed + "/6";
+
+        renderDevBox();
+      }
+
+      function nearlyEqual(a, b, tol) {
+        return Math.abs(a - b) <= tol;
+      }
+
+      function numValue(id) {
+        var raw = document.getElementById(id).value.trim();
+        if (raw === "") {
+          return null;
+        }
+        var n = Number(raw);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function checkAnswers() {
+        if (!state.run) {
+          feedbackEl.innerHTML = "<li class='bad'>Run a simulation before checking answers.</li>";
+          return;
+        }
+
+        var run = state.run.selected;
+        var m = run.metrics;
+        var inp = state.run.inputs;
+        var items = [];
+
+        var pred = document.getElementById("predictionSelect").value;
+        var predCorrect = classifyPrediction(m);
+        if (!pred) {
+          items.push({ type: "bad", msg: "Choose a prediction (idle/waiting/both/neither)." });
+        } else if (pred === predCorrect) {
+          items.push({ type: "good", msg: "Prediction is correct." });
+        } else {
+          items.push({ type: "bad", msg: "Prediction is not correct. Observed pattern: " + predCorrect + "." });
+        }
+
+        var inMake = numValue("inMakespan");
+        var inCap = numValue("inCapacity");
+        var inFlow = numValue("inFlowRate");
+        var inUtil = numValue("inUtil");
+
+        if (inMake === null || inCap === null || inFlow === null || inUtil === null) {
+          items.push({ type: "bad", msg: "Fill all four calculation fields (makespan, capacity, flow rate, utilization)." });
+        } else {
+          if (nearlyEqual(inMake, m.makespan, 0.15)) {
+            items.push({ type: "good", msg: "Makespan is correct." });
+          } else {
+            items.push({ type: "bad", msg: "Makespan should be " + m.makespan.toFixed(2) + " minutes." });
+          }
+
+          if (nearlyEqual(inCap, m.capacity, 0.005)) {
+            items.push({ type: "good", msg: "Capacity is correct." });
+          } else {
+            items.push({ type: "bad", msg: "Capacity should be " + m.capacity.toFixed(4) + " customers/min." });
+          }
+
+          if (nearlyEqual(inFlow, m.flowRate, 0.005)) {
+            items.push({ type: "good", msg: "Flow rate is correct." });
+          } else {
+            items.push({ type: "bad", msg: "Flow rate should be " + m.flowRate.toFixed(4) + " customers/min." });
+          }
+
+          var utilPct = m.utilization * 100;
+          if (nearlyEqual(inUtil, utilPct, 0.7)) {
+            items.push({ type: "good", msg: "Utilization is correct." });
+          } else {
+            items.push({ type: "bad", msg: "Utilization should be " + utilPct.toFixed(1) + "% ." });
+          }
+        }
+
+        var tightAns = document.getElementById("tightnessSelect").value;
+        var tightCorrect = classifyTightness(m, inp.spacing);
+        if (!tightAns) {
+          items.push({ type: "bad", msg: "Choose whether spacing was too tight, too loose, or reasonable." });
+        } else if (tightAns === tightCorrect) {
+          items.push({ type: "good", msg: "Spacing interpretation is correct." });
+        } else {
+          items.push({ type: "bad", msg: "Better interpretation: " + tightCorrect + "." });
+        }
+
+        var overAns = document.getElementById("overbookEffectSelect").value;
+        var overCorrect = overbookVerdict(inp.overbook, state.run.selected, state.run.alternative);
+        if (!overAns) {
+          items.push({ type: "bad", msg: "Choose whether overbooking improved or worsened this system." });
+        } else if (overAns === overCorrect) {
+          items.push({ type: "good", msg: "Overbooking interpretation is correct." });
+        } else {
+          items.push({
+            type: "bad",
+            msg: "For this run, overbooking is best labeled as " + overCorrect + "."
+          });
+        }
+
+        feedbackEl.innerHTML = items.map(function (it) {
+          return "<li class='" + it.type + "'>" + it.msg + "</li>";
+        }).join("");
+
+        predictionStatusEl.textContent = "Observed: " + classifyPrediction(m) +
+          " | Idle total: " + m.totalIdle.toFixed(1) + " min" +
+          " | Customers who waited: " + m.waitedCount + ".";
+      }
+
+      function resetStudentInputs() {
+        document.getElementById("predictionSelect").value = "";
+        document.getElementById("inMakespan").value = "";
+        document.getElementById("inCapacity").value = "";
+        document.getElementById("inFlowRate").value = "";
+        document.getElementById("inUtil").value = "";
+        document.getElementById("tightnessSelect").value = "";
+        document.getElementById("overbookEffectSelect").value = "";
+        clearFeedback();
+      }
+
+      function newSimulation() {
+        state.run = null;
+        resetStudentInputs();
+        simTbody.innerHTML = "";
+        metricsEl.innerHTML = "";
+        scenarioTextEl.textContent = "";
+        renderDevBox();
+      }
+
+      function renderDevBox() {
+        if (!devMode || !state.run) {
+          devBoxEl.hidden = true;
+          return;
+        }
+
+        var m = state.run.selected.metrics;
+        var alt = state.run.alternative.metrics;
+        var inp = state.run.inputs;
+        var pred = classifyPrediction(m);
+        var tight = classifyTightness(m, inp.spacing);
+        var over = overbookVerdict(inp.overbook, state.run.selected, state.run.alternative);
+
+        devBoxEl.hidden = false;
+        devBoxEl.innerHTML =
+          "<strong>Debug / Instructor Mode (?dev=1)</strong><br>" +
+          "Prediction answer: <strong>" + pred + "</strong><br>" +
+          "Makespan: <strong>" + m.makespan.toFixed(2) + "</strong> min<br>" +
+          "Capacity: <strong>" + m.capacity.toFixed(4) + "</strong> cust/min<br>" +
+          "Flow rate: <strong>" + m.flowRate.toFixed(4) + "</strong> cust/min<br>" +
+          "Utilization: <strong>" + (m.utilization * 100).toFixed(1) + "%</strong><br>" +
+          "Spacing interpretation: <strong>" + tight + "</strong><br>" +
+          "Overbooking interpretation: <strong>" + over + "</strong><br><br>" +
+          "Comparison (same random customers): selected overbook=" + inp.overbook +
+          " vs alternative overbook=" + (inp.overbook === "yes" ? "no" : "yes") + "<br>" +
+          "Selected idle=" + m.totalIdle.toFixed(1) + ", avg wait=" + m.avgWait.toFixed(2) +
+          " | Alt idle=" + alt.totalIdle.toFixed(1) + ", avg wait=" + alt.avgWait.toFixed(2);
+      }
+
+      document.getElementById("runBtn").addEventListener("click", runScenario);
+      document.getElementById("checkBtn").addEventListener("click", checkAnswers);
+      document.getElementById("resetBtn").addEventListener("click", resetStudentInputs);
+      document.getElementById("newBtn").addEventListener("click", newSimulation);
+
+      newSimulation();
+    })();
+  </script>
+</body>
+</html>

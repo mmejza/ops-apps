@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Scheduling Rule Simulator</title>
+	<style>
+		:root {
+			--bg: #f6f7fb;
+			--card: #ffffff;
+			--ink: #1a1f2b;
+			--muted: #5b6477;
+			--line: #dbe1ee;
+			--accent: #0b6e4f;
+			--accent-2: #f4a259;
+			--good: #1f7a4d;
+			--bad: #b42318;
+			--shadow: 0 14px 36px rgba(23, 30, 50, 0.08);
+			--radius: 14px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Avenir Next", "Segoe UI", Tahoma, sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(1200px 500px at 90% -10%, #d8f3dc 0%, transparent 60%),
+				radial-gradient(900px 400px at -10% 110%, #ffe7cc 0%, transparent 58%),
+				var(--bg);
+		}
+
+		.wrap {
+			max-width: 1100px;
+			margin: 28px auto;
+			padding: 0 16px 28px;
+		}
+
+		.hero {
+			background: linear-gradient(135deg, #144552 0%, #1b7f79 55%, #2a9d8f 100%);
+			color: #fff;
+			border-radius: var(--radius);
+			padding: 20px 22px;
+			box-shadow: var(--shadow);
+			margin-bottom: 16px;
+		}
+
+		.hero h1 {
+			margin: 0;
+			letter-spacing: 0.2px;
+			font-size: clamp(1.3rem, 2.5vw, 2rem);
+		}
+
+		.hero p {
+			margin: 8px 0 0;
+			font-size: 0.98rem;
+			line-height: 1.45;
+			opacity: 0.95;
+		}
+
+		.panel {
+			background: var(--card);
+			border: 1px solid var(--line);
+			border-radius: var(--radius);
+			padding: 16px;
+			box-shadow: var(--shadow);
+			margin-bottom: 14px;
+		}
+
+		.grid {
+			display: grid;
+			gap: 14px;
+		}
+
+		@media (min-width: 980px) {
+			.grid {
+				grid-template-columns: 1.15fr 0.85fr;
+			}
+		}
+
+		h2 {
+			margin: 0 0 10px;
+			font-size: 1.12rem;
+		}
+
+		.small {
+			color: var(--muted);
+			font-size: 0.92rem;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			border: 1px solid var(--line);
+			border-radius: 10px;
+			overflow: hidden;
+			background: #fff;
+		}
+
+		th,
+		td {
+			border-bottom: 1px solid var(--line);
+			padding: 8px 10px;
+			text-align: left;
+			font-size: 0.93rem;
+		}
+
+		tr:last-child td {
+			border-bottom: none;
+		}
+
+		th {
+			background: #f4f7ff;
+			font-weight: 700;
+		}
+
+		.row-correct {
+			background: #edf9f1;
+		}
+
+		.row-incorrect {
+			background: #fff2f2;
+		}
+
+		.controls {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			align-items: center;
+			margin-top: 10px;
+		}
+
+		.rule-group {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-bottom: 10px;
+		}
+
+		label {
+			font-size: 0.92rem;
+		}
+
+		select,
+		input[type="number"] {
+			width: 100%;
+			border: 1px solid #b9c5dd;
+			border-radius: 8px;
+			padding: 7px 8px;
+			background: #fff;
+			color: var(--ink);
+			font-size: 0.92rem;
+		}
+
+		.seq-select {
+			min-width: 58px;
+		}
+
+		.btn {
+			border: none;
+			border-radius: 10px;
+			padding: 10px 14px;
+			font-weight: 700;
+			letter-spacing: 0.2px;
+			cursor: pointer;
+			transition: transform 0.12s ease, filter 0.12s ease;
+		}
+
+		.btn:active {
+			transform: translateY(1px);
+		}
+
+		.btn-primary {
+			background: var(--accent);
+			color: #fff;
+		}
+
+		.btn-secondary {
+			background: #243b53;
+			color: #fff;
+		}
+
+		.btn-ghost {
+			background: #ecf2ff;
+			color: #173157;
+		}
+
+		.btn:hover {
+			filter: brightness(1.04);
+		}
+
+		.status {
+			border-left: 4px solid var(--accent-2);
+			background: #fff8ef;
+			padding: 10px 12px;
+			border-radius: 10px;
+			font-size: 0.93rem;
+			margin-top: 10px;
+			line-height: 1.45;
+		}
+
+		.feedback {
+			margin-top: 10px;
+			padding-left: 18px;
+			line-height: 1.45;
+			font-size: 0.92rem;
+		}
+
+		.feedback li {
+			margin-bottom: 5px;
+		}
+
+		.good {
+			color: var(--good);
+		}
+
+		.bad {
+			color: var(--bad);
+		}
+
+		.metrics {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 8px;
+			margin-top: 10px;
+		}
+
+		.metric {
+			border: 1px solid var(--line);
+			background: #f9fbff;
+			border-radius: 10px;
+			padding: 9px 10px;
+		}
+
+		.metric .label {
+			display: block;
+			font-size: 0.8rem;
+			color: var(--muted);
+		}
+
+		.metric .value {
+			display: block;
+			margin-top: 3px;
+			font-weight: 700;
+			font-size: 1.02rem;
+		}
+
+		.dev-box {
+			margin-top: 10px;
+			padding: 10px;
+			border: 1px dashed #6a8ec8;
+			border-radius: 10px;
+			background: #f2f7ff;
+		}
+
+		.dev-box h3 {
+			margin: 0 0 8px;
+			font-size: 0.96rem;
+		}
+
+		.muted-note {
+			font-size: 0.88rem;
+			color: var(--muted);
+			margin-top: 8px;
+		}
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<section class="hero">
+			<h1>Scheduling Rule Simulator</h1>
+			<p>
+				Practice FCFS, SPT, and EDD on a five-job single-machine schedule.
+				All jobs arrive at time zero, so completion time equals flow time.
+			</p>
+		</section>
+
+		<div class="grid">
+			<section class="panel">
+				<h2>1) Generated Job Data</h2>
+				<p class="small">Each scenario uses jobs A-E with random processing times and due dates.</p>
+				<table id="jobDataTable" aria-label="Generated job data">
+					<thead>
+						<tr>
+							<th>Job</th>
+							<th>Processing Time (days)</th>
+							<th>Due Date (days)</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+
+				<div class="controls">
+					<button id="newScenarioBtn" class="btn btn-secondary" type="button">New Scenario</button>
+					<button id="resetInputsBtn" class="btn btn-ghost" type="button">Reset Inputs</button>
+				</div>
+			</section>
+
+			<section class="panel">
+				<h2>2) Choose Scheduling Rule</h2>
+				<div class="rule-group" id="ruleGroup">
+					<label><input type="radio" name="rule" value="FCFS"> FCFS (A-B-C-D-E)</label>
+					<label><input type="radio" name="rule" value="SPT"> SPT (shortest processing time first)</label>
+					<label><input type="radio" name="rule" value="EDD"> EDD (earliest due date first)</label>
+				</div>
+				<p id="ruleHint" class="status">Select a rule, then enter your sequence and calculations.</p>
+			</section>
+		</div>
+
+		<section class="panel">
+			<h2>3) Enter Sequence and Job-by-Job Results</h2>
+			<p class="small">
+				Fill sequence positions 1-5 and compute each row for your chosen schedule.
+				Lateness = Completion - Due Date. Tardiness = max(0, lateness).
+			</p>
+
+			<table id="studentTable" aria-label="Student schedule input table">
+				<thead>
+					<tr>
+						<th>Position</th>
+						<th>Job</th>
+						<th>Completion Time</th>
+						<th>Lateness</th>
+						<th>Tardiness</th>
+						<th>Tardy? (Y/N)</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+
+			<div class="controls">
+				<button id="checkBtn" class="btn btn-primary" type="button">Submit and Check</button>
+			</div>
+
+			<ul id="feedbackList" class="feedback" aria-live="polite"></ul>
+		</section>
+
+		<section class="panel">
+			<h2>4) Summary Metrics (Selected Rule)</h2>
+			<div id="metricsBox" class="metrics"></div>
+			<p class="muted-note">Percent tardy = number of tardy jobs / total jobs.</p>
+		</section>
+
+		<section class="panel">
+			<h2>5) Interpretation Question</h2>
+			<p class="small">Across all three rules for this same scenario, choose the best rule for each objective.</p>
+			<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+				<div>
+					<label for="bestFlowSelect">Best for minimizing average flow time:</label>
+					<select id="bestFlowSelect">
+						<option value="">Select...</option>
+						<option value="FCFS">FCFS</option>
+						<option value="SPT">SPT</option>
+						<option value="EDD">EDD</option>
+					</select>
+				</div>
+				<div>
+					<label for="bestMaxTardySelect">Best for minimizing maximum tardiness:</label>
+					<select id="bestMaxTardySelect">
+						<option value="">Select...</option>
+						<option value="FCFS">FCFS</option>
+						<option value="SPT">SPT</option>
+						<option value="EDD">EDD</option>
+					</select>
+				</div>
+			</div>
+			<div class="controls">
+				<button id="checkInterpretBtn" class="btn btn-primary" type="button">Check Interpretation</button>
+			</div>
+			<ul id="interpretFeedback" class="feedback" aria-live="polite"></ul>
+			<div id="devBox" class="dev-box" hidden>
+				<h3>Debug / Instructor Mode (?dev=1)</h3>
+				<div id="devContent" class="small"></div>
+			</div>
+		</section>
+	</div>
+
+	<script>
+		(function () {
+			"use strict";
+
+			var JOB_LABELS = ["A", "B", "C", "D", "E"];
+			var jobs = [];
+			var selectedRule = "";
+
+			var params = new URLSearchParams(window.location.search);
+			var devMode = params.get("dev") === "1";
+
+			var jobDataTbody = document.querySelector("#jobDataTable tbody");
+			var studentTbody = document.querySelector("#studentTable tbody");
+			var feedbackList = document.getElementById("feedbackList");
+			var metricsBox = document.getElementById("metricsBox");
+			var ruleHint = document.getElementById("ruleHint");
+			var interpretFeedback = document.getElementById("interpretFeedback");
+			var devBox = document.getElementById("devBox");
+			var devContent = document.getElementById("devContent");
+
+			function randInt(min, max) {
+				return Math.floor(Math.random() * (max - min + 1)) + min;
+			}
+
+			function generateJobs() {
+				jobs = JOB_LABELS.map(function (label) {
+					return {
+						job: label,
+						p: randInt(2, 10),
+						d: randInt(7, 30)
+					};
+				});
+			}
+
+			function renderJobData() {
+				var rows = jobs.map(function (j) {
+					return "<tr><td>" + j.job + "</td><td>" + j.p + "</td><td>" + j.d + "</td></tr>";
+				}).join("");
+				jobDataTbody.innerHTML = rows;
+			}
+
+			function renderStudentRows() {
+				var rows = "";
+				for (var i = 1; i <= 5; i += 1) {
+					rows += "<tr data-row='" + i + "'>" +
+						"<td>" + i + "</td>" +
+						"<td>" + buildJobSelect(i) + "</td>" +
+						"<td><input type='number' id='c-" + i + "' step='1'></td>" +
+						"<td><input type='number' id='l-" + i + "' step='1'></td>" +
+						"<td><input type='number' id='t-" + i + "' step='1' min='0'></td>" +
+						"<td>" + buildTardySelect(i) + "</td>" +
+						"</tr>";
+				}
+				studentTbody.innerHTML = rows;
+			}
+
+			function buildJobSelect(index) {
+				var opts = "<option value=''>Pick...</option>";
+				JOB_LABELS.forEach(function (label) {
+					opts += "<option value='" + label + "'>" + label + "</option>";
+				});
+				return "<select id='job-" + index + "' class='seq-select'>" + opts + "</select>";
+			}
+
+			function buildTardySelect(index) {
+				return "<select id='y-" + index + "'><option value=''>Pick...</option><option value='Y'>Y</option><option value='N'>N</option></select>";
+			}
+
+			function getRuleSequence(rule) {
+				var copy = jobs.slice();
+				if (rule === "FCFS") {
+					return copy;
+				}
+				if (rule === "SPT") {
+					return copy.sort(function (a, b) {
+						if (a.p !== b.p) {
+							return a.p - b.p;
+						}
+						return a.job.localeCompare(b.job);
+					});
+				}
+				if (rule === "EDD") {
+					return copy.sort(function (a, b) {
+						if (a.d !== b.d) {
+							return a.d - b.d;
+						}
+						return a.job.localeCompare(b.job);
+					});
+				}
+				return [];
+			}
+
+			function computeForSequence(seq) {
+				var time = 0;
+				var rows = seq.map(function (j) {
+					time += j.p;
+					var c = time;
+					var l = c - j.d;
+					var t = Math.max(0, l);
+					return {
+						job: j.job,
+						c: c,
+						l: l,
+						t: t,
+						y: t > 0 ? "Y" : "N"
+					};
+				});
+
+				var n = rows.length;
+				var sumC = 0;
+				var sumL = 0;
+				var sumT = 0;
+				var maxT = 0;
+				var tardyCount = 0;
+
+				rows.forEach(function (r) {
+					sumC += r.c;
+					sumL += r.l;
+					sumT += r.t;
+					if (r.t > maxT) {
+						maxT = r.t;
+					}
+					if (r.t > 0) {
+						tardyCount += 1;
+					}
+				});
+
+				return {
+					rows: rows,
+					metrics: {
+						avgFlowTime: sumC / n,
+						avgLateness: sumL / n,
+						avgTardiness: sumT / n,
+						maxTardiness: maxT,
+						percentTardy: tardyCount / n
+					}
+				};
+			}
+
+			function numVal(id) {
+				var raw = document.getElementById(id).value.trim();
+				if (raw === "") {
+					return null;
+				}
+				var n = Number(raw);
+				return Number.isFinite(n) ? n : null;
+			}
+
+			function textVal(id) {
+				return document.getElementById(id).value;
+			}
+
+			function clearVisualState() {
+				feedbackList.innerHTML = "";
+				Array.prototype.forEach.call(studentTbody.querySelectorAll("tr"), function (tr) {
+					tr.classList.remove("row-correct");
+					tr.classList.remove("row-incorrect");
+				});
+			}
+
+			function showFeedback(items) {
+				feedbackList.innerHTML = items.map(function (item) {
+					return "<li class='" + item.type + "'>" + item.msg + "</li>";
+				}).join("");
+			}
+
+			function fmt(n) {
+				return Number.isInteger(n) ? String(n) : n.toFixed(2);
+			}
+
+			function renderMetrics(metrics) {
+				var entries = [
+					["Average Flow Time", fmt(metrics.avgFlowTime)],
+					["Average Lateness", fmt(metrics.avgLateness)],
+					["Average Tardiness", fmt(metrics.avgTardiness)],
+					["Maximum Tardiness", fmt(metrics.maxTardiness)],
+					["Percent Tardy", (metrics.percentTardy * 100).toFixed(0) + "%"]
+				];
+
+				metricsBox.innerHTML = entries.map(function (entry) {
+					return "<div class='metric'><span class='label'>" + entry[0] + "</span><span class='value'>" + entry[1] + "</span></div>";
+				}).join("");
+			}
+
+			function validateAndGrade() {
+				clearVisualState();
+
+				if (!selectedRule) {
+					showFeedback([{ type: "bad", msg: "Select FCFS, SPT, or EDD before submitting." }]);
+					return;
+				}
+
+				var expectedSeq = getRuleSequence(selectedRule);
+				var expectedJobs = expectedSeq.map(function (j) { return j.job; });
+				var expected = computeForSequence(expectedSeq);
+
+				var studentRows = [];
+				for (var i = 1; i <= 5; i += 1) {
+					studentRows.push({
+						pos: i,
+						job: textVal("job-" + i),
+						c: numVal("c-" + i),
+						l: numVal("l-" + i),
+						t: numVal("t-" + i),
+						y: textVal("y-" + i)
+					});
+				}
+
+				var feedback = [];
+				var seq = studentRows.map(function (r) { return r.job; });
+				var blanks = seq.filter(function (s) { return s === ""; }).length;
+				var unique = new Set(seq.filter(function (s) { return s !== ""; }));
+
+				if (blanks > 0) {
+					feedback.push({ type: "bad", msg: "Complete all five sequence positions." });
+				} else if (unique.size !== 5) {
+					feedback.push({ type: "bad", msg: "Each job A-E must appear exactly once in your sequence." });
+				}
+
+				if (blanks === 0 && unique.size === 5) {
+					var isSeqCorrect = seq.every(function (j, idx) { return j === expectedJobs[idx]; });
+					if (isSeqCorrect) {
+						feedback.push({ type: "good", msg: "Sequence is correct for " + selectedRule + "." });
+					} else {
+						feedback.push({
+							type: "bad",
+							msg: "Sequence does not match " + selectedRule + ". Expected: " + expectedJobs.join("-") + "."
+						});
+					}
+				}
+
+				for (var r = 0; r < 5; r += 1) {
+					var rowEl = studentTbody.querySelector("tr[data-row='" + (r + 1) + "']");
+					var rowMsg = [];
+					var s = studentRows[r];
+					var e = expected.rows[r];
+
+					if (s.c !== e.c) {
+						rowMsg.push("Completion should be " + e.c);
+					}
+					if (s.l !== e.l) {
+						rowMsg.push("Lateness should be " + e.l);
+					}
+					if (s.t !== e.t) {
+						rowMsg.push("Tardiness should be " + e.t);
+					}
+					if (s.y !== e.y) {
+						rowMsg.push("Tardy? should be " + e.y);
+					}
+
+					if (rowMsg.length === 0) {
+						rowEl.classList.add("row-correct");
+					} else {
+						rowEl.classList.add("row-incorrect");
+						feedback.push({
+							type: "bad",
+							msg: "Row " + (r + 1) + " (expected job " + e.job + "): " + rowMsg.join("; ") + "."
+						});
+					}
+				}
+
+				if (feedback.length === 0) {
+					feedback.push({ type: "good", msg: "Excellent work. All entries are correct." });
+				}
+
+				showFeedback(feedback);
+				renderMetrics(expected.metrics);
+				renderDevInfo();
+			}
+
+			function allRuleResults() {
+				return {
+					FCFS: computeForSequence(getRuleSequence("FCFS")),
+					SPT: computeForSequence(getRuleSequence("SPT")),
+					EDD: computeForSequence(getRuleSequence("EDD"))
+				};
+			}
+
+			function minRules(results, metricName) {
+				var values = ["FCFS", "SPT", "EDD"].map(function (rule) {
+					return { rule: rule, val: results[rule].metrics[metricName] };
+				});
+				var min = Math.min.apply(null, values.map(function (x) { return x.val; }));
+				return values.filter(function (x) { return x.val === min; }).map(function (x) { return x.rule; });
+			}
+
+			function checkInterpretation() {
+				var flowAns = document.getElementById("bestFlowSelect").value;
+				var maxTAns = document.getElementById("bestMaxTardySelect").value;
+
+				var results = allRuleResults();
+				var bestFlow = minRules(results, "avgFlowTime");
+				var bestMaxT = minRules(results, "maxTardiness");
+
+				var notes = [];
+
+				if (!flowAns || !maxTAns) {
+					notes.push({ type: "bad", msg: "Answer both interpretation questions." });
+				} else {
+					if (bestFlow.indexOf(flowAns) >= 0) {
+						notes.push({ type: "good", msg: "Average flow time choice is correct." });
+					} else {
+						notes.push({
+							type: "bad",
+							msg: "Average flow time is minimized by: " + bestFlow.join(" or ") + "."
+						});
+					}
+
+					if (bestMaxT.indexOf(maxTAns) >= 0) {
+						notes.push({ type: "good", msg: "Maximum tardiness choice is correct." });
+					} else {
+						notes.push({
+							type: "bad",
+							msg: "Maximum tardiness is minimized by: " + bestMaxT.join(" or ") + "."
+						});
+					}
+				}
+
+				interpretFeedback.innerHTML = notes.map(function (n) {
+					return "<li class='" + n.type + "'>" + n.msg + "</li>";
+				}).join("");
+			}
+
+			function resetInputsOnly() {
+				Array.prototype.forEach.call(document.querySelectorAll("#studentTable select, #studentTable input"), function (el) {
+					el.value = "";
+				});
+				document.getElementById("bestFlowSelect").value = "";
+				document.getElementById("bestMaxTardySelect").value = "";
+				feedbackList.innerHTML = "";
+				interpretFeedback.innerHTML = "";
+				metricsBox.innerHTML = "";
+				Array.prototype.forEach.call(studentTbody.querySelectorAll("tr"), function (tr) {
+					tr.classList.remove("row-correct");
+					tr.classList.remove("row-incorrect");
+				});
+			}
+
+			function renderDevInfo() {
+				if (!devMode) {
+					devBox.hidden = true;
+					return;
+				}
+
+				devBox.hidden = false;
+				var lines = [];
+				var rules = ["FCFS", "SPT", "EDD"];
+				rules.forEach(function (rule) {
+					var seq = getRuleSequence(rule);
+					var result = computeForSequence(seq);
+					lines.push("<strong>" + rule + "</strong>: " + seq.map(function (j) { return j.job; }).join("-") +
+						" | Avg Flow=" + fmt(result.metrics.avgFlowTime) +
+						", Max Tardy=" + fmt(result.metrics.maxTardiness));
+
+					var rowText = result.rows.map(function (r, idx) {
+						return "Pos " + (idx + 1) + " " + r.job +
+							" (C=" + r.c + ", L=" + r.l + ", T=" + r.t + ", " + r.y + ")";
+					}).join("<br>");
+					lines.push("<span>" + rowText + "</span>");
+					lines.push("<br>");
+				});
+				devContent.innerHTML = lines.join("<br>");
+			}
+
+			function handleRuleChange(e) {
+				selectedRule = e.target.value;
+				ruleHint.textContent = "Selected rule: " + selectedRule + ". Enter sequence and calculations, then submit.";
+			}
+
+			function newScenario() {
+				generateJobs();
+				renderJobData();
+				resetInputsOnly();
+				selectedRule = "";
+				Array.prototype.forEach.call(document.querySelectorAll("input[name='rule']"), function (rb) {
+					rb.checked = false;
+				});
+				ruleHint.textContent = "Select a rule, then enter your sequence and calculations.";
+				renderDevInfo();
+			}
+
+			document.getElementById("checkBtn").addEventListener("click", validateAndGrade);
+			document.getElementById("checkInterpretBtn").addEventListener("click", checkInterpretation);
+			document.getElementById("resetInputsBtn").addEventListener("click", resetInputsOnly);
+			document.getElementById("newScenarioBtn").addEventListener("click", newScenario);
+
+			Array.prototype.forEach.call(document.querySelectorAll("input[name='rule']"), function (rb) {
+				rb.addEventListener("change", handleRuleChange);
+			});
+
+			renderStudentRows();
+			newScenario();
+		})();
+	</script>
+</body>
+</html>
