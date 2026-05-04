@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Operations Management Apps</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f7fa;
+      color: #1f2937;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 20px 30px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #9ca3af;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 30px 20px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h2 {
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transition: transform 0.1s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .card a {
+      text-decoration: none;
+      color: #2563eb;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Operations Management Apps</h1>
+  <p>Interactive tools for learning OM concepts</p>
+</header>
+
+<div class="container">
+
+  <!-- CHAPTER 19 -->
+  <div class="section">
+    <h2>Chapter 19 – Project Management</h2>
+    <div class="grid">
+
+      <div class="card">
+        <a href="apps/Ch19/critical-path-app/">
+          Critical Path Explorer
+        </a>
+        <p>Forward pass, backward pass, slack, and delay analysis.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Add more chapters below as you build -->
+  <!-- Example:
+  <div class="section">
+    <h2>Chapter 10 – Forecasting</h2>
+    <div class="grid">
+      <div class="card">
+        <a href="apps/Ch10/moving-average-app/">Moving Average Tool</a>
+        <p>Compute and compare forecasts.</p>
+      </div>
+    </div>
+  </div>
+  -->
+
+</div>
+
+<footer>
+  OM Course App Library • Hosted on GitHub Pages
+</footer>
+
+</body>
+</html>
