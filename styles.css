@@ -1,0 +1,442 @@
+:root {
+  --bg-0: #f3f8ff;
+  --bg-1: #e8f0ff;
+  --ink-0: #11213c;
+  --ink-1: #2b3d60;
+  --line: #d3deef;
+  --panel: #ffffff;
+  --accent: #0f6a9e;
+  --accent-2: #0b7f66;
+  --danger: #b3252d;
+  --muted: #5a6d8d;
+  --critical-glow: #ffd9dd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+  color: var(--ink-0);
+  background: linear-gradient(155deg, var(--bg-0), #f9fcff 45%, var(--bg-1));
+  min-height: 100vh;
+}
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(700px 240px at 10% 6%, rgba(15, 106, 158, 0.12), transparent 65%),
+    radial-gradient(560px 220px at 94% 18%, rgba(11, 127, 102, 0.13), transparent 68%);
+}
+
+.app-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(17, 33, 60, 0.06);
+}
+
+.hero {
+  background: linear-gradient(130deg, #ffffff, #f7fbff 60%, #eef7fa);
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+h1 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(1.55rem, 2.9vw, 2.2rem);
+}
+
+h2 {
+  font-size: clamp(1.2rem, 2.1vw, 1.5rem);
+}
+
+h3 {
+  font-size: 1.05rem;
+}
+
+.lead,
+.section-sub {
+  margin: 0.35rem 0 0;
+  color: var(--ink-1);
+  max-width: 72ch;
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.mode-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.mode-btn,
+.secondary,
+.check-btn,
+#delay-minus,
+#delay-plus,
+.th-sort {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink-0);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.mode-btn {
+  padding: 0.45rem 0.72rem;
+}
+
+.mode-btn:hover,
+.secondary:hover,
+.check-btn:hover,
+#delay-minus:hover,
+#delay-plus:hover,
+.th-sort:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mode-btn.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.rule-box {
+  border: 1px solid #cddced;
+  border-left: 5px solid var(--accent-2);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 0.8rem;
+  background: #f7fcfb;
+  color: #173249;
+  min-height: 3.1rem;
+}
+
+.network-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(250px, 1fr);
+  gap: 0.85rem;
+}
+
+.svg-wrap {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.35rem;
+  background: #fdfefe;
+  overflow: auto;
+}
+
+#network-svg {
+  width: 100%;
+  min-width: 860px;
+  height: 400px;
+  display: block;
+}
+
+.info-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: #fbfdff;
+  color: var(--ink-1);
+}
+
+.info-panel p {
+  margin: 0.55rem 0;
+}
+
+.calc {
+  margin-top: 0.45rem;
+  background: #eef7fb;
+  border: 1px solid #cfe2ef;
+  border-radius: 8px;
+  padding: 0.55rem;
+  white-space: pre-line;
+  color: #0f3752;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.55rem 0.45rem;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+th {
+  background: #f6f9ff;
+  color: #203555;
+}
+
+.th-sort {
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+tbody tr:hover {
+  background: #f9fcff;
+}
+
+.crit-chip {
+  color: #fff;
+  background: var(--danger);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.79rem;
+  font-weight: 700;
+}
+
+.noncrit-chip {
+  color: #1f3d63;
+  background: #e7f0fb;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.79rem;
+  font-weight: 700;
+}
+
+.delay-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.delay-controls label {
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+select,
+input[type="number"],
+input[type="text"] {
+  border: 1px solid #c7d7ea;
+  border-radius: 8px;
+  padding: 0.42rem 0.55rem;
+  font: inherit;
+  color: var(--ink-0);
+  background: #fff;
+}
+
+.delay-input-group {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid #c7d7ea;
+}
+
+#delay-minus,
+#delay-plus {
+  padding: 0.34rem 0.7rem;
+  border: none;
+  border-right: 1px solid #d7e5f2;
+  border-radius: 0;
+}
+
+#delay-plus {
+  border-right: none;
+  border-left: 1px solid #d7e5f2;
+}
+
+#delay-days {
+  border: none;
+  border-radius: 0;
+  width: 72px;
+  text-align: center;
+}
+
+.secondary {
+  padding: 0.42rem 0.68rem;
+}
+
+.summary-grid,
+.practice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+}
+
+.summary-card,
+.question-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: #fbfdff;
+}
+
+.summary-box {
+  margin: 0.55rem 0 0;
+  white-space: pre-wrap;
+  line-height: 1.35;
+  color: #132f49;
+}
+
+.list-plain {
+  margin: 0.45rem 0 0;
+  padding-left: 1rem;
+  color: #173452;
+}
+
+.question-card label {
+  display: block;
+  font-weight: 700;
+  color: #1a3558;
+}
+
+.question-row {
+  margin-top: 0.52rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+}
+
+.check-btn {
+  padding: 0.43rem 0.65rem;
+}
+
+.feedback {
+  min-height: 1.2rem;
+  margin: 0.5rem 0 0;
+  font-weight: 700;
+}
+
+.feedback.ok {
+  color: #0f6d56;
+}
+
+.feedback.bad {
+  color: #a52831;
+}
+
+.node-box {
+  fill: #ffffff;
+  stroke: #89a4c9;
+  stroke-width: 1.5;
+  rx: 10;
+}
+
+.node-group:hover .node-box {
+  stroke: var(--accent);
+}
+
+.node-group.is-selected .node-box {
+  stroke: #0f6a9e;
+  stroke-width: 3;
+}
+
+.node-group.is-critical .node-box {
+  fill: #fff8f8;
+  stroke: var(--danger);
+}
+
+.node-text {
+  fill: #173251;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.node-sub {
+  fill: #305179;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.edge {
+  stroke: #9aadca;
+  stroke-width: 2.2;
+  fill: none;
+}
+
+.edge.critical {
+  stroke: var(--danger);
+  stroke-width: 3.1;
+}
+
+.mode-tag {
+  color: var(--muted);
+  font-size: 0.91rem;
+}
+
+@media (max-width: 1000px) {
+  .network-layout,
+  .summary-grid,
+  .practice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 0.65rem;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+
+  .mode-btn {
+    font-size: 0.88rem;
+  }
+}

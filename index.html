@@ -1,64 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Operations Apps</title>
-
-<style>
-body{
-  font-family: Arial, sans-serif;
-  background:#f5f7fb;
-  margin:0;
-}
-
-.container{
-  max-width:800px;
-  margin:auto;
-  padding:40px;
-}
-
-h1{
-  color:#1a2a44;
-}
-
-ul{
-  list-style:none;
-  padding:0;
-}
-
-li{
-  margin:12px 0;
-}
-
-a{
-  text-decoration:none;
-  font-size:18px;
-  color:#0b63ce;
-}
-
-a:hover{
-  text-decoration:underline;
-}
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Critical Path Method Explorer</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
+  <div class="page-bg" aria-hidden="true"></div>
+  <main class="app-shell">
+    <header class="hero card">
+      <p class="eyebrow">SCM 352 • Project Management</p>
+      <h1>Critical Path Method Explorer</h1>
+      <p class="lead">The critical path is the longest path through a project network. It defines the shortest possible project completion time. Activities on the critical path have zero slack.</p>
+    </header>
 
-<main class="container">
+    <section class="card" aria-labelledby="guided-title">
+      <div class="section-head">
+        <h2 id="guided-title">Step-by-Step Mode</h2>
+        <div class="mode-controls" role="tablist" aria-label="CPM modes">
+          <button class="mode-btn is-active" data-mode="network" role="tab" aria-selected="true">1. Network</button>
+          <button class="mode-btn" data-mode="forward" role="tab" aria-selected="false">2. Forward Pass</button>
+          <button class="mode-btn" data-mode="backward" role="tab" aria-selected="false">3. Backward Pass</button>
+          <button class="mode-btn" data-mode="slack" role="tab" aria-selected="false">4. Slack &amp; Critical Path</button>
+        </div>
+      </div>
 
-<h1>Operations Management Apps</h1>
-<p>Select an app:</p>
+      <div class="rule-box" id="mode-rule" aria-live="polite"></div>
 
-<ul>
-  <li><a href="apps/conformance-analysis/">Conformance Analysis</a></li>
-  <li><a href="apps/pcindex-calc/">Process Capability Index Calculator</a></li>
-  <li><a href="apps/SPCframework-puzzle/">SPC Framework Puzzle</a></li>
-  <li><a href="apps/xchart-statistics/">X-Chart Statistics Builder</a></li>
-</ul>
+      <div class="network-layout">
+        <div class="svg-wrap" aria-label="Activity on node project network">
+          <svg id="network-svg" viewBox="0 0 1020 420" role="img" aria-label="CPM network diagram"></svg>
+        </div>
+        <aside class="info-panel" id="node-panel" aria-live="polite">
+          <h3>Activity Details</h3>
+          <p>Select a node to inspect duration, links, and calculations.</p>
+        </aside>
+      </div>
+    </section>
 
-</main>
+    <section class="card" aria-labelledby="table-title">
+      <div class="section-head">
+        <h2 id="table-title">Activity Table</h2>
+        <p class="section-sub">Computed dynamically from the network and current delay settings.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><button class="th-sort" data-sort="id">Activity</button></th>
+              <th><button class="th-sort" data-sort="time">Time</button></th>
+              <th>Predecessors</th>
+              <th><button class="th-sort" data-sort="ES">ES</button></th>
+              <th><button class="th-sort" data-sort="EF">EF</button></th>
+              <th><button class="th-sort" data-sort="LS">LS</button></th>
+              <th><button class="th-sort" data-sort="LF">LF</button></th>
+              <th><button class="th-sort" data-sort="slack">Slack</button></th>
+              <th>Critical?</th>
+            </tr>
+          </thead>
+          <tbody id="cpm-table-body"></tbody>
+        </table>
+      </div>
+    </section>
 
+    <section class="card" aria-labelledby="delay-title">
+      <div class="section-head">
+        <h2 id="delay-title">Delay Analyzer</h2>
+        <p class="section-sub">Test how critical and noncritical delays affect duration, slack, and path shifts.</p>
+      </div>
+
+      <div class="delay-controls">
+        <label for="activity-select">Activity</label>
+        <select id="activity-select" aria-label="Select activity for delay"></select>
+
+        <label for="delay-days">Delay (days)</label>
+        <div class="delay-input-group">
+          <button id="delay-minus" type="button" aria-label="Decrease delay by one day">-</button>
+          <input id="delay-days" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="Delay days">
+          <button id="delay-plus" type="button" aria-label="Increase delay by one day">+</button>
+        </div>
+
+        <button id="reset-btn" class="secondary" type="button">Reset</button>
+        <button id="copy-summary-btn" class="secondary" type="button">Copy Result Summary</button>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card">
+          <h3>Delay Diagnostics</h3>
+          <div id="delay-diagnostics"></div>
+        </article>
+        <article class="summary-card">
+          <h3>Instructor Summary</h3>
+          <pre id="result-summary" class="summary-box" tabindex="0"></pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="practice-title">
+      <div class="section-head">
+        <h2 id="practice-title">Practice Check</h2>
+        <p class="section-sub">Auto-check your understanding against the base (no-delay) CPM result.</p>
+      </div>
+
+      <div class="practice-grid">
+        <div class="question-card">
+          <label for="q1">1) What is the base project duration?</label>
+          <div class="question-row">
+            <input id="q1" type="number" inputmode="numeric" aria-label="Base project duration answer">
+            <button class="check-btn" data-question="q1" type="button">Check</button>
+          </div>
+          <p class="feedback" id="fb-q1" aria-live="polite"></p>
+        </div>
+
+        <div class="question-card">
+          <label for="q2">2) Which activities are on the base critical path?</label>
+          <div class="question-row">
+            <input id="q2" type="text" placeholder="Example: A1,A2,A4,A5,A8,A9,A10" aria-label="Base critical path answer">
+            <button class="check-btn" data-question="q2" type="button">Check</button>
+          </div>
+          <p class="feedback" id="fb-q2" aria-live="polite"></p>
+        </div>
+
+        <div class="question-card">
+          <label for="q3">3) In the base case, what is A6's slack?</label>
+          <div class="question-row">
+            <input id="q3" type="number" inputmode="numeric" aria-label="A6 slack answer">
+            <button class="check-btn" data-question="q3" type="button">Check</button>
+          </div>
+          <p class="feedback" id="fb-q3" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
